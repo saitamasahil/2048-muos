@@ -262,6 +262,15 @@ end
 
 function Game:undo()
     if self.canUndo and self.undoState then
+        -- Snapshot the current tiles before restoring the old grid
+        local current_cells = {}
+        for x = 1, self.size do
+            current_cells[x] = {}
+            for y = 1, self.size do
+                current_cells[x][y] = self.grid.cells[x][y]
+            end
+        end
+
         self.grid:restoreState(self.undoState)
         self.score = self.undoScore
         self.canUndo = false
@@ -283,7 +292,36 @@ function Game:undo()
                 tile.mergedFrom = nil
             end
         end)
-        
+
+        -- Apply reverse animation data
+        for x = 1, self.size do
+            for y = 1, self.size do
+                local c_tile = current_cells[x][y]
+                if c_tile then
+                    if c_tile.isMerged and c_tile.mergedFrom then
+                        local t1 = c_tile.mergedFrom[1]
+                        local t2 = c_tile.mergedFrom[2]
+                        if t1 and t1.previousPosition then
+                            local r_t1 = self.grid:cellContent(t1.previousPosition.x, t1.previousPosition.y)
+                            if r_t1 then r_t1.previousPosition = {x = x, y = y} end
+                        end
+                        if t2 and t2.previousPosition then
+                            local r_t2 = self.grid:cellContent(t2.previousPosition.x, t2.previousPosition.y)
+                            if r_t2 then r_t2.previousPosition = {x = x, y = y} end
+                        end
+                    elseif not c_tile.isNew then
+                        if c_tile.previousPosition then
+                            local r_t = self.grid:cellContent(c_tile.previousPosition.x, c_tile.previousPosition.y)
+                            if r_t then r_t.previousPosition = {x = x, y = y} end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Trigger animation timer
+        self.animationTimer = self.animationDuration
+
         self:saveGameState()
     end
 end
