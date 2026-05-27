@@ -1,5 +1,9 @@
 # 2048 for muOS
 
+<p align="center">
+  <img src="screenshot.png" alt="2048 Gameplay Screenshot" width="250" />
+</p>
+
 A faithful port of the classic puzzle game 2048 for muOS, built using the LÖVE framework.
 
 This project is a direct port of the popular open-source [2048 Android](https://github.com/tpcstld/2048) application by tpcstld, which itself is based on the original web game by Gabriele Cirulli.
