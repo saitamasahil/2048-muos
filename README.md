@@ -19,7 +19,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
 
 ## Installation on muOS
 
-1. Download the latest release `.muxapp` file.
+1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048-muos/releases) page.
 2. Move the downloaded file to the `/mnt/mmc/MUOS/ARCHIVE` folder on your SD card.
 3. Open Archive Manager on your device and select the file to install.
 4. After installation, you'll find an entry called "2048" in the Applications section.
@@ -58,6 +58,6 @@ To build the package yourself, you should be on a Linux or macOS environment wit
 
 ## Credits & Acknowledgements
 
-- **Original Web Game**: [Gabriele Cirulli](https://github.com/gabrielecirulli/2048)
-- **Android Port Reference**: [tpcstld - 2048](https://github.com/tpcstld/2048)
+- Original Web Game: [Gabriele Cirulli](https://github.com/gabrielecirulli/2048)
+- Android Port Reference: [tpcstld - 2048](https://github.com/tpcstld/2048)
 - Built using the [LÖVE Framework](https://love2d.org/).
