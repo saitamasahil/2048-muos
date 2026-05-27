@@ -115,9 +115,9 @@ function renderer.init()
     font_tile_large = love.graphics.newFont(font_path, tile_font_size)
     font_tile_small = love.graphics.newFont(font_path, tile_small_size)
     font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
-    font_score      = love.graphics.newFont(font_path, math.floor(19 * scale))
+    font_score      = love.graphics.newFont(font_path, math.floor(20 * scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale))
-    font_label      = love.graphics.newFont(font_path, math.floor(19 * scale))
+    font_label      = love.graphics.newFont(font_path, math.floor(11 * scale))
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale))
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale))
     font_help_label = love.graphics.newFont(font_path, math.floor(16 * scale))
@@ -277,17 +277,28 @@ function renderer.drawScores(game)
     -- Center vertically in the header area (above the board)
     local box_y = math.floor((layout.board_y - box_h) / 2)
 
+    -- Dynamic vertical centering of text inside score boxes
+    local label_h = font_label:getHeight()
+    local score_h = font_score:getHeight()
+    local spacing = math.floor(1 * scale)
+    local total_text_h = label_h + score_h + spacing
+    local top_padding = math.floor((box_h - total_text_h) / 2)
+    
+    -- Subtract 1px visually to account for optical baseline offset of all-caps text
+    local label_y = box_y + top_padding - math.floor(1 * scale)
+    local score_y = box_y + top_padding + label_h + spacing
+
     -- SCORE box
     love.graphics.setColor(score_bg_color)
     roundedRect("fill", score_x, box_y, box_w, box_h, cr)
 
     love.graphics.setFont(font_label)
     love.graphics.setColor(score_label)
-    love.graphics.printf("SCORE", score_x, box_y + math.floor(3 * scale), box_w, "center")
+    love.graphics.printf("SCORE", score_x, label_y, box_w, "center")
 
     love.graphics.setFont(font_score)
     love.graphics.setColor(score_value)
-    love.graphics.printf(tostring(game.score), score_x, box_y + math.floor(24 * scale), box_w, "center")
+    love.graphics.printf(tostring(game.score), score_x, score_y, box_w, "center")
 
     -- BEST box
     love.graphics.setColor(score_bg_color)
@@ -295,11 +306,11 @@ function renderer.drawScores(game)
 
     love.graphics.setFont(font_label)
     love.graphics.setColor(score_label)
-    love.graphics.printf("BEST", best_x, box_y + math.floor(3 * scale), box_w, "center")
+    love.graphics.printf("BEST", best_x, label_y, box_w, "center")
 
     love.graphics.setFont(font_score)
     love.graphics.setColor(score_value)
-    love.graphics.printf(tostring(game.highScore), best_x, box_y + math.floor(24 * scale), box_w, "center")
+    love.graphics.printf(tostring(game.highScore), best_x, score_y, box_w, "center")
 end
 
 -- ============================================================================
