@@ -394,7 +394,7 @@ function renderer.drawHelp(game)
     -- --- D-PAD section (left side) ---
     local dpad_x = bar_x + math.floor(12 * scale)
 
-    -- Arrow key badges
+    -- Arrow key badges (the 'Move' label has been removed to free up space)
     local arrow_w = math.floor(32 * scale)
     local arrows = {"←", "↑", "↓", "→"}
     for _, arrow in ipairs(arrows) do
@@ -402,16 +402,17 @@ function renderer.drawHelp(game)
         dpad_x = dpad_x + arrow_w + math.floor(4 * scale)
     end
 
-    -- "Move" label
-    love.graphics.setFont(font_help_label)
-    love.graphics.setColor(dark_text)
-    love.graphics.print("Move", dpad_x + label_gap, badge_y + (badge_h - font_help_label:getHeight()) / 2)
-
     -- --- Action buttons (right side) ---
     local right_x = bar_x + bar_w - math.floor(12 * scale)
 
     -- Determine which actions to show based on game state
     local actions = {}
+
+    -- Always show exit hint (except on confirmation dialog)
+    if game.state ~= Game.STATE_CONFIRM_RESTART then
+        table.insert(actions, {key = "MENU + START", label = "Exit"})
+    end
+
     if game.state == Game.STATE_WON then
         table.insert(actions, 1, {key = "A", label = "Continue"})
         table.insert(actions, 1, {key = "B", label = "Undo"})
@@ -445,7 +446,7 @@ function renderer.drawHelp(game)
         right_x = right_x - key_w
         drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
 
-        right_x = right_x - gap * 2
+        right_x = right_x - math.floor(gap * 1.5)
     end
 end
 
