@@ -5,7 +5,7 @@ _G.timer = require("timer")
 local sem_ver = {
     major = 1,
     minor = 0,
-    patch = 1,
+    patch = 2,
     extra = ""
 }
 
@@ -45,3 +45,6 @@ end
 
 -- Working directory (set after love.load)
 _G.WORK_DIR = ""
+
+-- Current visual theme (light / dark)
+_G.theme = "light"

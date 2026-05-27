@@ -13,7 +13,7 @@ Game.STATE_PLAYING  = 0
 Game.STATE_WON      = 1
 Game.STATE_LOST     = 2
 Game.STATE_ENDLESS  = 3   -- Continuing after winning
-Game.STATE_CONFIRM_RESTART = 4 -- Confirming accidental restart
+Game.STATE_PAUSED   = 4 -- Confirming accidental restart
 
 -- Direction constants: 0=up, 1=right, 2=down, 3=left
 Game.DIR_UP    = 0
@@ -60,9 +60,15 @@ function Game.new()
         if savedState.undoState then
             self.undoState = savedState.undoState
         end
+        if savedState.theme then
+            _G.theme = savedState.theme
+        end
     else
         -- Start a fresh game if no save state exists
         self:addStartTiles()
+        if savedState and savedState.theme then
+            _G.theme = savedState.theme
+        end
     end
 
     return self
@@ -76,7 +82,8 @@ function Game:saveGameState()
         canUndo = self.canUndo,
         undoScore = self.undoScore,
         gridState = self.grid:saveState(),
-        undoState = self.undoState
+        undoState = self.undoState,
+        theme = _G.theme
     }
     save.saveState(stateTable)
 end
@@ -343,20 +350,22 @@ function Game:restart()
     self.undoState = nil
     self.animationTimer = 0
     self:addStartTiles()
-    save.clearState()
+    self:saveGameState()
 end
 
-function Game:requestRestart()
+function Game:togglePause()
     if self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS then
         self.prevState = self.state
-        self.state = Game.STATE_CONFIRM_RESTART
+        self.state = Game.STATE_PAUSED
+    elseif self.state == Game.STATE_PAUSED then
+        self.state = self.prevState or Game.STATE_PLAYING
     else
         self:restart()
     end
 end
 
-function Game:cancelRestart()
-    if self.state == Game.STATE_CONFIRM_RESTART then
+function Game:cancelPause()
+    if self.state == Game.STATE_PAUSED then
         self.state = self.prevState or Game.STATE_PLAYING
     end
 end

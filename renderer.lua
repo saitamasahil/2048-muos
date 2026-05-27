@@ -6,7 +6,12 @@ local Game = require("game")
 
 local renderer = {}
 
--- ============================================================================
+-- Theme transition animation state
+local transition_canvas = nil
+local transition_timer = 0
+local transition_duration = 0.5
+local transition_center_x = 0
+local transition_center_y = 0
 -- Color palette (from Android cell_rectangle_*.xml and colors.xml)
 -- ============================================================================
 local function hex(h)
@@ -16,37 +21,95 @@ local function hex(h)
            tonumber(h:sub(5, 6), 16) / 255
 end
 
--- Tile background colors indexed by value
-local tile_colors = {
-    [0]    = {hex("#cdc1b4")},   -- empty cell
-    [2]    = {hex("#eee4da")},
-    [4]    = {hex("#ede0c8")},
-    [8]    = {hex("#f2b179")},
-    [16]   = {hex("#f59563")},
-    [32]   = {hex("#f67c5f")},
-    [64]   = {hex("#f65e3b")},
-    [128]  = {hex("#edcf72")},
-    [256]  = {hex("#edcc61")},
-    [512]  = {hex("#edc850")},
-    [1024] = {hex("#edc53f")},
-    [2048] = {hex("#edc22e")},
+local themes = {
+    light = {
+        tile_colors = {
+            [0]    = {hex("#cdc1b4")},   -- empty cell
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#3c3a32")},
+        dark_text        = {hex("#776e65")},
+        light_text       = {hex("#f9f6f2")},
+        ui_text          = {hex("#776e65")},
+        bg_color         = {hex("#faf8ef")},
+        board_color      = {hex("#bbada0")},
+        score_bg_color   = {hex("#bbada0")},
+        score_label      = {hex("#eee4da")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#edc22e")},
+        overlay_lose     = {hex("#eee4da")},
+        help_bg_color    = {hex("#bbada0")},
+        help_key_color   = {hex("#edc22e")},
+        help_key_text    = {hex("#776e65")},
+    },
+    dark = {
+        tile_colors = {
+            [0]    = {hex("#3a3a3a")},   -- empty cell
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#eee4da")},
+        dark_text        = {hex("#776e65")},  -- Kept dark for light tiles
+        light_text       = {hex("#f9f6f2")},
+        ui_text          = {hex("#eee4da")},  -- Light color for UI text
+        bg_color         = {hex("#121212")},
+        board_color      = {hex("#2d2d2d")},
+        score_bg_color   = {hex("#2d2d2d")},
+        score_label      = {hex("#bbada0")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#edc22e")},
+        overlay_lose     = {hex("#2d2d2d")},
+        help_bg_color    = {hex("#2d2d2d")},
+        help_key_color   = {hex("#4a4a4a")},
+        help_key_text    = {hex("#eee4da")},
+    }
 }
-local super_tile_color = {hex("#3c3a32")}
 
--- Text colors
-local dark_text   = {hex("#776e65")}
-local light_text  = {hex("#f9f6f2")}
+-- Current active colors (will be populated by applyTheme)
+local tile_colors, super_tile_color, dark_text, light_text, ui_text
+local bg_color, board_color, score_bg_color, score_label, score_value
+local overlay_win, overlay_lose, help_bg_color, help_key_color, help_key_text
 
--- UI colors
-local bg_color       = {hex("#faf8ef")}
-local board_color    = {hex("#bbada0")}
-local score_bg_color = {hex("#bbada0")}
-local score_label    = {hex("#eee4da")}
-local score_value    = {hex("#ffffff")}
-local overlay_win    = {hex("#edc22e")}
-local overlay_lose   = {hex("#eee4da")}
-local help_bg_color  = {hex("#bbada0")}
-local help_key_color = {hex("#edc22e")}
+function renderer.applyTheme()
+    local t = themes[_G.theme] or themes.light
+    tile_colors = t.tile_colors
+    super_tile_color = t.super_tile_color
+    dark_text = t.dark_text
+    light_text = t.light_text
+    ui_text = t.ui_text
+    bg_color = t.bg_color
+    board_color = t.board_color
+    score_bg_color = t.score_bg_color
+    score_label = t.score_label
+    score_value = t.score_value
+    overlay_win = t.overlay_win
+    overlay_lose = t.overlay_lose
+    help_bg_color = t.help_bg_color
+    help_key_color = t.help_key_color
+    help_key_text = t.help_key_text
+end
+
+-- Initialize theme immediately
+renderer.applyTheme()
 
 -- ============================================================================
 -- Fonts
@@ -144,6 +207,7 @@ end
 
 local function getTileTextColor(value)
     if value <= 4 then return dark_text end
+    if value >= 4096 and _G.theme == "dark" then return dark_text end
     return light_text
 end
 
@@ -321,7 +385,7 @@ function renderer.drawHeader(game)
     local scale = _G.scale
 
     love.graphics.setFont(font_title)
-    love.graphics.setColor(dark_text)
+    love.graphics.setColor(ui_text)
     
     if game and game.won then
         local total_h = font_title:getHeight() + font_label:getHeight() - math.floor(4 * scale)
@@ -344,9 +408,11 @@ local function drawKeyBadge(text, x, y, w, h)
     local cr = math.floor(h * 0.3)
     local scale = _G.scale
 
-    -- Badge shadow (depth effect)
-    love.graphics.setColor(0, 0, 0, 0.12)
-    roundedRect("fill", x, y + math.floor(2 * scale), w, h, cr)
+    -- Badge shadow (depth effect) - inset to prevent edge fringing
+    love.graphics.setColor(0, 0, 0, 0.15)
+    local sh_in = math.max(1, math.floor(1 * scale))
+    local sh_off = math.max(1, math.floor(2 * scale))
+    roundedRect("fill", x + sh_in, y + sh_off, w - sh_in * 2, h, cr)
 
     -- Badge background
     love.graphics.setColor(help_key_color)
@@ -358,7 +424,7 @@ local function drawKeyBadge(text, x, y, w, h)
 
     -- Badge text
     love.graphics.setFont(font_help_key)
-    love.graphics.setColor(dark_text)
+    love.graphics.setColor(help_key_text)
     local tw = font_help_key:getWidth(text)
     local th = font_help_key:getHeight()
 
@@ -417,24 +483,26 @@ function renderer.drawHelp(game)
     -- Determine which actions to show based on game state
     local actions = {}
 
-    -- Always show exit hint (except on confirmation dialog)
-    if game.state ~= Game.STATE_CONFIRM_RESTART then
-        table.insert(actions, {key = "MENU + START", label = "Exit"})
-    end
+    -- Removed the long MENU+START Exit hint to save space for the Theme toggle.
+    -- Players universally know START/SELECT exits apps on CFWs.
 
     if game.state == Game.STATE_WON then
         table.insert(actions, 1, {key = "A", label = "Continue"})
+        table.insert(actions, 1, {key = "Y", label = "Theme"})
         table.insert(actions, 1, {key = "B", label = "Undo"})
     elseif game.state == Game.STATE_LOST then
         table.insert(actions, 1, {key = "A", label = "New Game"})
+        table.insert(actions, 1, {key = "Y", label = "Theme"})
         if game.canUndo then
             table.insert(actions, 1, {key = "B", label = "Undo"})
         end
-    elseif game.state == Game.STATE_CONFIRM_RESTART then
-        table.insert(actions, 1, {key = "A", label = "Yes"})
-        table.insert(actions, 1, {key = "B", label = "No"})
+    elseif game.state == Game.STATE_PAUSED then
+        table.insert(actions, 1, {key = "A", label = "Restart"})
+        table.insert(actions, 1, {key = "X", label = "Quit"})
+        table.insert(actions, 1, {key = "B", label = "Resume"})
     else
-        table.insert(actions, 1, {key = "SELECT", label = "New Game"})
+        table.insert(actions, 1, {key = "START", label = "Pause"})
+        table.insert(actions, 1, {key = "Y", label = "Theme"})
         if game.canUndo then
             table.insert(actions, 1, {key = "B", label = "Undo"})
         end
@@ -446,7 +514,7 @@ function renderer.drawHelp(game)
         love.graphics.setFont(font_help_label)
         local lbl_w = font_help_label:getWidth(action.label)
         right_x = right_x - lbl_w
-        love.graphics.setColor(dark_text)
+        love.graphics.setColor(ui_text)
         love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
         -- Badge
@@ -464,14 +532,14 @@ end
 -- ============================================================================
 function renderer.drawOverlay(game)
     if game:isPlaying() then return end
-    if game:isAnimating() and game.state ~= Game.STATE_CONFIRM_RESTART then return end
+    if game:isAnimating() and game.state ~= Game.STATE_PAUSED then return end
 
     local bx, by = layout.board_x, layout.board_y
     local bs = layout.board_size
 
     if game.state == Game.STATE_WON then
         love.graphics.setColor(overlay_win[1], overlay_win[2], overlay_win[3], 0.5)
-    elseif game.state == Game.STATE_CONFIRM_RESTART then
+    elseif game.state == Game.STATE_PAUSED then
         love.graphics.setColor(0, 0, 0, 0.65)
     else
         love.graphics.setColor(overlay_lose[1], overlay_lose[2], overlay_lose[3], 0.5)
@@ -481,17 +549,17 @@ function renderer.drawOverlay(game)
     love.graphics.setFont(font_message)
     if game.state == Game.STATE_WON then
         love.graphics.setColor(light_text)
-    elseif game.state == Game.STATE_CONFIRM_RESTART then
+    elseif game.state == Game.STATE_PAUSED then
         love.graphics.setColor(light_text)
     else
-        love.graphics.setColor(dark_text)
+        love.graphics.setColor(ui_text)
     end
 
     local msg
     if game.state == Game.STATE_WON then
         msg = "You Win!"
-    elseif game.state == Game.STATE_CONFIRM_RESTART then
-        msg = "Restart Game?"
+    elseif game.state == Game.STATE_PAUSED then
+        msg = "Paused"
     else
         msg = "Game Over!"
     end
@@ -504,7 +572,44 @@ end
 -- ============================================================================
 -- Main draw function
 -- ============================================================================
-function renderer.draw(game)
+local function drawStencilCircle()
+    local progress = 1 - (transition_timer / transition_duration)
+    -- Ease out cubic: 1 - (1 - t)^3
+    local p = 1 - math.pow(1 - progress, 3)
+    local w, h = love.graphics.getDimensions()
+    -- Max radius needs to cover the entire screen from the bottom right
+    local max_radius = math.sqrt(w*w + h*h)
+    local radius = max_radius * p
+    love.graphics.circle("fill", transition_center_x, transition_center_y, radius)
+end
+
+function renderer.startThemeTransition(game)
+    local w, h = love.graphics.getDimensions()
+    if not transition_canvas then
+        transition_canvas = love.graphics.newCanvas(w, h)
+    end
+    -- Capture current screen to canvas
+    love.graphics.setCanvas(transition_canvas)
+    love.graphics.clear()
+    renderer.draw(game, true) -- Pass true to skip transition drawing inside
+    love.graphics.setCanvas()
+    
+    transition_timer = transition_duration
+    -- The Y button is approximately at the bottom right
+    transition_center_x = w - math.floor(90 * _G.scale)
+    transition_center_y = h - math.floor(30 * _G.scale)
+end
+
+function renderer.updateTransition(dt)
+    if transition_timer > 0 then
+        transition_timer = math.max(0, transition_timer - dt)
+    end
+end
+
+-- ============================================================================
+-- Main draw function
+-- ============================================================================
+function renderer.draw(game, skip_transition)
     -- Fill background
     love.graphics.setColor(bg_color)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
@@ -515,6 +620,15 @@ function renderer.draw(game)
     renderer.drawTiles(game)
     renderer.drawOverlay(game)
     renderer.drawHelp(game)
+    
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        -- We want to draw the OLD screen (transition_canvas) everywhere EXCEPT where the stencil is.
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0) -- Draw where stencil is 0
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest() -- Disable stencil
+    end
 end
 
 return renderer

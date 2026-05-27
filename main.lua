@@ -40,6 +40,14 @@ function love.load(args)
     _G.WORK_DIR = love.filesystem.getWorkingDirectory() or "."
     save.init(_G.WORK_DIR .. "/static")
 
+    -- Load theme early for renderer and splash screen
+    local savedState = save.loadState()
+    if savedState and savedState.theme then
+        _G.theme = savedState.theme
+    end
+    -- Crucially apply the loaded theme to the renderer NOW
+    renderer.applyTheme()
+
     -- Initialize input
     input.load()
 
@@ -81,12 +89,21 @@ function love.update(dt)
 
     -- Update game animations
     game:update(dt)
+    renderer.updateTransition(dt)
 
     -- Update input (hold-to-repeat)
     input.update(dt)
 
     -- Process input events
     input.processEvents(function(event)
+        if event == input.events.Y then
+            renderer.startThemeTransition(game)
+            _G.theme = _G.theme == "light" and "dark" or "light"
+            renderer.applyTheme()
+            if game then game:saveGameState() end
+            return
+        end
+
         if game:isPlaying() then
             -- Directional moves
             if event == input.events.UP then
@@ -100,15 +117,17 @@ function love.update(dt)
             -- Undo
             elseif event == input.events.BACK then
                 game:undo()
-            -- New game (select button)
-            elseif event == input.events.SELECT then
-                game:requestRestart()
+            -- Pause menu (select or start button)
+            elseif event == input.events.SELECT or event == input.events.START then
+                game:togglePause()
             end
-        elseif game.state == Game.STATE_CONFIRM_RESTART then
+        elseif game.state == Game.STATE_PAUSED then
             if event == input.events.CONFIRM then
                 game:restart()
-            elseif event == input.events.BACK or event == input.events.SELECT then
-                game:cancelRestart()
+            elseif event == input.events.BACK or event == input.events.SELECT or event == input.events.START then
+                game:cancelPause()
+            elseif event == input.events.X then
+                love.event.quit()
             end
         elseif game.state == Game.STATE_WON then
             if event == input.events.CONFIRM then

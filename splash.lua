@@ -258,7 +258,11 @@ function splash.draw()
     love.graphics.translate(anim.shake_x, anim.shake_y)
 
     -- Background
-    love.graphics.setColor(colors.bg)
+    if _G.theme == "dark" then
+        love.graphics.setColor(hex("#121212"))
+    else
+        love.graphics.setColor(colors.bg)
+    end
     love.graphics.rectangle("fill", -10, -10, w + 20, h + 20)
 
     -- Draw background tile grid
