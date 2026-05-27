@@ -316,16 +316,25 @@ end
 -- ============================================================================
 -- Draw header ("2048" title)
 -- ============================================================================
-function renderer.drawHeader()
+function renderer.drawHeader(game)
     local bx = layout.board_x
     local scale = _G.scale
 
     love.graphics.setFont(font_title)
     love.graphics.setColor(dark_text)
     
-    -- Center title vertically in the header area
-    local title_y = math.floor((layout.board_y - font_title:getHeight()) / 2)
-    love.graphics.print("2048", bx, title_y)
+    if game and game.won then
+        local total_h = font_title:getHeight() + font_label:getHeight() - math.floor(4 * scale)
+        local title_y = math.floor((layout.board_y - total_h) / 2)
+        love.graphics.print("2048", bx, title_y)
+        
+        love.graphics.setFont(font_label)
+        love.graphics.print("Endless Mode", bx, title_y + font_title:getHeight() - math.floor(4 * scale))
+    else
+        -- Center title vertically in the header area
+        local title_y = math.floor((layout.board_y - font_title:getHeight()) / 2)
+        love.graphics.print("2048", bx, title_y)
+    end
 end
 
 -- ============================================================================
@@ -500,7 +509,7 @@ function renderer.draw(game)
     love.graphics.setColor(bg_color)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
 
-    renderer.drawHeader()
+    renderer.drawHeader(game)
     renderer.drawScores(game)
     renderer.drawBoard()
     renderer.drawTiles(game)
