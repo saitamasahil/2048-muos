@@ -341,7 +341,18 @@ local function drawKeyBadge(text, x, y, w, h)
     love.graphics.setColor(dark_text)
     local tw = font_help_key:getWidth(text)
     local th = font_help_key:getHeight()
-    love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2)
+
+    -- Visual alignment corrections for arrows in ClearSans
+    local offset_x, offset_y = 0, 0
+    if text == "←" then
+        offset_y = -math.floor(2 * scale)
+        offset_x = math.floor(1 * scale)
+    elseif text == "→" then
+        offset_y = -math.floor(2 * scale)
+        offset_x = -math.floor(1 * scale)
+    end
+
+    love.graphics.print(text, x + (w - tw) / 2 + offset_x, y + (h - th) / 2 + offset_y)
 end
 
 -- ============================================================================
