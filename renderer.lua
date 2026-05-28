@@ -12,6 +12,12 @@ local transition_timer = 0
 local transition_duration = 0.5
 local transition_center_x = 0
 local transition_center_y = 0
+
+-- Win animation state
+local win_particles = {}
+local win_timer = 0
+local win_text_bounce = 0
+
 -- Color palette (from Android cell_rectangle_*.xml and colors.xml)
 -- ============================================================================
 local function hex(h)
@@ -570,42 +576,75 @@ end
 -- Draw game over / win / confirm restart overlay
 -- ============================================================================
 function renderer.drawOverlay(game)
-    if game:isPlaying() then return end
+    if game:isPlaying() then 
+        win_timer = 0
+        return 
+    end
     if game:isAnimating() and game.state ~= Game.STATE_PAUSED then return end
 
     local bx, by = layout.board_x, layout.board_y
     local bs = layout.board_size
+    local dt = love.timer.getDelta()
 
     if game.state == Game.STATE_WON then
-        love.graphics.setColor(overlay_win[1], overlay_win[2], overlay_win[3], 0.5)
-    elseif game.state == Game.STATE_PAUSED then
-        love.graphics.setColor(0, 0, 0, 0.65)
-    else
-        love.graphics.setColor(overlay_lose[1], overlay_lose[2], overlay_lose[3], 0.5)
-    end
-    roundedRect("fill", bx, by, bs, bs, layout.corner_radius * 2)
+        win_timer = win_timer + dt
+        local fade_t = math.min(win_timer / 0.8, 1.0)
+        -- Smooth ease out
+        local ease_t = 1 - math.pow(1 - fade_t, 3)
+        
+        love.graphics.setColor(overlay_win[1], overlay_win[2], overlay_win[3], 0.6 * ease_t)
+        roundedRect("fill", bx, by, bs, bs, layout.corner_radius * 2)
 
-    love.graphics.setFont(font_message)
-    if game.state == Game.STATE_WON then
-        love.graphics.setColor(light_text)
-    elseif game.state == Game.STATE_PAUSED then
-        love.graphics.setColor(light_text)
-    else
-        love.graphics.setColor(ui_text)
-    end
+        local msg = "You Win!"
+        love.graphics.setFont(font_message)
+        local tw = font_message:getWidth(msg)
+        local th = font_message:getHeight()
+        local textX = bx + bs / 2
+        local textY = by + bs / 2
 
-    local msg
-    if game.state == Game.STATE_WON then
-        msg = "You Win!"
-    elseif game.state == Game.STATE_PAUSED then
-        msg = "Paused"
-    else
-        msg = "Game Over!"
-    end
+        -- Pulsing golden glow behind the text
+        local glow_alpha = (math.sin(win_timer * 3) * 0.5 + 0.5) * 0.4 * ease_t
+        local glow_color = getTileColor(2048)
+        love.graphics.setColor(glow_color[1], glow_color[2], glow_color[3], glow_alpha)
+        
+        -- Draw soft glow by drawing multiple scaled rounded rectangles
+        for i = 1, 3 do
+            local gw = tw + (40 * _G.scale * i)
+            local gh = th + (40 * _G.scale * i)
+            roundedRect("fill", textX - gw/2, textY - gh/2, gw, gh, layout.corner_radius * 2)
+        end
 
-    local tw = font_message:getWidth(msg)
-    local th = font_message:getHeight()
-    love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+        -- Draw the text
+        local text_scale = 0.8 + (0.2 * ease_t)
+        love.graphics.setColor(light_text[1], light_text[2], light_text[3], ease_t)
+        
+        love.graphics.push()
+        love.graphics.translate(textX, textY)
+        love.graphics.scale(text_scale, text_scale)
+        love.graphics.print(msg, -tw/2, -th/2)
+        love.graphics.pop()
+    else
+        win_timer = 0
+        
+        if game.state == Game.STATE_PAUSED then
+            love.graphics.setColor(0, 0, 0, 0.65)
+        else
+            love.graphics.setColor(overlay_lose[1], overlay_lose[2], overlay_lose[3], 0.5)
+        end
+        roundedRect("fill", bx, by, bs, bs, layout.corner_radius * 2)
+
+        local msg = game.state == Game.STATE_PAUSED and "Paused" or "Game Over!"
+        love.graphics.setFont(font_message)
+        if game.state == Game.STATE_PAUSED then
+            love.graphics.setColor(light_text)
+        else
+            love.graphics.setColor(ui_text)
+        end
+
+        local tw = font_message:getWidth(msg)
+        local th = font_message:getHeight()
+        love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+    end
 end
 
 -- ============================================================================

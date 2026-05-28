@@ -321,7 +321,7 @@ function Game:undo()
 
         -- Reset game state if we were lost/won
         if self.state == Game.STATE_LOST then
-            self.state = Game.STATE_PLAYING
+            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
         elseif self.state == Game.STATE_WON then
             self.state = Game.STATE_PLAYING
             self.won = false
@@ -395,7 +395,7 @@ function Game:togglePause()
         self.prevState = self.state
         self.state = Game.STATE_PAUSED
     elseif self.state == Game.STATE_PAUSED then
-        self.state = self.prevState or Game.STATE_PLAYING
+        self.state = self.prevState or (self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING)
     else
         self:restart()
     end
@@ -403,7 +403,7 @@ end
 
 function Game:cancelPause()
     if self.state == Game.STATE_PAUSED then
-        self.state = self.prevState or Game.STATE_PLAYING
+        self.state = self.prevState or (self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING)
     end
 end
 
@@ -438,7 +438,7 @@ function Game:moveCursor(dx, dy)
 end
 
 function Game:cancelTargeting()
-    self.state = Game.STATE_PLAYING
+    self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
     self.swapTarget = nil
 end
 
@@ -457,7 +457,7 @@ function Game:confirmTarget()
 
             self.grid.cells[cx][cy] = nil
             self.powerups.bomb = self.powerups.bomb - 1
-            self.state = Game.STATE_PLAYING
+            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
             self:saveGameState()
         end
     elseif self.state == Game.STATE_TARGETING_SWAP_1 then
@@ -496,7 +496,7 @@ function Game:confirmTarget()
 
             self.powerups.swap = self.powerups.swap - 1
             self.swapTarget = nil
-            self.state = Game.STATE_PLAYING
+            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
             self:saveGameState()
         else
             -- Cannot swap with self; cancel
