@@ -15,7 +15,7 @@ local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Quit
 local game
 
 function love.load(args)
-    math.randomseed(os.time())
+    love.math.setRandomSeed(os.time())
 
     -- Handle resolution arguments (same pattern as Scrappy)
     if args and #args > 0 then

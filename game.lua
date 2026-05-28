@@ -74,6 +74,9 @@ function Game.new(mode)
         if savedState.undoState then
             self.undoState = savedState.undoState
         end
+        if savedState.undoRNG then
+            self.undoRNG = savedState.undoRNG
+        end
         if savedState.theme then
             _G.theme = savedState.theme
         end
@@ -103,6 +106,7 @@ function Game:saveGameState()
         undoScore = self.undoScore,
         gridState = self.grid:saveState(),
         undoState = self.undoState,
+        undoRNG = self.undoRNG,
         theme = _G.theme,
         powerups = self.powerups,
         milestonesReached = self.milestonesReached
@@ -118,7 +122,7 @@ end
 
 function Game:addRandomTile()
     if self.grid:cellsAvailable() then
-        local value = math.random() < 0.9 and 2 or 4
+        local value = love.math.random() < 0.9 and 2 or 4
         local cell = self.grid:randomAvailableCell()
         if cell then
             local tile = Tile.new(cell.x, cell.y, value)
@@ -196,9 +200,10 @@ function Game:move(direction)
         return false
     end
 
-    -- Save undo state before the move
-    self.undoState = self.grid:saveState()
-    self.undoScore = self.score
+    -- Save undo state before the move, but only apply it if the board actually changes
+    local pendingUndoState = self.grid:saveState()
+    local pendingUndoScore = self.score
+    local pendingUndoRNG = love.math.getRandomState()
 
     local traversalsX, traversalsY = self:buildTraversals(direction)
     local moved = false
@@ -234,7 +239,7 @@ function Game:move(direction)
                     if self.mode == "plus" and merged.value >= 128 and not self.milestonesReached[merged.value] then
                         self.milestonesReached[merged.value] = true
                         -- Grant a random powerup
-                        local p = math.random(1, 3)
+                        local p = love.math.random(1, 3)
                         if p == 1 then self.powerups.undo = self.powerups.undo + 1
                         elseif p == 2 then self.powerups.swap = self.powerups.swap + 1
                         else self.powerups.bomb = self.powerups.bomb + 1 end
@@ -259,6 +264,9 @@ function Game:move(direction)
     end
 
     if moved then
+        self.undoState = pendingUndoState
+        self.undoScore = pendingUndoScore
+        self.undoRNG = pendingUndoRNG
         self.canUndo = true
         self:addRandomTile()
         self.animationTimer = self.animationDuration
@@ -318,6 +326,10 @@ function Game:undo()
         self.grid:restoreState(self.undoState)
         self.score = self.undoScore
         self.canUndo = false
+        
+        if self.undoRNG then
+            love.math.setRandomState(self.undoRNG)
+        end
 
         -- Reset game state if we were lost/won
         if self.state == Game.STATE_LOST then

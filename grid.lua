@@ -40,7 +40,7 @@ end
 function Grid:randomAvailableCell()
     local cells = self:getAvailableCells()
     if #cells > 0 then
-        return cells[math.random(#cells)]
+        return cells[love.math.random(#cells)]
     end
     return nil
 end
