@@ -100,7 +100,7 @@ function love.update(dt)
     input.processEvents(function(event)
         if event == input.events.Y then
             if _G.appState == "MENU" then
-                renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection) end)
+                renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection, true) end)
             else
                 renderer.startThemeTransition(game)
             end
@@ -156,12 +156,24 @@ function love.update(dt)
                 game:move(Game.DIR_LEFT)
             -- Powerups
             elseif event == input.events.L1 then
-                game:startSwapTargeting()
+                if game.mode == "plus" and game.powerups.swap <= 0 then
+                    renderer.showToast("No Swap Powerup!")
+                else
+                    game:startSwapTargeting()
+                end
             elseif event == input.events.R1 then
-                game:startBombTargeting()
+                if game.mode == "plus" and game.powerups.bomb <= 0 then
+                    renderer.showToast("No Bomb Powerup!")
+                else
+                    game:startBombTargeting()
+                end
             -- Undo
             elseif event == input.events.BACK then
-                game:undo()
+                if game.mode == "plus" and game.powerups.undo <= 0 then
+                    renderer.showToast("No Undo Powerup!")
+                else
+                    game:undo()
+                end
             -- Pause menu (select or start button)
             elseif event == input.events.SELECT or event == input.events.START then
                 game:togglePause()

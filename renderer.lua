@@ -14,9 +14,17 @@ local transition_center_x = 0
 local transition_center_y = 0
 
 -- Win animation state
-local win_particles = {}
 local win_timer = 0
-local win_text_bounce = 0
+
+-- Toast state
+local toast_message = nil
+local toast_timer = 0
+local TOAST_DURATION = 1.5
+
+function renderer.showToast(msg)
+    toast_message = msg
+    toast_timer = TOAST_DURATION
+end
 
 -- Color palette (from Android cell_rectangle_*.xml and colors.xml)
 -- ============================================================================
@@ -500,14 +508,14 @@ function renderer.drawHelp(game)
 
     local badge_h = math.floor(28 * scale)
     local badge_y = hy + (hh - badge_h) / 2
-    local gap = math.floor(10 * scale)
-    local label_gap = math.floor(6 * scale)
+    local item_gap = math.floor(8 * scale)
+    local label_gap = math.floor(4 * scale)
 
     -- --- D-PAD section (left side) ---
-    local dpad_x = bar_x + math.floor(12 * scale)
+    local dpad_x = bar_x + math.floor(10 * scale)
 
     -- Arrow key badges (the 'Move' label has been removed to free up space)
-    local arrow_w = math.floor(32 * scale)
+    local arrow_w = math.floor(30 * scale)
     local arrows = {"←", "↑", "↓", "→"}
     for _, arrow in ipairs(arrows) do
         drawKeyBadge(arrow, dpad_x, badge_y, arrow_w, badge_h)
@@ -515,7 +523,7 @@ function renderer.drawHelp(game)
     end
 
     -- Action buttons (right side) ---
-    local right_x = bar_x + bar_w - math.floor(12 * scale)
+    local right_x = bar_x + bar_w - math.floor(10 * scale)
 
     -- Determine which actions to show based on game state
     local actions = {}
@@ -540,13 +548,15 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "A", label = "Confirm"})
         table.insert(actions, 1, {key = "B", label = "Cancel"})
     else
-        table.insert(actions, 1, {key = "START", label = "Pause"})
-        table.insert(actions, 1, {key = "Y", label = "Theme"})
         if game.mode == "plus" then
+            table.insert(actions, 1, {key = "START", label = "Pause"})
+            -- Theme is hidden in Plus Mode to prevent overlapping the D-Pad
             table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
             table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
             table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
         else
+            table.insert(actions, 1, {key = "START", label = "Pause"})
+            table.insert(actions, 1, {key = "Y", label = "Theme"})
             if game.canUndo then
                 table.insert(actions, 1, {key = "B", label = "Undo"})
             end
@@ -564,11 +574,11 @@ function renderer.drawHelp(game)
 
         -- Badge
         right_x = right_x - label_gap
-        local key_w = math.max(math.floor(32 * scale), font_help_key:getWidth(action.key) + math.floor(16 * scale))
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
         right_x = right_x - key_w
         drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
 
-        right_x = right_x - math.floor(gap * 1.5)
+        right_x = right_x - item_gap
     end
 end
 
@@ -686,8 +696,45 @@ function renderer.updateTransition(dt)
     if transition_timer > 0 then
         transition_timer = math.max(0, transition_timer - dt)
     end
+    if toast_timer > 0 then
+        toast_timer = math.max(0, toast_timer - dt)
+    end
 end
 
+local function drawToast()
+    if toast_timer <= 0 or not toast_message then return end
+
+    local w, h = love.graphics.getDimensions()
+    love.graphics.setFont(font_message)
+    
+    local tw = font_message:getWidth(toast_message)
+    local th = font_message:getHeight()
+    local padX = 20 * _G.scale
+    local padY = 10 * _G.scale
+
+    local boxW = tw + padX * 2
+    local boxH = th + padY * 2
+    
+    -- Fade in/out
+    local alpha = 1.0
+    if toast_timer < 0.3 then
+        alpha = toast_timer / 0.3
+    elseif toast_timer > TOAST_DURATION - 0.3 then
+        alpha = (TOAST_DURATION - toast_timer) / 0.3
+    end
+    
+    local y = h - (70 * _G.scale) - boxH
+    -- Slide up slightly
+    y = y + (1.0 - alpha) * 10 * _G.scale
+
+    love.graphics.setColor(0.1, 0.1, 0.1, 0.85 * alpha)
+    roundedRect("fill", (w - boxW) / 2, y, boxW, boxH, 12 * _G.scale)
+    
+    love.graphics.setColor(1, 1, 1, alpha)
+    love.graphics.print(toast_message, (w - tw) / 2, y + padY)
+end
+
+-- Internal functions
 -- ============================================================================
 -- Draw targeting cursor
 -- ============================================================================
@@ -739,7 +786,7 @@ end
 -- ============================================================================
 -- Main Menu
 -- ============================================================================
-function renderer.drawMainMenu(selection)
+function renderer.drawMainMenu(selection, skip_transition)
     love.graphics.setColor(bg_color)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
 
@@ -774,6 +821,29 @@ function renderer.drawMainMenu(selection)
         end
         love.graphics.print(opt, (w - ow) / 2, oy)
     end
+
+    -- Draw Theme hint at the bottom right
+    local badge_h = math.floor(28 * scale)
+    local hy = h - badge_h - math.floor(20 * scale)
+    
+    love.graphics.setFont(font_help_label)
+    local lbl_text = "Theme"
+    local lbl_w = font_help_label:getWidth(lbl_text)
+    local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth("Y") + math.floor(12 * scale))
+    local total_w = key_w + math.floor(4 * scale) + lbl_w
+    local start_x = w - total_w - math.floor(20 * scale) -- Align right with 20px padding
+
+    drawKeyBadge("Y", start_x, hy, key_w, badge_h)
+    love.graphics.setColor(ui_text)
+    love.graphics.print(lbl_text, start_x + key_w + math.floor(4 * scale), hy + (badge_h - font_help_label:getHeight()) / 2)
+
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
 end
 
 -- ============================================================================
@@ -800,6 +870,8 @@ function renderer.draw(game, skip_transition)
         love.graphics.draw(transition_canvas, 0, 0)
         love.graphics.setStencilTest() -- Disable stencil
     end
+
+    drawToast()
 end
 
 return renderer
