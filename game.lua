@@ -14,6 +14,9 @@ Game.STATE_WON      = 1
 Game.STATE_LOST     = 2
 Game.STATE_ENDLESS  = 3   -- Continuing after winning
 Game.STATE_PAUSED   = 4 -- Confirming accidental restart
+Game.STATE_TARGETING_BOMB = 5
+Game.STATE_TARGETING_SWAP_1 = 6
+Game.STATE_TARGETING_SWAP_2 = 7
 
 -- Direction constants: 0=up, 1=right, 2=down, 3=left
 Game.DIR_UP    = 0
@@ -29,15 +32,26 @@ local vectors = {
     [3] = {x = -1, y =  0},  -- left
 }
 
-function Game.new()
+function Game.new(mode)
     local self = setmetatable({}, Game)
     self.size = 4
     self.grid = Grid.new(self.size, self.size)
+    self.mode = mode or "classic"
     self.score = 0
-    self.highScore = save.loadHighScore()
+    self.highScore = save.loadHighScore(self.mode)
     self.state = Game.STATE_PLAYING
     self.won = false
     self.moved = false
+
+    -- Plus Mode state
+    self.powerups = { undo = 1, bomb = 1, swap = 1 }
+    self.milestonesReached = {}
+    self.cursorX = 1
+    self.cursorY = 1
+    self.swapTarget = nil
+
+    self.bombAnimation = nil
+    self.swapAnimation = nil
 
     -- Undo state
     self.undoState = nil
@@ -49,7 +63,7 @@ function Game.new()
     self.animationDuration = 0.12  -- seconds
 
     -- Try to load saved game state
-    local savedState = save.loadState()
+    local savedState = save.loadState(self.mode)
     if savedState and savedState.gridState then
         self.score = savedState.score or 0
         self.state = savedState.state or Game.STATE_PLAYING
@@ -62,6 +76,12 @@ function Game.new()
         end
         if savedState.theme then
             _G.theme = savedState.theme
+        end
+        if savedState.powerups then
+            self.powerups = savedState.powerups
+        end
+        if savedState.milestonesReached then
+            self.milestonesReached = savedState.milestonesReached
         end
     else
         -- Start a fresh game if no save state exists
@@ -83,9 +103,11 @@ function Game:saveGameState()
         undoScore = self.undoScore,
         gridState = self.grid:saveState(),
         undoState = self.undoState,
-        theme = _G.theme
+        theme = _G.theme,
+        powerups = self.powerups,
+        milestonesReached = self.milestonesReached
     }
-    save.saveState(stateTable)
+    save.saveState(stateTable, self.mode)
 end
 
 function Game:addStartTiles()
@@ -205,7 +227,17 @@ function Game:move(direction)
                     self.score = self.score + merged.value
                     if self.score > self.highScore then
                         self.highScore = self.score
-                        save.saveHighScore(self.highScore)
+                        save.saveHighScore(self.highScore, self.mode)
+                    end
+
+                    -- Check milestones for powerup replenishment (Plus Mode)
+                    if self.mode == "plus" and merged.value >= 128 and not self.milestonesReached[merged.value] then
+                        self.milestonesReached[merged.value] = true
+                        -- Grant a random powerup
+                        local p = math.random(1, 3)
+                        if p == 1 then self.powerups.undo = self.powerups.undo + 1
+                        elseif p == 2 then self.powerups.swap = self.powerups.swap + 1
+                        else self.powerups.bomb = self.powerups.bomb + 1 end
                     end
 
                     -- Check for win (2048 tile!)
@@ -269,6 +301,11 @@ end
 
 function Game:undo()
     if self.canUndo and self.undoState then
+        if self.mode == "plus" then
+            if self.powerups.undo <= 0 then return end
+            self.powerups.undo = self.powerups.undo - 1
+        end
+
         -- Snapshot the current tiles before restoring the old grid
         local current_cells = {}
         for x = 1, self.size do
@@ -370,11 +407,126 @@ function Game:cancelPause()
     end
 end
 
+-- ============================================================================
+-- Targeting / Powerups
+-- ============================================================================
+
+function Game:startBombTargeting()
+    if self.mode ~= "plus" or self.powerups.bomb <= 0 then return end
+    if not self:isPlaying() then return end
+    self.state = Game.STATE_TARGETING_BOMB
+    self.cursorX = 2
+    self.cursorY = 2
+end
+
+function Game:startSwapTargeting()
+    if self.mode ~= "plus" or self.powerups.swap <= 0 then return end
+    if not self:isPlaying() then return end
+    self.state = Game.STATE_TARGETING_SWAP_1
+    self.cursorX = 2
+    self.cursorY = 2
+    self.swapTarget = nil
+end
+
+function Game:moveCursor(dx, dy)
+    local nx = self.cursorX + dx
+    local ny = self.cursorY + dy
+    if nx >= 1 and nx <= self.size and ny >= 1 and ny <= self.size then
+        self.cursorX = nx
+        self.cursorY = ny
+    end
+end
+
+function Game:cancelTargeting()
+    self.state = Game.STATE_PLAYING
+    self.swapTarget = nil
+end
+
+function Game:confirmTarget()
+    local cx, cy = self.cursorX, self.cursorY
+
+    if self.state == Game.STATE_TARGETING_BOMB then
+        if self.grid.cells[cx][cy] then
+            -- Delete the tile
+            self.undoState = self.grid:saveState()
+            self.undoScore = self.score
+            self.canUndo = true
+
+            local t = self.grid.cells[cx][cy]
+            self.bombAnimation = {x = cx, y = cy, tileValue = t.value, timer = 0.15, duration = 0.15}
+
+            self.grid.cells[cx][cy] = nil
+            self.powerups.bomb = self.powerups.bomb - 1
+            self.state = Game.STATE_PLAYING
+            self:saveGameState()
+        end
+    elseif self.state == Game.STATE_TARGETING_SWAP_1 then
+        if self.grid.cells[cx][cy] then
+            self.swapTarget = {x = cx, y = cy}
+            self.state = Game.STATE_TARGETING_SWAP_2
+        end
+    elseif self.state == Game.STATE_TARGETING_SWAP_2 then
+        if (self.swapTarget.x ~= cx or self.swapTarget.y ~= cy) then
+            self.undoState = self.grid:saveState()
+            self.undoScore = self.score
+            self.canUndo = true
+
+            local t1 = self.grid.cells[self.swapTarget.x][self.swapTarget.y]
+            local t2 = self.grid.cells[cx][cy]
+            
+            -- Swap them in grid
+            self.grid.cells[self.swapTarget.x][self.swapTarget.y] = t2
+            self.grid.cells[cx][cy] = t1
+            
+            -- Start animation
+            self.swapAnimation = {
+                t1 = t1 and {val = t1.value, startX = self.swapTarget.x, startY = self.swapTarget.y, endX = cx, endY = cy} or nil,
+                t2 = t2 and {val = t2.value, startX = cx, startY = cy, endX = self.swapTarget.x, endY = self.swapTarget.y} or nil,
+                t1Ref = t1,
+                t2Ref = t2,
+                timer = 0.20,
+                duration = 0.20
+            }
+            if t1 then t1.isSwapping = true end
+            if t2 then t2.isSwapping = true end
+
+            -- Update tile coordinates
+            if t1 then t1:setPosition(cx, cy) end
+            if t2 then t2:setPosition(self.swapTarget.x, self.swapTarget.y) end
+
+            self.powerups.swap = self.powerups.swap - 1
+            self.swapTarget = nil
+            self.state = Game.STATE_PLAYING
+            self:saveGameState()
+        else
+            -- Cannot swap with self; cancel
+            self.swapTarget = nil
+            self.state = Game.STATE_TARGETING_SWAP_1
+        end
+    end
+end
+
 function Game:update(dt)
     if self.animationTimer > 0 then
         self.animationTimer = self.animationTimer - dt
         if self.animationTimer < 0 then
             self.animationTimer = 0
+        end
+    end
+
+    if self.bombAnimation then
+        self.bombAnimation.timer = self.bombAnimation.timer - dt
+        if self.bombAnimation.timer <= 0 then
+            self.bombAnimation = nil
+        end
+    end
+
+    if self.swapAnimation then
+        self.swapAnimation.timer = self.swapAnimation.timer - dt
+        if self.swapAnimation.timer <= 0 then
+            if self.swapAnimation.t1Ref then self.swapAnimation.t1Ref.isSwapping = false end
+            if self.swapAnimation.t2Ref then self.swapAnimation.t2Ref.isSwapping = false end
+            self.swapAnimation = nil
         end
     end
 end
@@ -389,7 +541,8 @@ function Game:isAnimating()
 end
 
 function Game:isPlaying()
-    return self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS
+    return self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS or 
+           self.state == Game.STATE_TARGETING_BOMB or self.state == Game.STATE_TARGETING_SWAP_1 or self.state == Game.STATE_TARGETING_SWAP_2
 end
 
 return Game

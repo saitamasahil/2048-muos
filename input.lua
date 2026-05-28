@@ -31,6 +31,8 @@ input.events = {
     MENU   = "escape",    -- Physical Menu/Function button
     X      = "x",         -- X button
     Y      = "y",         -- Y button
+    L1     = "l1",        -- Left shoulder
+    R1     = "r1",        -- Right shoulder
 }
 
 input.state = {}
@@ -47,6 +49,8 @@ input.joystick_mapping = {
     ["back"]      = input.events.SELECT,
     ["start"]     = input.events.START,
     ["guide"]     = input.events.MENU,
+    ["leftshoulder"] = input.events.L1,
+    ["rightshoulder"] = input.events.R1,
 }
 
 -- Cooldown to prevent accidental double-inputs

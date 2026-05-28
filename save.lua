@@ -14,22 +14,24 @@ function save.init(dir)
     end
 end
 
-function save.getPath()
+function save.getPath(mode)
+    local file = (mode == "plus") and "highscore_plus.dat" or SAVE_FILE
     if SAVE_DIR ~= "" then
-        return SAVE_DIR .. "/" .. SAVE_FILE
+        return SAVE_DIR .. "/" .. file
     end
-    return SAVE_FILE
+    return file
 end
 
-function save.getStatePath()
+function save.getStatePath(mode)
+    local file = (mode == "plus") and "gamestate_plus.dat" or STATE_FILE
     if SAVE_DIR ~= "" then
-        return SAVE_DIR .. "/" .. STATE_FILE
+        return SAVE_DIR .. "/" .. file
     end
-    return STATE_FILE
+    return file
 end
 
-function save.loadHighScore()
-    local path = save.getPath()
+function save.loadHighScore(mode)
+    local path = save.getPath(mode)
     local file = io.open(path, "r")
     if file then
         local content = file:read("*all")
@@ -42,8 +44,8 @@ function save.loadHighScore()
     return 0
 end
 
-function save.saveHighScore(score)
-    local path = save.getPath()
+function save.saveHighScore(score, mode)
+    local path = save.getPath(mode)
     local file = io.open(path, "w")
     if file then
         file:write(tostring(math.floor(score)))
@@ -51,8 +53,8 @@ function save.saveHighScore(score)
     end
 end
 
-function save.saveState(state)
-    local path = save.getStatePath()
+function save.saveState(state, mode)
+    local path = save.getStatePath(mode)
     local file = io.open(path, "w")
     if file then
         local function serialize(o)
@@ -84,8 +86,8 @@ function save.saveState(state)
     end
 end
 
-function save.loadState()
-    local path = save.getStatePath()
+function save.loadState(mode)
+    local path = save.getStatePath(mode)
     local file = io.open(path, "r")
     if file then
         local content = file:read("*all")
@@ -106,8 +108,8 @@ function save.loadState()
     return nil
 end
 
-function save.clearState()
-    local path = save.getStatePath()
+function save.clearState(mode)
+    local path = save.getStatePath(mode)
     os.remove(path)
 end
 

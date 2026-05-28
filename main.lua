@@ -9,6 +9,9 @@ local renderer = require("renderer")
 local save     = require("save")
 local splash   = require("splash")
 
+_G.appState = "MENU" -- "MENU" or "GAME"
+local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Quit
+
 local game
 
 function love.load(args)
@@ -56,9 +59,6 @@ function love.load(args)
 
     -- Load splash screen
     splash.load()
-
-    -- Start a new game
-    game = Game.new()
 end
 
 function love.update(dt)
@@ -88,7 +88,9 @@ function love.update(dt)
     end
 
     -- Update game animations
-    game:update(dt)
+    if game then
+        game:update(dt)
+    end
     renderer.updateTransition(dt)
 
     -- Update input (hold-to-repeat)
@@ -97,14 +99,52 @@ function love.update(dt)
     -- Process input events
     input.processEvents(function(event)
         if event == input.events.Y then
-            renderer.startThemeTransition(game)
+            if _G.appState == "MENU" then
+                renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection) end)
+            else
+                renderer.startThemeTransition(game)
+            end
             _G.theme = _G.theme == "light" and "dark" or "light"
             renderer.applyTheme()
             if game then game:saveGameState() end
             return
         end
 
-        if game:isPlaying() then
+        if _G.appState == "MENU" then
+            if event == input.events.UP then
+                menuSelection = menuSelection > 1 and (menuSelection - 1) or 3
+            elseif event == input.events.DOWN then
+                menuSelection = menuSelection < 3 and (menuSelection + 1) or 1
+            elseif event == input.events.CONFIRM then
+                if menuSelection == 1 then
+                    _G.appState = "GAME"
+                    game = Game.new("classic")
+                elseif menuSelection == 2 then
+                    _G.appState = "GAME"
+                    game = Game.new("plus")
+                elseif menuSelection == 3 then
+                    love.event.quit()
+                end
+            end
+            return
+        end
+
+        -- GAME inputs below
+        if game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
+            if event == input.events.UP then
+                game:moveCursor(0, -1)
+            elseif event == input.events.DOWN then
+                game:moveCursor(0, 1)
+            elseif event == input.events.LEFT then
+                game:moveCursor(-1, 0)
+            elseif event == input.events.RIGHT then
+                game:moveCursor(1, 0)
+            elseif event == input.events.CONFIRM then
+                game:confirmTarget()
+            elseif event == input.events.BACK then
+                game:cancelTargeting()
+            end
+        elseif game:isPlaying() then
             -- Directional moves
             if event == input.events.UP then
                 game:move(Game.DIR_UP)
@@ -114,6 +154,11 @@ function love.update(dt)
                 game:move(Game.DIR_DOWN)
             elseif event == input.events.LEFT then
                 game:move(Game.DIR_LEFT)
+            -- Powerups
+            elseif event == input.events.L1 then
+                game:startSwapTargeting()
+            elseif event == input.events.R1 then
+                game:startBombTargeting()
             -- Undo
             elseif event == input.events.BACK then
                 game:undo()
@@ -127,7 +172,9 @@ function love.update(dt)
             elseif event == input.events.BACK or event == input.events.SELECT or event == input.events.START then
                 game:cancelPause()
             elseif event == input.events.X then
-                love.event.quit()
+                if game then game:saveGameState() end
+                _G.appState = "MENU"
+                game = nil
             end
         elseif game.state == Game.STATE_WON then
             if event == input.events.CONFIRM then
@@ -148,9 +195,11 @@ function love.update(dt)
 end
 
 function love.draw()
-    if splash.finished then
-        renderer.draw(game)
-    else
+    if not splash.finished then
         splash.draw()
+    elseif _G.appState == "MENU" then
+        renderer.drawMainMenu(menuSelection)
+    else
+        renderer.draw(game)
     end
 end

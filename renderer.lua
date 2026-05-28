@@ -254,9 +254,11 @@ function renderer.drawTile(tile, animProgress)
         ty = py + (ty - py) * animProgress
     end
 
-    -- Scale for spawn / merge animation
+    -- Scale for spawn / merge / bomb animation
     local tileScale = 1
-    if tile.isNew and animProgress < 1 then
+    if tile.isBombing then
+        tileScale = 1 - animProgress
+    elseif tile.isNew and animProgress < 1 then
         tileScale = animProgress
     elseif tile.isMerged and animProgress < 1 then
         if animProgress < 0.5 then
@@ -304,22 +306,51 @@ function renderer.drawTiles(game)
     local animProgress = game:getAnimationProgress()
 
     game.grid:eachCell(function(x, y, tile)
-        if tile and not tile.isMerged and not tile.isNew then
+        if tile and not tile.isMerged and not tile.isNew and not tile.isSwapping then
             renderer.drawTile(tile, animProgress)
         end
     end)
 
     game.grid:eachCell(function(x, y, tile)
-        if tile and tile.isMerged then
+        if tile and tile.isMerged and not tile.isSwapping then
             renderer.drawTile(tile, animProgress)
         end
     end)
 
     game.grid:eachCell(function(x, y, tile)
-        if tile and tile.isNew then
+        if tile and tile.isNew and not tile.isSwapping then
             renderer.drawTile(tile, animProgress)
         end
     end)
+
+    if game.bombAnimation then
+        local p = 1 - (game.bombAnimation.timer / game.bombAnimation.duration)
+        local t = {
+            x = game.bombAnimation.x,
+            y = game.bombAnimation.y,
+            value = game.bombAnimation.tileValue,
+            isBombing = true
+        }
+        renderer.drawTile(t, p)
+    end
+
+    if game.swapAnimation then
+        local p = 1 - (game.swapAnimation.timer / game.swapAnimation.duration)
+        
+        local drawSwapTile = function(s)
+            if not s then return end
+            local t = {
+                x = s.endX,
+                y = s.endY,
+                value = s.val,
+                previousPosition = {x = s.startX, y = s.startY}
+            }
+            renderer.drawTile(t, p)
+        end
+
+        drawSwapTile(game.swapAnimation.t1)
+        drawSwapTile(game.swapAnimation.t2)
+    end
 end
 
 -- ============================================================================
@@ -477,34 +508,42 @@ function renderer.drawHelp(game)
         dpad_x = dpad_x + arrow_w + math.floor(4 * scale)
     end
 
-    -- --- Action buttons (right side) ---
+    -- Action buttons (right side) ---
     local right_x = bar_x + bar_w - math.floor(12 * scale)
 
     -- Determine which actions to show based on game state
     local actions = {}
 
-    -- Removed the long MENU+START Exit hint to save space for the Theme toggle.
-    -- Players universally know START/SELECT exits apps on CFWs.
-
     if game.state == Game.STATE_WON then
         table.insert(actions, 1, {key = "A", label = "Continue"})
         table.insert(actions, 1, {key = "Y", label = "Theme"})
-        table.insert(actions, 1, {key = "B", label = "Undo"})
+        if game.mode ~= "plus" then
+            table.insert(actions, 1, {key = "B", label = "Undo"})
+        end
     elseif game.state == Game.STATE_LOST then
         table.insert(actions, 1, {key = "A", label = "New Game"})
         table.insert(actions, 1, {key = "Y", label = "Theme"})
-        if game.canUndo then
+        if game.canUndo and game.mode ~= "plus" then
             table.insert(actions, 1, {key = "B", label = "Undo"})
         end
     elseif game.state == Game.STATE_PAUSED then
         table.insert(actions, 1, {key = "A", label = "Restart"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "B", label = "Resume"})
+    elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
+        table.insert(actions, 1, {key = "A", label = "Confirm"})
+        table.insert(actions, 1, {key = "B", label = "Cancel"})
     else
         table.insert(actions, 1, {key = "START", label = "Pause"})
         table.insert(actions, 1, {key = "Y", label = "Theme"})
-        if game.canUndo then
-            table.insert(actions, 1, {key = "B", label = "Undo"})
+        if game.mode == "plus" then
+            table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
+            table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
+            table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
+        else
+            if game.canUndo then
+                table.insert(actions, 1, {key = "B", label = "Undo"})
+            end
         end
     end
 
@@ -583,7 +622,7 @@ local function drawStencilCircle()
     love.graphics.circle("fill", transition_center_x, transition_center_y, radius)
 end
 
-function renderer.startThemeTransition(game)
+function renderer.startThemeTransition(drawTarget)
     local w, h = love.graphics.getDimensions()
     if not transition_canvas then
         transition_canvas = love.graphics.newCanvas(w, h)
@@ -591,7 +630,11 @@ function renderer.startThemeTransition(game)
     -- Capture current screen to canvas
     love.graphics.setCanvas(transition_canvas)
     love.graphics.clear()
-    renderer.draw(game, true) -- Pass true to skip transition drawing inside
+    if type(drawTarget) == "function" then
+        drawTarget()
+    else
+        renderer.draw(drawTarget, true) -- Pass true to skip transition drawing inside
+    end
     love.graphics.setCanvas()
     
     transition_timer = transition_duration
@@ -607,6 +650,94 @@ function renderer.updateTransition(dt)
 end
 
 -- ============================================================================
+-- Draw targeting cursor
+-- ============================================================================
+function renderer.drawTargetingCursor(game)
+    if game.state ~= Game.STATE_TARGETING_BOMB and 
+       game.state ~= Game.STATE_TARGETING_SWAP_1 and 
+       game.state ~= Game.STATE_TARGETING_SWAP_2 then
+        return
+    end
+
+    local bx, by = layout.board_x, layout.board_y
+    local cs = layout.cell_size
+    local cg = layout.cell_gap
+    local cr = layout.corner_radius
+
+    -- Darken the board slightly
+    love.graphics.setColor(0, 0, 0, 0.4)
+    roundedRect("fill", bx, by, layout.board_size, layout.board_size, cr * 2)
+
+    -- Draw swap target 1 if active
+    if game.swapTarget then
+        local stx = bx + cg + (game.swapTarget.x - 1) * (cs + cg)
+        local sty = by + cg + (game.swapTarget.y - 1) * (cs + cg)
+        love.graphics.setColor(0.3, 0.7, 1, 0.5)
+        roundedRect("fill", stx, sty, cs, cs, cr)
+        love.graphics.setLineWidth(4 * _G.scale)
+        love.graphics.setColor(0.3, 0.7, 1, 1)
+        roundedRect("line", stx, sty, cs, cs, cr)
+    end
+
+    -- Draw cursor
+    local tx = bx + cg + (game.cursorX - 1) * (cs + cg)
+    local ty = by + cg + (game.cursorY - 1) * (cs + cg)
+
+    -- Blink effect
+    local time = love.timer.getTime()
+    local alpha = 0.5 + 0.5 * math.sin(time * 10)
+    
+    if game.state == Game.STATE_TARGETING_BOMB then
+        love.graphics.setColor(1, 0.2, 0.2, alpha)
+    else
+        love.graphics.setColor(0.3, 1, 0.3, alpha)
+    end
+    
+    love.graphics.setLineWidth(6 * _G.scale)
+    roundedRect("line", tx, ty, cs, cs, cr)
+end
+
+-- ============================================================================
+-- Main Menu
+-- ============================================================================
+function renderer.drawMainMenu(selection)
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    love.graphics.setFont(font_title)
+    love.graphics.setColor(ui_text)
+    local title = "2048"
+    local tw = font_title:getWidth(title)
+    love.graphics.print(title, (w - tw) / 2, h * 0.2)
+    
+    love.graphics.setFont(font_label)
+    local sub = "Select Mode"
+    local sw = font_label:getWidth(sub)
+    love.graphics.print(sub, (w - sw) / 2, h * 0.2 + font_title:getHeight())
+
+    local options = {"Play Classic", "Play Plus", "Quit"}
+    local start_y = h * 0.45
+    local gap = math.floor(40 * scale)
+
+    love.graphics.setFont(font_message)
+    for i, opt in ipairs(options) do
+        local ow = font_message:getWidth(opt)
+        local oy = start_y + (i - 1) * gap
+        if i == selection then
+            love.graphics.setColor(help_key_color)
+            roundedRect("fill", (w - ow) / 2 - 20 * scale, oy - 5 * scale, ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+            love.graphics.setColor(help_key_text)
+        else
+            love.graphics.setColor(ui_text)
+        end
+        love.graphics.print(opt, (w - ow) / 2, oy)
+    end
+end
+
+-- ============================================================================
 -- Main draw function
 -- ============================================================================
 function renderer.draw(game, skip_transition)
@@ -618,6 +749,7 @@ function renderer.draw(game, skip_transition)
     renderer.drawScores(game)
     renderer.drawBoard()
     renderer.drawTiles(game)
+    renderer.drawTargetingCursor(game)
     renderer.drawOverlay(game)
     renderer.drawHelp(game)
     
