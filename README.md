@@ -12,13 +12,16 @@ This project is a direct port of the popular open-source [2048 Android](https://
 
 - **Classic & Plus Modes**: Enjoy the original 2048 puzzle experience, or switch to the new Plus Mode which introduces strategic powerups!
 - **Plus Mode Powerups**: In Plus Mode, earn Bomb, Swap, and Undo powerups by reaching new tile milestones (128, 256, 512, etc.). Use them to destroy unwanted tiles, swap adjacent tiles, or revert mistakes.
-- **Dark Mode**: Instantly toggle between a sleek Dark Theme and the classic Light Theme with a beautifully animated reveal. Your theme preference is saved automatically!
+- **Achievements & Unlockable Themes**: Track your progress by unlocking 18 unique achievements, ranging from reaching high tiles to mastering Plus mode. Completing achievements rewards you with beautifully crafted custom themes!
+- **Themes**: Instantly toggle between unlocked themes and the classic Light/Dark modes with a beautifully animated reveal. Your theme preference is saved automatically!
 - **Auto-Save & Resume**: Your progress, board state, and score are saved automatically after every move. Close the game anytime and pick up right where you left off.
 - **Interactive Pause Menu**: A built-in pause overlay makes it easy to safely quit the app or restart a new game cleanly.
 - **Undo System**: Made a mistake? Press `B` to undo your previous move (unlimited in Classic Mode, consumes a powerup in Plus Mode).
 - **High Scores**: Automatically tracks and preserves your best score.
 - **Accurate Aesthetics**: Uses the exact color palette, typography, and smooth slide/merge animations from the beloved Android version, complete with an elegant glowing win animation.
 - **Standalone Package**: Bundled as a standard `.muxapp` package for effortless installation on muOS with dynamic UI scaling for different resolutions.
+
+*Note: This isn't a Konami game, so the classic Konami Code definitely shouldn't do anything here... right?*
 
 ## Installation on muOS
 
