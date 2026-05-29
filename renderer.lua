@@ -13,6 +13,10 @@ local transition_duration = 0.5
 local transition_center_x = 0
 local transition_center_y = 0
 
+-- Menu selection animation state
+local menu_anim_y = nil
+local menu_anim_target_y = nil
+
 -- Win animation state
 local win_timer = 0
 
@@ -1273,6 +1277,17 @@ function renderer.updateTransition(dt)
             toast_timer = TOAST_DURATION
         end
     end
+    
+    if menu_anim_target_y then
+        if not menu_anim_y then
+            menu_anim_y = menu_anim_target_y
+        end
+        local lerp_factor = 1 - math.exp(-25 * dt)
+        menu_anim_y = menu_anim_y + (menu_anim_target_y - menu_anim_y) * lerp_factor
+        if math.abs(menu_anim_y - menu_anim_target_y) < 0.5 then
+            menu_anim_y = menu_anim_target_y
+        end
+    end
 end
 
 local function drawToast()
@@ -1740,11 +1755,16 @@ function renderer.drawMainMenu(selection, skip_transition)
     end
     local block_x = (w - max_ow) / 2
 
+    local target_oy = start_y + (selection - 1) * gap
+    menu_anim_target_y = target_oy
+    if not menu_anim_y then menu_anim_y = target_oy end
+
+    love.graphics.setColor(help_key_color)
+    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+
     for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
         if i == selection then
-            love.graphics.setColor(help_key_color)
-            roundedRect("fill", block_x - 20 * scale, oy - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
             love.graphics.setColor(help_key_text)
         else
             love.graphics.setColor(ui_text)
@@ -1818,11 +1838,16 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     end
     local block_x = (w - max_ow) / 2
 
+    local target_oy = start_y + (selection - 1) * gap
+    menu_anim_target_y = target_oy
+    if not menu_anim_y then menu_anim_y = target_oy end
+
+    love.graphics.setColor(help_key_color)
+    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+
     for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
         if i == selection then
-            love.graphics.setColor(help_key_color)
-            roundedRect("fill", block_x - 20 * scale, oy - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
             love.graphics.setColor(help_key_text)
         else
             love.graphics.setColor(ui_text)
