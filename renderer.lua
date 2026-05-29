@@ -712,6 +712,16 @@ function renderer.getThemeBgColor()
     return bg_color
 end
 
+function renderer.getThemeTileColors()
+    local t = themes[_G.theme] or themes.light
+    return t.tile_colors, t.super_tile_color
+end
+
+function renderer.getThemeHighlightColors()
+    local t = themes[_G.theme] or themes.light
+    return t.super_tile_color or {hex("#edc22e")}, t.board_color or {hex("#bbada0")}
+end
+
 -- ============================================================================
 -- Fonts
 -- ============================================================================

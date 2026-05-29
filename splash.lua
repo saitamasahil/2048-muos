@@ -79,6 +79,29 @@ function splash.load()
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
 
+    local renderer = require("renderer")
+    local tile_colors_t, super_color = renderer.getThemeTileColors()
+    local theme_gold, theme_super = renderer.getThemeHighlightColors()
+
+    -- Dynamically update standard flash, ring, and particle colors based on active theme
+    colors.gold = theme_gold
+    colors.super = theme_super
+
+    -- Dynamically build background cascade tile color list from theme
+    cascade_tile_colors = {}
+    local values = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
+    for _, v in ipairs(values) do
+        if tile_colors_t[v] then
+            table.insert(cascade_tile_colors, tile_colors_t[v])
+        end
+    end
+    if super_color then
+        table.insert(cascade_tile_colors, super_color)
+    end
+    if #cascade_tile_colors == 0 then
+        cascade_tile_colors = {colors.tile_2, colors.tile_4, colors.orange, colors.tile_16, colors.tile_32, colors.red, colors.tile_128, colors.tile_512, colors.gold, colors.super}
+    end
+
     -- Load assets
     logo = love.graphics.newImage("assets/logo_2048.png")
 
