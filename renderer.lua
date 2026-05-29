@@ -1525,13 +1525,13 @@ function renderer.drawAchievements(scroll, skip_transition)
         { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme" },
         { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme" },
         { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in Plus Mode", reward = "Retro Theme" },
-        { id = "ach_untouchable", name = "Untouchable", desc = "Reach 1024 without powerups in Plus Mode", reward = "Peach Theme" },
+        { id = "ach_untouchable", name = "Untouchable", desc = "Reach 1024 without using Undos or powerups in Plus Mode", reward = "Peach Theme" },
         { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme" },
         { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Matrix Theme" },
         { id = "ach_score_25k", name = "Aesthetic", desc = "Reach 25,000 points", reward = "Vaporwave Theme" },
         { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme" },
         { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme" },
-        { id = "ach_untouchable_2048", name = "Zen Master", desc = "Reach 2048 without powerups", reward = "Matcha Theme" }
+        { id = "ach_untouchable_2048", name = "Zen Master", desc = "Reach 2048 without using Undos or powerups", reward = "Matcha Theme" }
     }
 
     local list_y = padding + font_title:getHeight() + math.floor(20 * scale)
