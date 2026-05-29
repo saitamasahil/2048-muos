@@ -312,7 +312,7 @@ function Game:move(direction)
                         self.state = Game.STATE_WON
                     end
                     
-                    if merged.value >= 2048 and _G.unlockAchievement then
+                    if self.mode == "classic" and merged.value >= 2048 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_2048")
                     end
                     
@@ -328,7 +328,7 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_4096")
                     end
                     
-                    if self.mode == "plus" and merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
+                    if merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_untouchable")
                     end
                     
