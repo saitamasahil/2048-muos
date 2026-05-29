@@ -47,6 +47,7 @@ function Game.new(mode)
     local initial_powerups = _G.cheat_max_powerups and 99 or 1
     self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
     self.milestonesReached = {}
+    self.floatingNotifications = {}
     self.cursorX = 1
     self.cursorY = 1
     self.swapTarget = nil
@@ -295,13 +296,39 @@ function Game:move(direction)
                     end
 
                     -- Check milestones for powerup replenishment (Plus Mode)
-                    if self.mode == "plus" and merged.value >= 128 and not self.milestonesReached[merged.value] then
-                        self.milestonesReached[merged.value] = true
-                        -- Grant a random powerup
-                        local p = love.math.random(1, 3)
-                        if p == 1 then self.powerups.undo = self.powerups.undo + 1
-                        elseif p == 2 then self.powerups.swap = self.powerups.swap + 1
-                        else self.powerups.bomb = self.powerups.bomb + 1 end
+                    if self.mode == "plus" and merged.value >= 128 then
+                        local function grantRandomPowerup(g)
+                            local p = love.math.random(1, 3)
+                            if p == 1 then
+                                g.powerups.undo = g.powerups.undo + 1
+                                return "Undo"
+                            elseif p == 2 then
+                                g.powerups.swap = g.powerups.swap + 1
+                                return "Swap"
+                            else
+                                g.powerups.bomb = g.powerups.bomb + 1
+                                return "Bomb"
+                            end
+                        end
+
+                        if merged.value == 128 then
+                            local name = grantRandomPowerup(self)
+                            self:addFloatingNotification("+" .. name, merged.x, merged.y)
+                        elseif merged.value == 256 then
+                            local name = grantRandomPowerup(self)
+                            self.powerups.undo = self.powerups.undo + 1
+                            self:addFloatingNotification("+" .. name .. " & +1 Undo", merged.x, merged.y)
+                        elseif merged.value == 512 then
+                            self.powerups.undo = self.powerups.undo + 1
+                            self.powerups.bomb = self.powerups.bomb + 1
+                            self.powerups.swap = self.powerups.swap + 1
+                            self:addFloatingNotification("All Powerups +1", merged.x, merged.y)
+                        elseif merged.value >= 1024 then
+                            self.powerups.undo = self.powerups.undo + 2
+                            self.powerups.bomb = self.powerups.bomb + 2
+                            self.powerups.swap = self.powerups.swap + 2
+                            self:addFloatingNotification("All Powerups +2", merged.x, merged.y)
+                        end
                     end
 
                     -- Check for win (2048 tile!)
@@ -676,6 +703,29 @@ function Game:update(dt)
             self.swapAnimation = nil
         end
     end
+
+    if self.floatingNotifications then
+        for i = #self.floatingNotifications, 1, -1 do
+            local n = self.floatingNotifications[i]
+            n.timer = n.timer - dt
+            if n.timer <= 0 then
+                table.remove(self.floatingNotifications, i)
+            end
+        end
+    end
+end
+
+function Game:addFloatingNotification(text, col, row)
+    if not self.floatingNotifications then
+        self.floatingNotifications = {}
+    end
+    table.insert(self.floatingNotifications, {
+        text = text,
+        col = col,
+        row = row,
+        timer = 1.0,
+        max_life = 1.0
+    })
 end
 
 function Game:getAnimationProgress()

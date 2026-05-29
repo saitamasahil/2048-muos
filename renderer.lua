@@ -1024,6 +1024,37 @@ function renderer.drawTiles(game)
         drawSwapTile(game.swapAnimation.t1)
         drawSwapTile(game.swapAnimation.t2)
     end
+
+    if game.floatingNotifications then
+        local bx, by = layout.board_x, layout.board_y
+        local cs = layout.cell_size
+        local cg = layout.cell_gap
+        for _, n in ipairs(game.floatingNotifications) do
+            local cx = bx + cg + (n.col - 1) * (cs + cg) + cs / 2
+            local cy = by + cg + (n.row - 1) * (cs + cg) + cs / 2
+            
+            -- Float upward based on elapsed life
+            local elapsed = n.max_life - n.timer
+            local float_y = cy - (elapsed * 55 * _G.scale)
+            
+            -- Fade out
+            local alpha = math.min(1, n.timer / 0.3)
+            
+            love.graphics.setFont(font_help_key)
+            
+            -- Text shadow for legibility
+            love.graphics.setColor(0, 0, 0, alpha * 0.75)
+            love.graphics.printf(n.text, cx - 100 * _G.scale, float_y + 1, 200 * _G.scale, "center")
+            
+            -- Text fill (bold emerald green / neon green)
+            if _G.theme == "ascii" then
+                love.graphics.setColor(0, 1, 0, alpha)
+            else
+                love.graphics.setColor(0.18, 0.72, 0.35, alpha)
+            end
+            love.graphics.printf(n.text, cx - 100 * _G.scale, float_y, 200 * _G.scale, "center")
+        end
+    end
 end
 
 -- ============================================================================
