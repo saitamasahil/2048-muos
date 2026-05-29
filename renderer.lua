@@ -1355,6 +1355,356 @@ function renderer.drawTargetingCursor(game)
 end
 
 -- ============================================================================
+-- Tutorial
+-- ============================================================================
+
+-- Draw a mini 4x4 board at a given position with static tile data
+-- tiles is a flat table: tiles[col][row] = value (or nil/0 for empty)
+local mini_fonts = {}
+local mini_fonts_cell_size = 0
+
+local function drawMiniBoard(bx, by, board_size, tiles, highlight)
+    local scale = _G.scale
+    local cell_gap = math.floor(board_size * 0.022)
+    local cell_size = math.floor((board_size - cell_gap * 5) / 4)
+    local cr = math.floor(cell_size * 0.06)
+
+    -- Create/cache mini fonts sized for this cell size
+    if cell_size ~= mini_fonts_cell_size then
+        mini_fonts_cell_size = cell_size
+        mini_fonts.large = love.graphics.newFont(font_path, math.max(8, math.floor(cell_size * 0.45)))
+        mini_fonts.small = love.graphics.newFont(font_path, math.max(7, math.floor(cell_size * 0.35)))
+        mini_fonts.tiny  = love.graphics.newFont(font_path, math.max(6, math.floor(cell_size * 0.28)))
+    end
+
+    -- Board background
+    love.graphics.setColor(board_color)
+    roundedRect("fill", bx, by, board_size, board_size, cr * 2)
+
+    -- Draw cells
+    for col = 1, 4 do
+        for row = 1, 4 do
+            local cx = bx + cell_gap + (col - 1) * (cell_size + cell_gap)
+            local cy = by + cell_gap + (row - 1) * (cell_size + cell_gap)
+            local val = tiles and tiles[col] and tiles[col][row] or 0
+
+            -- Tile background
+            local color = getTileColor(val)
+            love.graphics.setColor(color)
+            roundedRect("fill", cx, cy, cell_size, cell_size, cr)
+
+            -- Tile text
+            if val > 0 then
+                local textColor = getTileTextColor(val)
+                love.graphics.setColor(textColor)
+
+                local font
+                if val >= 10000 then
+                    font = mini_fonts.tiny
+                elseif val >= 1000 then
+                    font = mini_fonts.small
+                else
+                    font = mini_fonts.large
+                end
+                love.graphics.setFont(font)
+
+                local text = tostring(val)
+                local tw = font:getWidth(text)
+                local th = font:getHeight()
+                love.graphics.print(text, cx + (cell_size - tw) / 2, cy + (cell_size - th) / 2)
+            end
+
+            -- Highlight specific cells
+            if highlight then
+                for _, h in ipairs(highlight) do
+                    if h.col == col and h.row == row then
+                        local time = love.timer.getTime()
+                        local alpha = 0.3 + 0.3 * math.sin(time * 4)
+                        love.graphics.setColor(h.r or 0.3, h.g or 1, h.b or 0.3, alpha)
+                        love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
+                        roundedRect("line", cx, cy, cell_size, cell_size, cr)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function renderer.drawTutorial(page, skip_transition)
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+    local padding = math.floor(20 * scale)
+
+    -- Tutorial slide data
+    local slides = {
+        {
+            title = "HOW TO PLAY",
+            lines = {
+                "Use the D-Pad to slide all tiles.",
+                "Tiles with the same number merge",
+                "into one when they collide!",
+                "Goal: Create the 2048 tile!"
+            },
+            tiles = {
+                {0, 0, 0, 2},
+                {0, 0, 0, 0},
+                {0, 0, 0, 2},
+                {0, 0, 4, 0}
+            }
+        },
+        {
+            title = "MERGING TILES",
+            lines = {
+                "When two tiles of the same value",
+                "touch, they merge into one!",
+                "2 + 2 = 4,  4 + 4 = 8,  8 + 8 = 16",
+                "Keep merging to reach 2048!"
+            },
+            tiles = {
+                {0, 0, 2, 0},
+                {0, 0, 0, 0},
+                {0, 2, 0, 4},
+                {2, 0, 2, 8}
+            },
+            highlight = {
+                {col = 1, row = 4, r = 0.3, g = 1, b = 0.3},
+                {col = 3, row = 4, r = 0.3, g = 1, b = 0.3}
+            }
+        },
+        {
+            title = "GAME MODES",
+            lines = {
+                "Classic Mode:",
+                "  Unlimited undo with B button.",
+                "Plus Mode:",
+                "  Limited powerups: Undo, Bomb, Swap.",
+                "  Earn more at tile milestones!"
+            },
+            tiles = {
+                {0, 0, 0, 0},
+                {0, 128, 0, 0},
+                {16, 64, 256, 0},
+                {2, 8, 32, 512}
+            }
+        },
+        {
+            title = "UNDO  [B]",
+            lines = {
+                "Made a mistake? Press B to undo!",
+                "",
+                "Classic: Unlimited undos.",
+                "Plus: Limited undo powerups.",
+                "Using undo counts as a powerup."
+            },
+            tiles = {
+                {0, 0, 0, 2},
+                {0, 0, 0, 2},
+                {0, 0, 2, 4},
+                {0, 0, 0, 16}
+            }
+        },
+        {
+            title = "SWAP  [L1]  (Plus Mode)",
+            lines = {
+                "Press L1 to swap any two tiles!",
+                "Select first tile, then second.",
+                "",
+                "Use it to rearrange your board",
+                "and set up big merges!"
+            },
+            tiles = {
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 4, 0},
+                {2, 0, 8, 16}
+            },
+            highlight = {
+                {col = 3, row = 3, r = 0.3, g = 0.7, b = 1},
+                {col = 3, row = 4, r = 0.3, g = 0.7, b = 1}
+            }
+        },
+        {
+            title = "BOMB  [R1]  (Plus Mode)",
+            lines = {
+                "Press R1 to enter bomb mode.",
+                "Select any tile to destroy it!",
+                "",
+                "Great for clearing high tiles",
+                "that are blocking your merges."
+            },
+            tiles = {
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 64, 0},
+                {2, 4, 8, 16}
+            },
+            highlight = {
+                {col = 3, row = 3, r = 1, g = 0.2, b = 0.2}
+            }
+        },
+        {
+            title = "THEMES  [Y]",
+            lines = {
+                "Press Y anytime to change theme!",
+                "",
+                "Unlock new themes by earning",
+                "achievements. 20 themes total!"
+            },
+            tiles = {
+                {2, 0, 0, 0},
+                {4, 0, 0, 0},
+                {8, 16, 0, 0},
+                {32, 64, 128, 256}
+            }
+        },
+        {
+            title = "STRATEGY TIPS",
+            lines = {
+                "Keep your highest tile in a corner.",
+                "Build a chain along one edge.",
+                "Never push your big tile away!",
+                "",
+                "Plan ahead and don't fill the board."
+            },
+            tiles = {
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {4, 8, 16, 32},
+                {256, 128, 64, 2048}
+            },
+            highlight = {
+                {col = 4, row = 4, r = 1, g = 0.85, b = 0.2}
+            }
+        }
+    }
+
+    local total_pages = #slides
+    local slide = slides[page] or slides[1]
+
+    -- Header: title
+    love.graphics.setFont(font_title)
+    love.graphics.setColor(ui_text)
+    local title_text = slide.title
+    local title_w = font_title:getWidth(title_text)
+    love.graphics.print(title_text, (w - title_w) / 2, padding)
+
+    -- Page indicator (dots)
+    local dot_r = math.floor(4 * scale)
+    local dot_gap = math.floor(14 * scale)
+    local dots_w = total_pages * (dot_r * 2 + dot_gap) - dot_gap
+    local dots_x = (w - dots_w) / 2
+    local dots_y = padding + font_title:getHeight() + math.floor(8 * scale)
+
+    for i = 1, total_pages do
+        local dx = dots_x + (i - 1) * (dot_r * 2 + dot_gap) + dot_r
+        if i == page then
+            love.graphics.setColor(help_key_color)
+            love.graphics.circle("fill", dx, dots_y, dot_r)
+        else
+            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
+            love.graphics.circle("fill", dx, dots_y, dot_r)
+        end
+    end
+
+    -- Message box area
+    local msg_y = dots_y + dot_r * 2 + math.floor(12 * scale)
+    local msg_pad = math.floor(15 * scale)
+    local msg_box_x = padding
+    local msg_box_w = w - padding * 2
+
+    -- Calculate message box height from lines
+    love.graphics.setFont(font_help_label)
+    local line_h = font_help_label:getHeight()
+    local num_lines = #slide.lines
+    local msg_box_h = msg_pad * 2 + num_lines * (line_h + math.floor(3 * scale))
+
+    -- Message box background
+    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.85)
+    roundedRect("fill", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
+
+    -- Message box border
+    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.5)
+    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+    roundedRect("line", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
+
+    -- Message text
+    love.graphics.setColor(ui_text)
+    local text_y = msg_y + msg_pad
+    for _, line in ipairs(slide.lines) do
+        love.graphics.print(line, msg_box_x + msg_pad, text_y)
+        text_y = text_y + line_h + math.floor(3 * scale)
+    end
+
+    -- Mini board
+    local board_top = msg_y + msg_box_h + math.floor(12 * scale)
+    local footer_h = math.floor(55 * scale)
+    local available_h = h - board_top - footer_h - math.floor(10 * scale)
+    local available_w = w - padding * 2
+    local board_size = math.min(available_w, available_h)
+    local board_x = math.floor((w - board_size) / 2)
+
+    drawMiniBoard(board_x, board_top, board_size, slide.tiles, slide.highlight)
+
+    -- Footer: navigation hints
+    local badge_h = math.floor(28 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
+
+    -- Build action list
+    local actions = {}
+    if page < total_pages then
+        table.insert(actions, 1, {key = "A", label = "Next"})
+    else
+        table.insert(actions, 1, {key = "A", label = "Exit"})
+    end
+    table.insert(actions, 1, {key = "Y", label = "Theme"})
+    if page > 1 then
+        table.insert(actions, 1, {key = "B", label = "Back"})
+    else
+        table.insert(actions, 1, {key = "B", label = "Exit"})
+    end
+
+    -- Page counter on the left
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.6)
+    local page_text = page .. "/" .. total_pages
+    love.graphics.print(page_text, padding, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+    -- Draw actions right-to-left
+    local right_x = w - math.floor(10 * scale)
+    for _, action in ipairs(actions) do
+        -- Label
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(ui_text)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Badge
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+        right_x = right_x - item_gap
+    end
+
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
+
+    drawToast()
+end
+
+-- ============================================================================
 -- Main Menu
 -- ============================================================================
 function renderer.drawMainMenu(selection, skip_transition)
@@ -1370,9 +1720,9 @@ function renderer.drawMainMenu(selection, skip_transition)
     local tw = font_main_menu_title:getWidth(title)
     love.graphics.print(title, (w - tw) / 2, h * 0.15)
     
-    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Quit"}
+    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", "Quit"}
     if _G.cheats_unlocked then
-        table.insert(options, 4, "Cheats")
+        table.insert(options, 5, "Cheats")
     end
     local start_y = h * 0.45
     local gap = math.floor(40 * scale)

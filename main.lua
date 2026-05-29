@@ -10,7 +10,7 @@ local save     = require("save")
 local splash   = require("splash")
 
 _G.appState = "MENU" -- "MENU" or "GAME"
-local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Quit
+local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Achievements, 4: Tutorial, 5: Quit
 
 local game
 
@@ -205,6 +205,8 @@ function love.update(dt)
                 renderer.startThemeTransition(function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end)
             elseif _G.appState == "ACHIEVEMENTS" then
                 renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
+            elseif _G.appState == "TUTORIAL" then
+                renderer.startThemeTransition(function() renderer.drawTutorial(_G.tutorial_page or 1, true) end)
             else
                 renderer.startThemeTransition(game)
             end
@@ -228,7 +230,7 @@ function love.update(dt)
                 if event == konami_sequence[konami_progress] then
                     konami_progress = konami_progress + 1
                     if konami_progress == 5 then
-                        renderer.showToast("What you think this is a konami game?")
+                        renderer.showToast("What you think this is a Konami game?")
                     elseif konami_progress == 9 then
                         renderer.showToast("Wait, what are you doing?")
                     elseif konami_progress > #konami_sequence then
@@ -249,7 +251,7 @@ function love.update(dt)
                 end
             end
             
-            local max_menu = _G.cheats_unlocked and 5 or 4
+            local max_menu = _G.cheats_unlocked and 6 or 5
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
@@ -263,19 +265,45 @@ function love.update(dt)
                     game = Game.new("plus")
                 elseif menuSelection == 3 then
                     _G.appState = "ACHIEVEMENTS"
+                elseif menuSelection == 4 then
+                    _G.appState = "TUTORIAL"
+                    _G.tutorial_page = 1
                 else
                     if _G.cheats_unlocked then
-                        if menuSelection == 4 then
+                        if menuSelection == 5 then
                             _G.appState = "CHEATS_MENU"
                             _G.cheats_selection = 1
-                        elseif menuSelection == 5 then
+                        elseif menuSelection == 6 then
                             love.event.quit()
                         end
                     else
-                        if menuSelection == 4 then
+                        if menuSelection == 5 then
                             love.event.quit()
                         end
                     end
+                end
+            end
+            return
+        elseif _G.appState == "TUTORIAL" then
+            if event == input.events.BACK then
+                if (_G.tutorial_page or 1) > 1 then
+                    _G.tutorial_page = _G.tutorial_page - 1
+                else
+                    _G.appState = "MENU"
+                end
+            elseif event == input.events.CONFIRM then
+                if (_G.tutorial_page or 1) < 8 then
+                    _G.tutorial_page = (_G.tutorial_page or 1) + 1
+                else
+                    _G.appState = "MENU"
+                end
+            elseif event == input.events.RIGHT then
+                if (_G.tutorial_page or 1) < 8 then
+                    _G.tutorial_page = (_G.tutorial_page or 1) + 1
+                end
+            elseif event == input.events.LEFT then
+                if (_G.tutorial_page or 1) > 1 then
+                    _G.tutorial_page = _G.tutorial_page - 1
                 end
             end
             return
@@ -287,7 +315,7 @@ function love.update(dt)
             elseif event == input.events.UP then
                 _G.achievements_scroll_target = math.max(0, (_G.achievements_scroll_target or 0) - 1)
             elseif event == input.events.DOWN then
-                -- 8 achievements total, allow scrolling only if items overflow visible area
+                -- 18 achievements total, allow scrolling only if items overflow visible area
                 local w, h = love.graphics.getDimensions()
                 local scale = _G.scale
                 local item_h = math.floor(85 * scale)
@@ -438,6 +466,8 @@ function love.draw()
         splash.draw()
     elseif _G.appState == "MENU" then
         renderer.drawMainMenu(menuSelection)
+    elseif _G.appState == "TUTORIAL" then
+        renderer.drawTutorial(_G.tutorial_page or 1)
     elseif _G.appState == "CHEATS_MENU" then
         renderer.drawCheatsMenu(_G.cheats_selection or 1)
     elseif _G.appState == "ACHIEVEMENTS" then
