@@ -406,8 +406,8 @@ local themes = {
             [16]   = {hex("#1abc9c")},
             [32]   = {hex("#17a589")},
             [64]   = {hex("#148f77")},
-            [128]  = {hex("#117a65")},
-            [256]  = {hex("#0e6251")},
+            [128]  = {hex("#094a40")},
+            [256]  = {hex("#053029")},
             [512]  = {hex("#58d68d")},
             [1024] = {hex("#2ecc71")},
             [2048] = {hex("#27ae60")},
@@ -1247,6 +1247,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Max Powerups: " .. (_G.cheat_max_powerups and "ON" or "OFF"),
         "Start with 1024 (Classic Mode): " .. (_G.cheat_start_1024_classic and "ON" or "OFF"),
         "Start with 1024 (Plus Mode): " .. (_G.cheat_start_1024_plus and "ON" or "OFF"),
+        "Debug: Test All Tiles: " .. (_G.cheat_test_tiles and "ON" or "OFF"),
         "Back"
     }
     local start_y = h * 0.35

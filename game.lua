@@ -120,6 +120,20 @@ function Game:saveGameState()
 end
 
 function Game:addStartTiles()
+    if _G.cheat_test_tiles then
+        _G.cheat_test_tiles = false
+        local val = 2
+        for r = 1, 4 do
+            for c = 1, 4 do
+                local tile = Tile.new(c, r, val)
+                tile.isNew = true
+                self.grid:insertTile(tile)
+                val = val * 2
+            end
+        end
+        return
+    end
+
     local starting_tiles = 2
     
     if self.mode == "classic" and _G.cheat_start_1024_classic then
