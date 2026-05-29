@@ -19,11 +19,16 @@ local win_timer = 0
 -- Toast state
 local toast_message = nil
 local toast_timer = 0
+local toast_queue = {}
 local TOAST_DURATION = 1.5
 
 function renderer.showToast(msg)
-    toast_message = msg
-    toast_timer = TOAST_DURATION
+    if toast_timer > 0 then
+        table.insert(toast_queue, msg)
+    else
+        toast_message = msg
+        toast_timer = TOAST_DURATION
+    end
 end
 
 -- Color palette (from Android cell_rectangle_*.xml and colors.xml)
@@ -1260,6 +1265,10 @@ function renderer.updateTransition(dt)
     end
     if toast_timer > 0 then
         toast_timer = math.max(0, toast_timer - dt)
+        if toast_timer == 0 and #toast_queue > 0 then
+            toast_message = table.remove(toast_queue, 1)
+            toast_timer = TOAST_DURATION
+        end
     end
 end
 
