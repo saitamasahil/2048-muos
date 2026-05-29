@@ -69,6 +69,9 @@ function Game.new(mode)
         self.score = savedState.score or 0
         self.state = savedState.state or Game.STATE_PLAYING
         self.won = savedState.won or false
+        if self.state == Game.STATE_PAUSED then
+            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
+        end
         self.canUndo = savedState.canUndo or false
         self.undoScore = savedState.undoScore or 0
         self.grid:restoreState(savedState.gridState)
