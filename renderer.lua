@@ -586,9 +586,21 @@ local function getTileColor(value)
 end
 
 local function getTileTextColor(value)
-    if value <= 4 then return dark_text end
-    if value >= 4096 and _G.theme == "dark" then return dark_text end
-    return light_text
+    -- Preserve classic 2048 text colors for default themes
+    if _G.theme == "light" or _G.theme == "dark" or _G.theme == "ocean" or _G.theme == "forest" then
+        if value <= 4 then return dark_text end
+        if value >= 4096 and _G.theme == "dark" then return dark_text end
+        return light_text
+    end
+    
+    -- Dynamic contrast for all other custom/premium themes
+    local color = getTileColor(value)
+    local luminance = 0.299 * color[1] + 0.587 * color[2] + 0.114 * color[3]
+    if luminance > 0.65 then
+        return dark_text
+    else
+        return light_text
+    end
 end
 
 -- ============================================================================
