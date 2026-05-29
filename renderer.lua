@@ -1228,6 +1228,8 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     local tw = font_title:getWidth(title)
     love.graphics.print(title, (w - tw) / 2, h * 0.2)
 
+
+
     local options = {
         "Unlock All Themes",
         "Max Powerups: " .. (_G.cheat_max_powerups and "ON" or "OFF"),
@@ -1251,6 +1253,13 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         end
         love.graphics.print(opt, (w - ow) / 2, oy)
     end
+
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+    local subtitle = "Cheats are only active for the current session"
+    local sw = font_help_label:getWidth(subtitle)
+    local subtitle_y = start_y + (#options * gap) + math.floor(10 * scale)
+    love.graphics.print(subtitle, (w - sw) / 2, subtitle_y)
 
     if not skip_transition and transition_timer > 0 and transition_canvas then
         love.graphics.stencil(drawStencilCircle, "replace", 1)
