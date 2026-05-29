@@ -61,6 +61,28 @@ function save.loadTheme()
     return nil
 end
 
+local CHEATS_FILE = "cheats.dat"
+
+function save.saveCheats(unlocked)
+    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. CHEATS_FILE) or CHEATS_FILE
+    local file = io.open(path, "w")
+    if file then
+        file:write(unlocked and "1" or "0")
+        file:close()
+    end
+end
+
+function save.loadCheats()
+    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. CHEATS_FILE) or CHEATS_FILE
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        return content == "1"
+    end
+    return false
+end
+
 function save.loadHighScore(mode)
     local path = save.getPath(mode)
     local file = io.open(path, "r")

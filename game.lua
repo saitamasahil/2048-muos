@@ -44,7 +44,8 @@ function Game.new(mode)
     self.moved = false
 
     -- Plus Mode state
-    self.powerups = { undo = 1, bomb = 1, swap = 1 }
+    local initial_powerups = _G.cheat_max_powerups and 99 or 1
+    self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
     self.milestonesReached = {}
     self.cursorX = 1
     self.cursorY = 1
@@ -119,7 +120,33 @@ function Game:saveGameState()
 end
 
 function Game:addStartTiles()
-    for _ = 1, 2 do
+    local starting_tiles = 2
+    
+    if self.mode == "classic" and _G.cheat_start_1024_classic then
+        _G.cheat_start_1024_classic = false
+        if self.grid:cellsAvailable() then
+            local cell = self.grid:randomAvailableCell()
+            if cell then
+                local tile = Tile.new(cell.x, cell.y, 1024)
+                tile.isNew = true
+                self.grid:insertTile(tile)
+                starting_tiles = starting_tiles - 1
+            end
+        end
+    elseif self.mode == "plus" and _G.cheat_start_1024_plus then
+        _G.cheat_start_1024_plus = false
+        if self.grid:cellsAvailable() then
+            local cell = self.grid:randomAvailableCell()
+            if cell then
+                local tile = Tile.new(cell.x, cell.y, 1024)
+                tile.isNew = true
+                self.grid:insertTile(tile)
+                starting_tiles = starting_tiles - 1
+            end
+        end
+    end
+
+    for _ = 1, starting_tiles do
         self:addRandomTile()
     end
 end
@@ -431,6 +458,10 @@ function Game:restart()
     self.canUndo = false
     self.undoState = nil
     self.animationTimer = 0
+    if self.mode == "plus" then
+        local initial_powerups = _G.cheat_max_powerups and 99 or 1
+        self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
+    end
     self:addStartTiles()
     self:saveGameState()
 end

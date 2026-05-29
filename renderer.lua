@@ -280,17 +280,17 @@ local themes = {
     sunset = {
         tile_colors = {
             [0]    = {hex("#f5cba7")},
-            [2]    = {hex("#eee4da")},
-            [4]    = {hex("#ede0c8")},
-            [8]    = {hex("#f2b179")},
-            [16]   = {hex("#f59563")},
-            [32]   = {hex("#f67c5f")},
-            [64]   = {hex("#f65e3b")},
-            [128]  = {hex("#edcf72")},
-            [256]  = {hex("#edcc61")},
-            [512]  = {hex("#edc850")},
-            [1024] = {hex("#edc53f")},
-            [2048] = {hex("#edc22e")},
+            [2]    = {hex("#fadbd8")},
+            [4]    = {hex("#f5b7b1")},
+            [8]    = {hex("#f1948a")},
+            [16]   = {hex("#ec7063")},
+            [32]   = {hex("#e74c3c")},
+            [64]   = {hex("#cb4335")},
+            [128]  = {hex("#b03a2e")},
+            [256]  = {hex("#f9e79f")},
+            [512]  = {hex("#f7dc6f")},
+            [1024] = {hex("#f4d03f")},
+            [2048] = {hex("#f1c40f")},
         },
         super_tile_color = {hex("#922b21")},
         dark_text        = {hex("#784212")},
@@ -310,17 +310,17 @@ local themes = {
     candy = {
         tile_colors = {
             [0]    = {hex("#f8c8dc")},
-            [2]    = {hex("#eee4da")},
-            [4]    = {hex("#ede0c8")},
-            [8]    = {hex("#f2b179")},
-            [16]   = {hex("#f59563")},
-            [32]   = {hex("#f67c5f")},
-            [64]   = {hex("#f65e3b")},
-            [128]  = {hex("#edcf72")},
-            [256]  = {hex("#edcc61")},
-            [512]  = {hex("#edc850")},
-            [1024] = {hex("#edc53f")},
-            [2048] = {hex("#edc22e")},
+            [2]    = {hex("#f5eef8")},
+            [4]    = {hex("#ebdef0")},
+            [8]    = {hex("#d7bde2")},
+            [16]   = {hex("#c39bd3")},
+            [32]   = {hex("#af7ac5")},
+            [64]   = {hex("#9b59b6")},
+            [128]  = {hex("#884ea0")},
+            [256]  = {hex("#76448a")},
+            [512]  = {hex("#f1948a")},
+            [1024] = {hex("#ec7063")},
+            [2048] = {hex("#e74c3c")},
         },
         super_tile_color = {hex("#9b2335")},
         dark_text        = {hex("#6c3483")},
@@ -340,20 +340,20 @@ local themes = {
     midnight = {
         tile_colors = {
             [0]    = {hex("#334155")},
-            [2]    = {hex("#eee4da")},
-            [4]    = {hex("#ede0c8")},
-            [8]    = {hex("#f2b179")},
-            [16]   = {hex("#f59563")},
-            [32]   = {hex("#f67c5f")},
-            [64]   = {hex("#f65e3b")},
-            [128]  = {hex("#edcf72")},
-            [256]  = {hex("#edcc61")},
-            [512]  = {hex("#edc850")},
-            [1024] = {hex("#edc53f")},
-            [2048] = {hex("#edc22e")},
+            [2]    = {hex("#60a5fa")},
+            [4]    = {hex("#3b82f6")},
+            [8]    = {hex("#2563eb")},
+            [16]   = {hex("#1d4ed8")},
+            [32]   = {hex("#1e40af")},
+            [64]   = {hex("#1e3a8a")},
+            [128]  = {hex("#312e81")},
+            [256]  = {hex("#818cf8")},
+            [512]  = {hex("#6366f1")},
+            [1024] = {hex("#4f46e5")},
+            [2048] = {hex("#4338ca")},
         },
         super_tile_color = {hex("#818cf8")},
-        dark_text        = {hex("#94a3b8")},
+        dark_text        = {hex("#0f172a")},
         light_text       = {hex("#ffffff")},
         ui_text          = {hex("#cbd5e1")},
         bg_color         = {hex("#0f172a")},
@@ -370,20 +370,20 @@ local themes = {
     volcano = {
         tile_colors = {
             [0]    = {hex("#404040")},
-            [2]    = {hex("#eee4da")},
-            [4]    = {hex("#ede0c8")},
-            [8]    = {hex("#f2b179")},
-            [16]   = {hex("#f59563")},
-            [32]   = {hex("#f67c5f")},
-            [64]   = {hex("#f65e3b")},
-            [128]  = {hex("#edcf72")},
-            [256]  = {hex("#edcc61")},
-            [512]  = {hex("#edc850")},
-            [1024] = {hex("#edc53f")},
-            [2048] = {hex("#edc22e")},
+            [2]    = {hex("#d6dbdf")},
+            [4]    = {hex("#aeb6bf")},
+            [8]    = {hex("#85929e")},
+            [16]   = {hex("#5d6d7e")},
+            [32]   = {hex("#34495e")},
+            [64]   = {hex("#2e4053")},
+            [128]  = {hex("#f5b041")},
+            [256]  = {hex("#f39c12")},
+            [512]  = {hex("#e67e22")},
+            [1024] = {hex("#d35400")},
+            [2048] = {hex("#e74c3c")},
         },
         super_tile_color = {hex("#ef4444")},
-        dark_text        = {hex("#a3a3a3")},
+        dark_text        = {hex("#1a1a1a")},
         light_text       = {hex("#ffffff")},
         ui_text          = {hex("#e5e5e5")},
         bg_color         = {hex("#1a1a1a")},
@@ -400,20 +400,20 @@ local themes = {
     abyss = {
         tile_colors = {
             [0]    = {hex("#0f766e")},
-            [2]    = {hex("#eee4da")},
-            [4]    = {hex("#ede0c8")},
-            [8]    = {hex("#f2b179")},
-            [16]   = {hex("#f59563")},
-            [32]   = {hex("#f67c5f")},
-            [64]   = {hex("#f65e3b")},
-            [128]  = {hex("#edcf72")},
-            [256]  = {hex("#edcc61")},
-            [512]  = {hex("#edc850")},
-            [1024] = {hex("#edc53f")},
-            [2048] = {hex("#edc22e")},
+            [2]    = {hex("#a3e4d7")},
+            [4]    = {hex("#76d7c4")},
+            [8]    = {hex("#48c9b0")},
+            [16]   = {hex("#1abc9c")},
+            [32]   = {hex("#17a589")},
+            [64]   = {hex("#148f77")},
+            [128]  = {hex("#117a65")},
+            [256]  = {hex("#0e6251")},
+            [512]  = {hex("#58d68d")},
+            [1024] = {hex("#2ecc71")},
+            [2048] = {hex("#27ae60")},
         },
         super_tile_color = {hex("#14b8a6")},
-        dark_text        = {hex("#99f6e4")},
+        dark_text        = {hex("#042f2e")},
         light_text       = {hex("#ffffff")},
         ui_text          = {hex("#ccfbf1")},
         bg_color         = {hex("#042f2e")},
@@ -430,20 +430,20 @@ local themes = {
     eclipse = {
         tile_colors = {
             [0]    = {hex("#3f3f46")},
-            [2]    = {hex("#eee4da")},
-            [4]    = {hex("#ede0c8")},
-            [8]    = {hex("#f2b179")},
-            [16]   = {hex("#f59563")},
-            [32]   = {hex("#f67c5f")},
-            [64]   = {hex("#f65e3b")},
-            [128]  = {hex("#edcf72")},
-            [256]  = {hex("#edcc61")},
-            [512]  = {hex("#edc850")},
-            [1024] = {hex("#edc53f")},
-            [2048] = {hex("#edc22e")},
+            [2]    = {hex("#f2f3f4")},
+            [4]    = {hex("#e5e7e9")},
+            [8]    = {hex("#d7dbdd")},
+            [16]   = {hex("#cacfd2")},
+            [32]   = {hex("#bdc3c7")},
+            [64]   = {hex("#a6acaf")},
+            [128]  = {hex("#909497")},
+            [256]  = {hex("#797d7f")},
+            [512]  = {hex("#626567")},
+            [1024] = {hex("#4d5656")},
+            [2048] = {hex("#f1c40f")},
         },
         super_tile_color = {hex("#facc15")},
-        dark_text        = {hex("#a1a1aa")},
+        dark_text        = {hex("#18181b")},
         light_text       = {hex("#ffffff")},
         ui_text          = {hex("#f4f4f5")},
         bg_color         = {hex("#18181b")},
@@ -559,6 +559,7 @@ function renderer.init()
     font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
     font_score      = love.graphics.newFont(font_path, math.floor(20 * scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale))
+    font_main_menu_title = love.graphics.newFont(font_path, math.floor(72 * scale))
     font_label      = love.graphics.newFont(font_path, math.floor(16 * scale))
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale))
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale))
@@ -991,7 +992,7 @@ function renderer.drawOverlay(game)
 
         -- Draw the text
         local text_scale = 0.8 + (0.2 * ease_t)
-        love.graphics.setColor(light_text[1], light_text[2], light_text[3], ease_t)
+        love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], ease_t)
         
         love.graphics.push()
         love.graphics.translate(textX, textY)
@@ -1158,18 +1159,16 @@ function renderer.drawMainMenu(selection, skip_transition)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
 
-    love.graphics.setFont(font_title)
+    love.graphics.setFont(font_main_menu_title)
     love.graphics.setColor(ui_text)
     local title = "2048"
-    local tw = font_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.2)
+    local tw = font_main_menu_title:getWidth(title)
+    love.graphics.print(title, (w - tw) / 2, h * 0.15)
     
-    love.graphics.setFont(font_label)
-    local sub = "Select Mode"
-    local sw = font_label:getWidth(sub)
-    love.graphics.print(sub, (w - sw) / 2, h * 0.2 + font_title:getHeight())
-
     local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Quit"}
+    if _G.cheats_unlocked then
+        table.insert(options, 4, "Cheats")
+    end
     local start_y = h * 0.45
     local gap = math.floor(40 * scale)
 
@@ -1209,7 +1208,61 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.draw(transition_canvas, 0, 0)
         love.graphics.setStencilTest()
     end
+    
+    drawToast()
 end
+
+-- ============================================================================
+-- Cheats Menu
+-- ============================================================================
+function renderer.drawCheatsMenu(selection, skip_transition)
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    love.graphics.setFont(font_title)
+    love.graphics.setColor(ui_text)
+    local title = "Cheats Menu"
+    local tw = font_title:getWidth(title)
+    love.graphics.print(title, (w - tw) / 2, h * 0.2)
+
+    local options = {
+        "Unlock All Themes",
+        "Max Powerups: " .. (_G.cheat_max_powerups and "ON" or "OFF"),
+        "Start with 1024 (Classic Mode): " .. (_G.cheat_start_1024_classic and "ON" or "OFF"),
+        "Start with 1024 (Plus Mode): " .. (_G.cheat_start_1024_plus and "ON" or "OFF"),
+        "Back"
+    }
+    local start_y = h * 0.35
+    local gap = math.floor(40 * scale)
+
+    love.graphics.setFont(font_message)
+    for i, opt in ipairs(options) do
+        local ow = font_message:getWidth(opt)
+        local oy = start_y + (i - 1) * gap
+        if i == selection then
+            love.graphics.setColor(help_key_color)
+            roundedRect("fill", (w - ow) / 2 - 20 * scale, oy - 5 * scale, ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+            love.graphics.setColor(help_key_text)
+        else
+            love.graphics.setColor(ui_text)
+        end
+        love.graphics.print(opt, (w - ow) / 2, oy)
+    end
+
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
+    
+    drawToast()
+end
+
 
 -- ============================================================================
 -- Main draw function
@@ -1291,7 +1344,7 @@ function renderer.drawAchievements(scroll, skip_transition)
             if isUnlocked then
                 love.graphics.setColor(help_key_color)
             else
-                love.graphics.setColor(board_color[1]*1.2, board_color[2]*1.2, board_color[3]*1.2, 0.5)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.2)
             end
             love.graphics.setLineWidth(math.floor(2 * scale))
             roundedRect("line", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
@@ -1361,15 +1414,19 @@ function renderer.drawAchievements(scroll, skip_transition)
 
             -- Name & Desc
             local text_x = icon_x + icon_s + math.floor(15 * scale)
-            love.graphics.setColor(isUnlocked and ui_text or dark_text)
+            if isUnlocked then
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 1)
+            else
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.5)
+            end
             love.graphics.setFont(font_label)
             love.graphics.print(ach.name, text_x, current_y + math.floor(12 * scale))
             
             love.graphics.setFont(font_help_label)
             if isUnlocked then
-                love.graphics.setColor(ui_text[1]*0.8, ui_text[2]*0.8, ui_text[3]*0.8)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.8)
             else
-                love.graphics.setColor(dark_text[1]*0.7, dark_text[2]*0.7, dark_text[3]*0.7)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.35)
             end
             love.graphics.print(ach.desc, text_x, current_y + math.floor(42 * scale))
             
@@ -1384,11 +1441,15 @@ function renderer.drawAchievements(scroll, skip_transition)
             if isUnlocked then
                 love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 0.2)
             else
-                love.graphics.setColor(0, 0, 0, 0.2)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.1)
             end
             roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_help_label:getHeight() + math.floor(8 * scale), math.floor(6 * scale))
             
-            love.graphics.setColor(isUnlocked and super_tile_color or dark_text)
+            if isUnlocked then
+                love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 1)
+            else
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.4)
+            end
             love.graphics.print(rew_text, tag_x, tag_y)
 
             current_y = current_y + item_h

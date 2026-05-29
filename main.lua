@@ -14,6 +14,10 @@ local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Quit
 
 local game
 
+_G.cheats_unlocked = false
+local konami_sequence = { "up", "up", "down", "down", "left", "right", "left", "right", "backspace", "return", "space" }
+local konami_progress = 1
+
 function love.load(args)
     love.math.setRandomSeed(os.time())
 
@@ -112,6 +116,8 @@ function love.load(args)
     if savedTheme then
         _G.theme = savedTheme
     end
+    
+    _G.cheats_unlocked = save.loadCheats()
     -- Crucially apply the loaded theme to the renderer NOW
     renderer.applyTheme()
 
@@ -176,6 +182,8 @@ function love.update(dt)
         if event == input.events.Y then
             if _G.appState == "MENU" then
                 renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection, true) end)
+            elseif _G.appState == "CHEATS_MENU" then
+                renderer.startThemeTransition(function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end)
             elseif _G.appState == "ACHIEVEMENTS" then
                 renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
             else
@@ -197,10 +205,36 @@ function love.update(dt)
         end
 
         if _G.appState == "MENU" then
+            if not _G.cheats_unlocked then
+                if event == konami_sequence[konami_progress] then
+                    konami_progress = konami_progress + 1
+                    if konami_progress == 5 then
+                        renderer.showToast("What you think this is a konami game?")
+                    elseif konami_progress == 9 then
+                        renderer.showToast("Wait, what are you doing?")
+                    elseif konami_progress > #konami_sequence then
+                        renderer.showToast("You weren't supposed to do this. But OK.")
+                        _G.cheats_unlocked = true
+                        save.saveCheats(true)
+                        konami_progress = 1
+                    end
+                    if event == input.events.BACK or event == input.events.CONFIRM or event == input.events.START then
+                        return
+                    end
+                else
+                    if event == konami_sequence[1] then
+                        konami_progress = 2
+                    else
+                        konami_progress = 1
+                    end
+                end
+            end
+            
+            local max_menu = _G.cheats_unlocked and 5 or 4
             if event == input.events.UP then
-                menuSelection = menuSelection > 1 and (menuSelection - 1) or 4
+                menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
-                menuSelection = menuSelection < 4 and (menuSelection + 1) or 1
+                menuSelection = menuSelection < max_menu and (menuSelection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if menuSelection == 1 then
                     _G.appState = "GAME"
@@ -210,8 +244,19 @@ function love.update(dt)
                     game = Game.new("plus")
                 elseif menuSelection == 3 then
                     _G.appState = "ACHIEVEMENTS"
-                elseif menuSelection == 4 then
-                    love.event.quit()
+                else
+                    if _G.cheats_unlocked then
+                        if menuSelection == 4 then
+                            _G.appState = "CHEATS_MENU"
+                            _G.cheats_selection = 1
+                        elseif menuSelection == 5 then
+                            love.event.quit()
+                        end
+                    else
+                        if menuSelection == 4 then
+                            love.event.quit()
+                        end
+                    end
                 end
             end
             return
@@ -234,6 +279,46 @@ function love.update(dt)
                 local total_height = total_items * item_h
                 local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h) + 1)
                 _G.achievements_scroll_target = math.min(max_scroll, (_G.achievements_scroll_target or 0) + 1)
+            end
+            return
+        elseif _G.appState == "CHEATS_MENU" then
+            if event == input.events.BACK then
+                _G.appState = "MENU"
+            elseif event == input.events.UP then
+                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 5
+            elseif event == input.events.DOWN then
+                _G.cheats_selection = _G.cheats_selection < 5 and (_G.cheats_selection + 1) or 1
+            elseif event == input.events.CONFIRM then
+                if _G.cheats_selection == 1 then
+                    local all_themes = {"ocean", "forest", "sunset", "candy", "oled", "neon", "retro", "peach", "midnight", "volcano", "abyss", "eclipse"}
+                    for _, t in ipairs(all_themes) do
+                        local found = false
+                        for _, existing in ipairs(_G.unlocked_themes) do
+                            if existing == t then found = true break end
+                        end
+                        if not found then table.insert(_G.unlocked_themes, t) end
+                    end
+                    renderer.showToast("All Themes Unlocked!")
+                elseif _G.cheats_selection == 2 then
+                    _G.cheat_max_powerups = not _G.cheat_max_powerups
+                    renderer.showToast("Max Powerups: " .. (_G.cheat_max_powerups and "ON" or "OFF"))
+                elseif _G.cheats_selection == 3 then
+                    _G.cheat_start_1024_classic = not _G.cheat_start_1024_classic
+                    if _G.cheat_start_1024_classic then
+                        renderer.showToast("Start with 1024 (Classic Mode) is ON. Start a new game to apply.")
+                    else
+                        renderer.showToast("Start with 1024 (Classic Mode) is OFF.")
+                    end
+                elseif _G.cheats_selection == 4 then
+                    _G.cheat_start_1024_plus = not _G.cheat_start_1024_plus
+                    if _G.cheat_start_1024_plus then
+                        renderer.showToast("Start with 1024 (Plus Mode) is ON. Start a new game to apply.")
+                    else
+                        renderer.showToast("Start with 1024 (Plus Mode) is OFF.")
+                    end
+                elseif _G.cheats_selection == 5 then
+                    _G.appState = "MENU"
+                end
             end
             return
         end
@@ -320,9 +405,11 @@ function love.draw()
         splash.draw()
     elseif _G.appState == "MENU" then
         renderer.drawMainMenu(menuSelection)
+    elseif _G.appState == "CHEATS_MENU" then
+        renderer.drawCheatsMenu(_G.cheats_selection or 1)
     elseif _G.appState == "ACHIEVEMENTS" then
         renderer.drawAchievements(_G.achievements_scroll or 0)
-    else
+    elseif _G.appState == "GAME" and game then
         renderer.draw(game)
     end
 end
