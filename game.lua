@@ -93,6 +93,10 @@ function Game.new(mode)
         if savedState and savedState.theme then
             _G.theme = savedState.theme
         end
+        if _G.achievements then
+            _G.achievements.powerups_used_this_run = 0
+            save.saveAchievements(_G.achievements)
+        end
     end
     -- Trigger "First Steps" achievement
     if _G.unlockAchievement then
@@ -410,9 +414,10 @@ function Game:undo()
         if self.mode == "plus" then
             if self.powerups.undo <= 0 then return end
             self.powerups.undo = self.powerups.undo - 1
-            if _G.achievements.powerups_used_this_run then
-                _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
-            end
+        end
+        if _G.achievements.powerups_used_this_run then
+            _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
+            save.saveAchievements(_G.achievements)
         end
 
         -- Snapshot the current tiles before restoring the old grid
@@ -504,6 +509,10 @@ function Game:restart()
         self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
     end
     self:addStartTiles()
+    if _G.achievements then
+        _G.achievements.powerups_used_this_run = 0
+        save.saveAchievements(_G.achievements)
+    end
     self:saveGameState()
 end
 
