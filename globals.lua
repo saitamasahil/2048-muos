@@ -62,6 +62,12 @@ _G.achievements = {
     ach_score_10k = false,   -- High Roller -> unlocks 'neon'
     ach_demolition = false,  -- Demolition Expert (10 bombs used) -> unlocks 'retro'
     ach_untouchable = false, -- Untouchable (1024 without powerups) -> unlocks 'peach'
+    ach_2048_plus = false,   -- Plus Mode Master -> unlocks 'cyberpunk'
+    ach_4096 = false,        -- The One -> unlocks 'matrix'
+    ach_score_25k = false,   -- Aesthetic -> unlocks 'vaporwave'
+    ach_score_50k = false,   -- Vampire Lord -> unlocks 'dracula'
+    ach_score_100k = false,  -- Midas Touch -> unlocks 'gold'
+    ach_untouchable_2048 = false, -- Zen Master (2048 without powerups) -> unlocks 'matcha'
     
     -- Dark simple achievements (color-only dark themes)
     ach_merge_1024 = false,  -- Almost There -> unlocks 'midnight'

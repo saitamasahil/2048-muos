@@ -69,6 +69,13 @@ function love.load(args)
     if _G.achievements.ach_score_2k then table.insert(_G.unlocked_themes, "volcano") end
     if _G.achievements.ach_score_7k then table.insert(_G.unlocked_themes, "abyss") end
     if _G.achievements.ach_first_bomb then table.insert(_G.unlocked_themes, "eclipse") end
+    
+    if _G.achievements.ach_2048_plus then table.insert(_G.unlocked_themes, "cyberpunk") end
+    if _G.achievements.ach_4096 then table.insert(_G.unlocked_themes, "matrix") end
+    if _G.achievements.ach_score_25k then table.insert(_G.unlocked_themes, "vaporwave") end
+    if _G.achievements.ach_score_50k then table.insert(_G.unlocked_themes, "dracula") end
+    if _G.achievements.ach_score_100k then table.insert(_G.unlocked_themes, "gold") end
+    if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
 
     function _G.unlockAchievement(id)
         if not _G.achievements[id] then
@@ -87,7 +94,13 @@ function love.load(args)
                 ach_merge_1024 = "midnight",
                 ach_score_2k = "volcano",
                 ach_score_7k = "abyss",
-                ach_first_bomb = "eclipse"
+                ach_first_bomb = "eclipse",
+                ach_2048_plus = "cyberpunk",
+                ach_4096 = "matrix",
+                ach_score_25k = "vaporwave",
+                ach_score_50k = "dracula",
+                ach_score_100k = "gold",
+                ach_untouchable_2048 = "matcha"
             }
             if theme_map[id] then
                 table.insert(_G.unlocked_themes, theme_map[id])
@@ -105,7 +118,13 @@ function love.load(args)
                 ach_merge_1024 = "Almost There",
                 ach_score_2k = "Gaining Momentum",
                 ach_score_7k = "High Scorer",
-                ach_first_bomb = "Boom!"
+                ach_first_bomb = "Boom!",
+                ach_2048_plus = "Plus Mode Master",
+                ach_4096 = "The One",
+                ach_score_25k = "Aesthetic",
+                ach_score_50k = "Vampire Lord",
+                ach_score_100k = "Midas Touch",
+                ach_untouchable_2048 = "Zen Master"
             }
             renderer.showToast("Unlocked: " .. (names[id] or id) .. "!")
         end
@@ -290,7 +309,7 @@ function love.update(dt)
                 _G.cheats_selection = _G.cheats_selection < 7 and (_G.cheats_selection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if _G.cheats_selection == 1 then
-                    local all_themes = {"ocean", "forest", "sunset", "candy", "oled", "neon", "retro", "peach", "midnight", "volcano", "abyss", "eclipse"}
+                    local all_themes = {"ocean", "forest", "sunset", "candy", "oled", "neon", "retro", "peach", "midnight", "volcano", "abyss", "eclipse", "cyberpunk", "matrix", "vaporwave", "dracula", "gold", "matcha"}
                     for _, t in ipairs(all_themes) do
                         local found = false
                         for _, existing in ipairs(_G.unlocked_themes) do

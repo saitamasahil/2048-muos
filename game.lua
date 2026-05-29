@@ -320,8 +320,20 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_merge_1024")
                     end
                     
+                    if merged.value >= 4096 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_4096")
+                    end
+                    
                     if self.mode == "plus" and merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_untouchable")
+                    end
+                    
+                    if self.mode == "plus" and merged.value >= 2048 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_2048_plus")
+                    end
+                    
+                    if merged.value >= 2048 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_untouchable_2048")
                     end
 
                     moved = true
@@ -352,6 +364,9 @@ function Game:move(direction)
             if self.score >= 5000 then _G.unlockAchievement("ach_score_5k") end
             if self.score >= 7500 then _G.unlockAchievement("ach_score_7k") end
             if self.score >= 10000 then _G.unlockAchievement("ach_score_10k") end
+            if self.score >= 25000 then _G.unlockAchievement("ach_score_25k") end
+            if self.score >= 50000 then _G.unlockAchievement("ach_score_50k") end
+            if self.score >= 100000 then _G.unlockAchievement("ach_score_100k") end
         end
         self:saveGameState()
         -- Check for loss
