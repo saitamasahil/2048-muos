@@ -81,9 +81,7 @@ function Game.new(mode)
         if savedState.undoRNG then
             self.undoRNG = savedState.undoRNG
         end
-        if savedState.theme then
-            _G.theme = savedState.theme
-        end
+
         if savedState.powerups then
             self.powerups = savedState.powerups
         end
@@ -93,9 +91,7 @@ function Game.new(mode)
     else
         -- Start a fresh game if no save state exists
         self:addStartTiles()
-        if savedState and savedState.theme then
-            _G.theme = savedState.theme
-        end
+
         if _G.achievements then
             _G.achievements.powerups_used_this_run = 0
             save.saveAchievements(_G.achievements)
@@ -119,7 +115,6 @@ function Game:saveGameState()
         gridState = self.grid:saveState(),
         undoState = self.undoState,
         undoRNG = self.undoRNG,
-        theme = _G.theme,
         powerups = self.powerups,
         milestonesReached = self.milestonesReached
     }

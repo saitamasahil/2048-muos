@@ -24,14 +24,17 @@ local win_timer = 0
 local toast_message = nil
 local toast_timer = 0
 local toast_queue = {}
+local toast_max_duration = 1.5
 local TOAST_DURATION = 1.5
 
-function renderer.showToast(msg)
+function renderer.showToast(msg, custom_duration)
+    local duration = custom_duration or TOAST_DURATION
     if toast_timer > 0 then
-        table.insert(toast_queue, msg)
+        table.insert(toast_queue, {msg = msg, duration = duration})
     else
         toast_message = msg
-        toast_timer = TOAST_DURATION
+        toast_timer = duration
+        toast_max_duration = duration
     end
 end
 
@@ -224,6 +227,36 @@ local themes = {
         help_bg_color    = {hex("#ffdab9")},
         help_key_color   = {hex("#c27a7e")},
         help_key_text    = {hex("#ffffff")},
+    },
+    ascii = {
+        tile_colors = {
+            [0]    = {hex("#000000")},
+            [2]    = {hex("#00ff00")},
+            [4]    = {hex("#00ff00")},
+            [8]    = {hex("#00ff00")},
+            [16]   = {hex("#00ff00")},
+            [32]   = {hex("#00ff00")},
+            [64]   = {hex("#00ff00")},
+            [128]  = {hex("#00ff00")},
+            [256]  = {hex("#00ff00")},
+            [512]  = {hex("#00ff00")},
+            [1024] = {hex("#00ff00")},
+            [2048] = {hex("#00ff00")},
+        },
+        super_tile_color = {hex("#00ff00")},
+        dark_text        = {hex("#00ff00")},
+        light_text       = {hex("#00ff00")},
+        ui_text          = {hex("#00ff00")},
+        bg_color         = {hex("#000000")},
+        board_color      = {hex("#00ff00")},
+        score_bg_color   = {hex("#000000")},
+        score_label      = {hex("#00ff00")},
+        score_value      = {hex("#00ff00")},
+        overlay_win      = {hex("#00ff00")},
+        overlay_lose     = {hex("#000000")},
+        help_bg_color    = {hex("#000000")},
+        help_key_color   = {hex("#00ff00")},
+        help_key_text    = {hex("#00ff00")},
     },
     -- Simple themes (color-only, no custom tiles — use default light tile colors)
     ocean = {
@@ -762,6 +795,52 @@ end
 -- Helper: draw a rounded rectangle
 -- ============================================================================
 local function roundedRect(mode, x, y, w, h, r)
+    if _G.theme == "ascii" then
+        if mode == "fill" then
+            local cr, cg, cb, ca = love.graphics.getColor()
+            love.graphics.setColor(0, 0, 0, ca)
+            love.graphics.rectangle("fill", x, y, w, h)
+            love.graphics.setColor(cr, cg, cb, ca)
+        end
+        
+        local font = font_help_label
+        if not font then font = love.graphics.getFont() end
+        
+        -- Use plain rectangle for very small UI elements to avoid clutter
+        if w < 40 * _G.scale or h < 40 * _G.scale then
+            love.graphics.rectangle("line", x, y, w, h)
+            return
+        end
+
+        local prev_font = love.graphics.getFont()
+        love.graphics.setFont(font)
+
+        local char_w = math.max(1, font:getWidth("-"))
+        local char_h = math.max(1, font:getHeight())
+
+        love.graphics.print("+", x, y)
+        love.graphics.print("+", x + w - char_w, y)
+        love.graphics.print("+", x, y + h - char_h)
+        love.graphics.print("+", x + w - char_w, y + h - char_h)
+
+        if w > char_w * 2 then
+            for bx = x + char_w, x + w - char_w * 1.5, char_w do
+                love.graphics.print("-", bx, y)
+                love.graphics.print("-", bx, y + h - char_h)
+            end
+        end
+
+        if h > char_h * 2 then
+            for by = y + char_h, y + h - char_h * 1.5, char_h do
+                love.graphics.print("|", x, by)
+                love.graphics.print("|", x + w - char_w, by)
+            end
+        end
+
+        love.graphics.setFont(prev_font)
+        return
+    end
+
     r = r or 0
     if r <= 0 then
         love.graphics.rectangle(mode, x, y, w, h)
@@ -1273,8 +1352,10 @@ function renderer.updateTransition(dt)
     if toast_timer > 0 then
         toast_timer = math.max(0, toast_timer - dt)
         if toast_timer == 0 and #toast_queue > 0 then
-            toast_message = table.remove(toast_queue, 1)
-            toast_timer = TOAST_DURATION
+            local next_toast = table.remove(toast_queue, 1)
+            toast_message = next_toast.msg
+            toast_timer = next_toast.duration
+            toast_max_duration = next_toast.duration
         end
     end
     
@@ -1300,16 +1381,20 @@ local function drawToast()
     local th = font_message:getHeight()
     local padX = 20 * _G.scale
     local padY = 10 * _G.scale
+    local max_text_w = w - (padX * 2) - (40 * _G.scale)
+    
+    local text_w, wrapped_lines = font_message:getWrap(toast_message, max_text_w)
+    local th = font_message:getHeight() * #wrapped_lines
 
-    local boxW = tw + padX * 2
+    local boxW = text_w + padX * 2
     local boxH = th + padY * 2
     
     -- Fade in/out
     local alpha = 1.0
     if toast_timer < 0.3 then
         alpha = toast_timer / 0.3
-    elseif toast_timer > TOAST_DURATION - 0.3 then
-        alpha = (TOAST_DURATION - toast_timer) / 0.3
+    elseif toast_timer > toast_max_duration - 0.3 then
+        alpha = (toast_max_duration - toast_timer) / 0.3
     end
     
     local y = h - (70 * _G.scale) - boxH
@@ -1320,7 +1405,7 @@ local function drawToast()
     roundedRect("fill", (w - boxW) / 2, y, boxW, boxH, 12 * _G.scale)
     
     love.graphics.setColor(1, 1, 1, alpha)
-    love.graphics.print(toast_message, (w - tw) / 2, y + padY)
+    love.graphics.printf(toast_message, (w - text_w) / 2, y + padY, text_w, "center")
 end
 
 -- Internal functions
@@ -1971,61 +2056,99 @@ function renderer.drawAchievements(scroll, skip_transition)
             local icon_x = padding + math.floor(12 * scale)
             local icon_y = current_y + (card_h - icon_s) / 2
             
-            if isUnlocked then
-                -- Solid green circle background
+            if _G.theme == "ascii" then
                 local cx = icon_x + icon_s / 2
                 local cy = icon_y + icon_s / 2
-                local r = icon_s / 2
-                love.graphics.setColor(0.18, 0.72, 0.35)
-                love.graphics.circle("fill", cx, cy, r)
-                -- Darker green border
-                love.graphics.setColor(0.12, 0.55, 0.25)
-                love.graphics.setLineWidth(math.max(1, math.floor(2 * scale)))
-                love.graphics.circle("line", cx, cy, r)
                 
-                -- White checkmark drawn with thick lines
-                love.graphics.setColor(1, 1, 1)
-                love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
-                local check_s = icon_s * 0.3
-                love.graphics.line(
-                    cx - check_s, cy,
-                    cx - check_s * 0.3, cy + check_s * 0.7,
-                    cx + check_s, cy - check_s * 0.6
-                )
-            else
-                -- Muted circle background using ui_text at low alpha
-                local cx = icon_x + icon_s / 2
-                local cy = icon_y + icon_s / 2
-                local r = icon_s / 2
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.15)
-                love.graphics.circle("fill", cx, cy, r)
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
+                -- Outer wireframe box for icon
+                love.graphics.setColor(ui_text)
                 love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
-                love.graphics.circle("line", cx, cy, r)
+                roundedRect("line", icon_x, icon_y, icon_s, icon_s)
                 
-                -- Draw Padlock using ui_text color (always visible)
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-                local lock_w = math.floor(20 * scale)
-                local lock_h = math.floor(15 * scale)
-                local lock_x = cx - lock_w / 2
-                local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
-                
-                -- Lock body
-                roundedRect("fill", lock_x, lock_y, lock_w, lock_h, math.floor(3 * scale))
-                
-                -- Lock keyhole
-                love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3], 0.8)
-                love.graphics.circle("fill", lock_x + lock_w/2, lock_y + lock_h * 0.4, math.max(1, math.floor(2 * scale)))
-                love.graphics.rectangle("fill", lock_x + lock_w/2 - math.floor(1 * scale), lock_y + lock_h * 0.4, math.floor(2 * scale), math.floor(5 * scale))
-                
-                -- Lock shackle (arc + vertical lines)
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-                local shackle_r = math.floor(7 * scale)
-                local shackle_cy = lock_y - math.floor(1 * scale)
-                love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
-                love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
-                love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
-                love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
+                if isUnlocked then
+                    -- ASCII checkmark [X]
+                    love.graphics.setFont(font_message)
+                    love.graphics.setColor(ui_text)
+                    local txt = "X"
+                    local tw = font_message:getWidth(txt)
+                    local th = font_message:getHeight()
+                    love.graphics.print(txt, cx - tw / 2, cy - th / 2)
+                else
+                    -- ASCII Lock
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                    local lock_w = math.floor(20 * scale)
+                    local lock_h = math.floor(15 * scale)
+                    local lock_x = cx - lock_w / 2
+                    local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
+                    
+                    -- Wireframe lock body
+                    roundedRect("line", lock_x, lock_y, lock_w, lock_h)
+                    
+                    -- Lock shackle
+                    local shackle_r = math.floor(7 * scale)
+                    local shackle_cy = lock_y - math.floor(1 * scale)
+                    love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
+                    love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
+                    love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
+                    love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
+                end
+            else
+                if isUnlocked then
+                    -- Solid green circle background
+                    local cx = icon_x + icon_s / 2
+                    local cy = icon_y + icon_s / 2
+                    local r = icon_s / 2
+                    love.graphics.setColor(0.18, 0.72, 0.35)
+                    love.graphics.circle("fill", cx, cy, r)
+                    -- Darker green border
+                    love.graphics.setColor(0.12, 0.55, 0.25)
+                    love.graphics.setLineWidth(math.max(1, math.floor(2 * scale)))
+                    love.graphics.circle("line", cx, cy, r)
+                    
+                    -- White checkmark drawn with thick lines
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
+                    local check_s = icon_s * 0.3
+                    love.graphics.line(
+                        cx - check_s, cy,
+                        cx - check_s * 0.3, cy + check_s * 0.7,
+                        cx + check_s, cy - check_s * 0.6
+                    )
+                else
+                    -- Muted circle background using ui_text at low alpha
+                    local cx = icon_x + icon_s / 2
+                    local cy = icon_y + icon_s / 2
+                    local r = icon_s / 2
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.15)
+                    love.graphics.circle("fill", cx, cy, r)
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
+                    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+                    love.graphics.circle("line", cx, cy, r)
+                    
+                    -- Draw Padlock using ui_text color (always visible)
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                    local lock_w = math.floor(20 * scale)
+                    local lock_h = math.floor(15 * scale)
+                    local lock_x = cx - lock_w / 2
+                    local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
+                    
+                    -- Lock body
+                    roundedRect("fill", lock_x, lock_y, lock_w, lock_h, math.floor(3 * scale))
+                    
+                    -- Lock keyhole
+                    love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3], 0.8)
+                    love.graphics.circle("fill", lock_x + lock_w/2, lock_y + lock_h * 0.4, math.max(1, math.floor(2 * scale)))
+                    love.graphics.rectangle("fill", lock_x + lock_w/2 - math.floor(1 * scale), lock_y + lock_h * 0.4, math.floor(2 * scale), math.floor(5 * scale))
+                    
+                    -- Lock shackle (arc + vertical lines)
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                    local shackle_r = math.floor(7 * scale)
+                    local shackle_cy = lock_y - math.floor(1 * scale)
+                    love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
+                    love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
+                    love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
+                    love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
+                end
             end
 
             -- Name & Desc

@@ -76,6 +76,7 @@ function love.load(args)
     if _G.achievements.ach_score_50k then table.insert(_G.unlocked_themes, "dracula") end
     if _G.achievements.ach_score_100k then table.insert(_G.unlocked_themes, "gold") end
     if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
+    if _G.achievements.ach_secret_ascii then table.insert(_G.unlocked_themes, "ascii") end
 
     function _G.unlockAchievement(id)
         if not _G.achievements[id] then
@@ -271,6 +272,12 @@ function love.update(dt)
                 else
                     if _G.cheats_unlocked then
                         if menuSelection == 5 then
+                            if not _G.achievements.ach_secret_ascii then
+                                _G.achievements.ach_secret_ascii = true
+                                table.insert(_G.unlocked_themes, "ascii")
+                                save.saveAchievements(_G.achievements)
+                                renderer.showToast("Beep boop! Cheater detected! Enjoy your 'punishment': the super-retro ASCII Art Theme!", 4.0)
+                            end
                             _G.appState = "CHEATS_MENU"
                             _G.cheats_selection = 1
                         elseif menuSelection == 6 then

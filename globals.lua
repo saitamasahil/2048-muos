@@ -75,6 +75,9 @@ _G.achievements = {
     ach_score_7k = false,    -- High Scorer -> unlocks 'abyss'
     ach_first_bomb = false,  -- Boom! -> unlocks 'eclipse'
     
+    -- Secret tracking stats
+    ach_secret_ascii = false, -- Hacker Mode -> unlocks 'ascii'
+    
     -- Hidden tracking stats
     bombs_used = 0,
     powerups_used_this_run = 0
