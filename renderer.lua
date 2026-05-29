@@ -1731,17 +1731,25 @@ function renderer.drawMainMenu(selection, skip_transition)
     local gap = math.floor(40 * scale)
 
     love.graphics.setFont(font_message)
-    for i, opt in ipairs(options) do
+    local max_ow = 0
+    for _, opt in ipairs(options) do
         local ow = font_message:getWidth(opt)
+        if ow > max_ow then
+            max_ow = ow
+        end
+    end
+    local block_x = (w - max_ow) / 2
+
+    for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
         if i == selection then
             love.graphics.setColor(help_key_color)
-            roundedRect("fill", (w - ow) / 2 - 20 * scale, oy - 5 * scale, ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+            roundedRect("fill", block_x - 20 * scale, oy - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
             love.graphics.setColor(help_key_text)
         else
             love.graphics.setColor(ui_text)
         end
-        love.graphics.print(opt, (w - ow) / 2, oy)
+        love.graphics.print(opt, block_x, oy)
     end
 
     -- Draw Theme hint at the bottom right
@@ -1801,17 +1809,25 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     local gap = math.floor(40 * scale)
 
     love.graphics.setFont(font_message)
-    for i, opt in ipairs(options) do
+    local max_ow = 0
+    for _, opt in ipairs(options) do
         local ow = font_message:getWidth(opt)
+        if ow > max_ow then
+            max_ow = ow
+        end
+    end
+    local block_x = (w - max_ow) / 2
+
+    for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
         if i == selection then
             love.graphics.setColor(help_key_color)
-            roundedRect("fill", (w - ow) / 2 - 20 * scale, oy - 5 * scale, ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+            roundedRect("fill", block_x - 20 * scale, oy - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
             love.graphics.setColor(help_key_text)
         else
             love.graphics.setColor(ui_text)
         end
-        love.graphics.print(opt, (w - ow) / 2, oy)
+        love.graphics.print(opt, block_x, oy)
     end
 
     love.graphics.setFont(font_help_label)
