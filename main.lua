@@ -276,7 +276,7 @@ function love.update(dt)
                                 _G.achievements.ach_secret_ascii = true
                                 table.insert(_G.unlocked_themes, "ascii")
                                 save.saveAchievements(_G.achievements)
-                                renderer.showToast("Beep boop! Cheater detected! Enjoy your 'punishment': the super-retro ASCII Art Theme!", 4.0)
+                                renderer.showToast("Beep Boop! Cheater detected! Enjoy your punishment: the super-retro ASCII Art Theme!", 4.0)
                             end
                             _G.appState = "CHEATS_MENU"
                             _G.cheats_selection = 1
