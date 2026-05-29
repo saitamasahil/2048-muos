@@ -257,9 +257,11 @@ function splash.draw()
     love.graphics.push()
     love.graphics.translate(anim.shake_x, anim.shake_y)
 
-    -- Background
-    if _G.theme == "dark" then
-        love.graphics.setColor(hex("#121212"))
+    -- Background — adapts to current theme
+    local renderer = require("renderer")
+    local theme_bg = renderer.getThemeBgColor()
+    if theme_bg then
+        love.graphics.setColor(theme_bg)
     else
         love.graphics.setColor(colors.bg)
     end

@@ -95,6 +95,367 @@ local themes = {
         help_bg_color    = {hex("#2d2d2d")},
         help_key_color   = {hex("#4a4a4a")},
         help_key_text    = {hex("#eee4da")},
+    },
+    oled = {
+        tile_colors = {
+            [0]    = {hex("#1a1a1a")},   -- empty cell
+            [2]    = {hex("#333333")},
+            [4]    = {hex("#4d4d4d")},
+            [8]    = {hex("#666666")},
+            [16]   = {hex("#808080")},
+            [32]   = {hex("#999999")},
+            [64]   = {hex("#b3b3b3")},
+            [128]  = {hex("#cccccc")},
+            [256]  = {hex("#e6e6e6")},
+            [512]  = {hex("#ffffff")},
+            [1024] = {hex("#ffffff")},
+            [2048] = {hex("#ffffff")},
+        },
+        super_tile_color = {hex("#ffffff")},
+        dark_text        = {hex("#000000")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#ffffff")},
+        bg_color         = {hex("#000000")},
+        board_color      = {hex("#0f0f0f")},
+        score_bg_color   = {hex("#0f0f0f")},
+        score_label      = {hex("#888888")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#ffffff")},
+        overlay_lose     = {hex("#0f0f0f")},
+        help_bg_color    = {hex("#0f0f0f")},
+        help_key_color   = {hex("#333333")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    neon = {
+        tile_colors = {
+            [0]    = {hex("#1f2833")},   -- empty cell
+            [2]    = {hex("#45a29e")},
+            [4]    = {hex("#66fcf1")},
+            [8]    = {hex("#c5c6c7")},
+            [16]   = {hex("#ff00ff")},
+            [32]   = {hex("#b82601")},
+            [64]   = {hex("#813772")},
+            [128]  = {hex("#062f4f")},
+            [256]  = {hex("#f6cd61")},
+            [512]  = {hex("#3da4ab")},
+            [1024] = {hex("#0e9aa7")},
+            [2048] = {hex("#fe8a71")},
+        },
+        super_tile_color = {hex("#ff00ff")},
+        dark_text        = {hex("#0b0c10")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#66fcf1")},
+        bg_color         = {hex("#0b0c10")},
+        board_color      = {hex("#1f2833")},
+        score_bg_color   = {hex("#1f2833")},
+        score_label      = {hex("#45a29e")},
+        score_value      = {hex("#66fcf1")},
+        overlay_win      = {hex("#ff00ff")},
+        overlay_lose     = {hex("#1f2833")},
+        help_bg_color    = {hex("#1f2833")},
+        help_key_color   = {hex("#45a29e")},
+        help_key_text    = {hex("#0b0c10")},
+    },
+    retro = {
+        tile_colors = {
+            [0]    = {hex("#8bac0f")},   -- empty cell
+            [2]    = {hex("#306230")},
+            [4]    = {hex("#0f380f")},
+            [8]    = {hex("#306230")},
+            [16]   = {hex("#0f380f")},
+            [32]   = {hex("#306230")},
+            [64]   = {hex("#0f380f")},
+            [128]  = {hex("#306230")},
+            [256]  = {hex("#0f380f")},
+            [512]  = {hex("#306230")},
+            [1024] = {hex("#0f380f")},
+            [2048] = {hex("#0f380f")},
+        },
+        super_tile_color = {hex("#0f380f")},
+        dark_text        = {hex("#9bbc0f")},
+        light_text       = {hex("#9bbc0f")},
+        ui_text          = {hex("#0f380f")},
+        bg_color         = {hex("#9bbc0f")},
+        board_color      = {hex("#8bac0f")},
+        score_bg_color   = {hex("#8bac0f")},
+        score_label      = {hex("#0f380f")},
+        score_value      = {hex("#0f380f")},
+        overlay_win      = {hex("#306230")},
+        overlay_lose     = {hex("#8bac0f")},
+        help_bg_color    = {hex("#8bac0f")},
+        help_key_color   = {hex("#0f380f")},
+        help_key_text    = {hex("#9bbc0f")},
+    },
+    peach = {
+        tile_colors = {
+            [0]    = {hex("#ffdab9")},   -- empty cell
+            [2]    = {hex("#ffcba4")},
+            [4]    = {hex("#ffb6c1")},
+            [8]    = {hex("#ffa07a")},
+            [16]   = {hex("#ff7f50")},
+            [32]   = {hex("#ff6347")},
+            [64]   = {hex("#ff4500")},
+            [128]  = {hex("#ff69b4")},
+            [256]  = {hex("#ff1493")},
+            [512]  = {hex("#db7093")},
+            [1024] = {hex("#c71585")},
+            [2048] = {hex("#c27a7e")},
+        },
+        super_tile_color = {hex("#c27a7e")},
+        dark_text        = {hex("#ffffff")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#c27a7e")},
+        bg_color         = {hex("#ffe5b4")},
+        board_color      = {hex("#ffdab9")},
+        score_bg_color   = {hex("#ffdab9")},
+        score_label      = {hex("#c27a7e")},
+        score_value      = {hex("#c27a7e")},
+        overlay_win      = {hex("#ff69b4")},
+        overlay_lose     = {hex("#ffdab9")},
+        help_bg_color    = {hex("#ffdab9")},
+        help_key_color   = {hex("#c27a7e")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    -- Simple themes (color-only, no custom tiles — use default light tile colors)
+    ocean = {
+        tile_colors = {
+            [0]    = {hex("#b8d4e3")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#1a5276")},
+        dark_text        = {hex("#1a5276")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#1a5276")},
+        bg_color         = {hex("#d6eaf8")},
+        board_color      = {hex("#aed6f1")},
+        score_bg_color   = {hex("#aed6f1")},
+        score_label      = {hex("#2980b9")},
+        score_value      = {hex("#1a5276")},
+        overlay_win      = {hex("#2980b9")},
+        overlay_lose     = {hex("#aed6f1")},
+        help_bg_color    = {hex("#aed6f1")},
+        help_key_color   = {hex("#2980b9")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    forest = {
+        tile_colors = {
+            [0]    = {hex("#c8dbbe")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#1e6b3a")},
+        dark_text        = {hex("#2d5016")},
+        light_text       = {hex("#f9f6f2")},
+        ui_text          = {hex("#2d5016")},
+        bg_color         = {hex("#e8f5e9")},
+        board_color      = {hex("#a5d6a7")},
+        score_bg_color   = {hex("#a5d6a7")},
+        score_label      = {hex("#388e3c")},
+        score_value      = {hex("#1b5e20")},
+        overlay_win      = {hex("#388e3c")},
+        overlay_lose     = {hex("#a5d6a7")},
+        help_bg_color    = {hex("#a5d6a7")},
+        help_key_color   = {hex("#388e3c")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    sunset = {
+        tile_colors = {
+            [0]    = {hex("#f5cba7")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#922b21")},
+        dark_text        = {hex("#784212")},
+        light_text       = {hex("#fef9e7")},
+        ui_text          = {hex("#922b21")},
+        bg_color         = {hex("#fdebd0")},
+        board_color      = {hex("#f0b27a")},
+        score_bg_color   = {hex("#f0b27a")},
+        score_label      = {hex("#d35400")},
+        score_value      = {hex("#922b21")},
+        overlay_win      = {hex("#e67e22")},
+        overlay_lose     = {hex("#f0b27a")},
+        help_bg_color    = {hex("#f0b27a")},
+        help_key_color   = {hex("#d35400")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    candy = {
+        tile_colors = {
+            [0]    = {hex("#f8c8dc")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#9b2335")},
+        dark_text        = {hex("#6c3483")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#9b2335")},
+        bg_color         = {hex("#fdedec")},
+        board_color      = {hex("#f5b7b1")},
+        score_bg_color   = {hex("#f5b7b1")},
+        score_label      = {hex("#c0392b")},
+        score_value      = {hex("#9b2335")},
+        overlay_win      = {hex("#e74c3c")},
+        overlay_lose     = {hex("#f5b7b1")},
+        help_bg_color    = {hex("#f5b7b1")},
+        help_key_color   = {hex("#c0392b")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    midnight = {
+        tile_colors = {
+            [0]    = {hex("#334155")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#818cf8")},
+        dark_text        = {hex("#94a3b8")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#cbd5e1")},
+        bg_color         = {hex("#0f172a")},
+        board_color      = {hex("#1e293b")},
+        score_bg_color   = {hex("#1e293b")},
+        score_label      = {hex("#cbd5e1")},
+        score_value      = {hex("#f8fafc")},
+        overlay_win      = {hex("#6366f1")},
+        overlay_lose     = {hex("#1e293b")},
+        help_bg_color    = {hex("#1e293b")},
+        help_key_color   = {hex("#6366f1")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    volcano = {
+        tile_colors = {
+            [0]    = {hex("#404040")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#ef4444")},
+        dark_text        = {hex("#a3a3a3")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#e5e5e5")},
+        bg_color         = {hex("#1a1a1a")},
+        board_color      = {hex("#2d2d2d")},
+        score_bg_color   = {hex("#2d2d2d")},
+        score_label      = {hex("#ef4444")},
+        score_value      = {hex("#fca5a5")},
+        overlay_win      = {hex("#dc2626")},
+        overlay_lose     = {hex("#2d2d2d")},
+        help_bg_color    = {hex("#2d2d2d")},
+        help_key_color   = {hex("#dc2626")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    abyss = {
+        tile_colors = {
+            [0]    = {hex("#0f766e")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#14b8a6")},
+        dark_text        = {hex("#99f6e4")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#ccfbf1")},
+        bg_color         = {hex("#042f2e")},
+        board_color      = {hex("#115e59")},
+        score_bg_color   = {hex("#115e59")},
+        score_label      = {hex("#ccfbf1")},
+        score_value      = {hex("#5eead4")},
+        overlay_win      = {hex("#0d9488")},
+        overlay_lose     = {hex("#115e59")},
+        help_bg_color    = {hex("#115e59")},
+        help_key_color   = {hex("#0d9488")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    eclipse = {
+        tile_colors = {
+            [0]    = {hex("#3f3f46")},
+            [2]    = {hex("#eee4da")},
+            [4]    = {hex("#ede0c8")},
+            [8]    = {hex("#f2b179")},
+            [16]   = {hex("#f59563")},
+            [32]   = {hex("#f67c5f")},
+            [64]   = {hex("#f65e3b")},
+            [128]  = {hex("#edcf72")},
+            [256]  = {hex("#edcc61")},
+            [512]  = {hex("#edc850")},
+            [1024] = {hex("#edc53f")},
+            [2048] = {hex("#edc22e")},
+        },
+        super_tile_color = {hex("#facc15")},
+        dark_text        = {hex("#a1a1aa")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#f4f4f5")},
+        bg_color         = {hex("#18181b")},
+        board_color      = {hex("#27272a")},
+        score_bg_color   = {hex("#27272a")},
+        score_label      = {hex("#fde047")},
+        score_value      = {hex("#fef08a")},
+        overlay_win      = {hex("#eab308")},
+        overlay_lose     = {hex("#27272a")},
+        help_bg_color    = {hex("#27272a")},
+        help_key_color   = {hex("#eab308")},
+        help_key_text    = {hex("#ffffff")},
     }
 }
 
@@ -124,6 +485,10 @@ end
 
 -- Initialize theme immediately
 renderer.applyTheme()
+
+function renderer.getThemeBgColor()
+    return bg_color
+end
 
 -- ============================================================================
 -- Fonts
@@ -804,7 +1169,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     local sw = font_label:getWidth(sub)
     love.graphics.print(sub, (w - sw) / 2, h * 0.2 + font_title:getHeight())
 
-    local options = {"Play Classic", "Play Plus", "Quit"}
+    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Quit"}
     local start_y = h * 0.45
     local gap = math.floor(40 * scale)
 
@@ -872,6 +1237,194 @@ function renderer.draw(game, skip_transition)
     end
 
     drawToast()
+end
+
+-- ============================================================================
+-- Achievements Screen
+-- ============================================================================
+function renderer.drawAchievements(scroll, skip_transition)
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+    local padding = math.floor(20 * scale)
+
+    -- Header
+    love.graphics.setFont(font_title)
+    love.graphics.setColor(ui_text)
+    local title = "Achievements"
+    love.graphics.print(title, padding, padding)
+
+    -- Achievement definitions
+    local achievementsList = {
+        { id = "ach_first_game", name = "First Steps", desc = "Play your first game", reward = "Ocean Theme" },
+        { id = "ach_score_1k", name = "Getting Started", desc = "Reach 1,000 points", reward = "Forest Theme" },
+        { id = "ach_score_2k", name = "Gaining Momentum", desc = "Reach 2,000 points", reward = "Volcano Theme" },
+        { id = "ach_score_5k", name = "Rising Star", desc = "Reach 5,000 points", reward = "Sunset Theme" },
+        { id = "ach_score_7k", name = "High Scorer", desc = "Reach 7,500 points", reward = "Abyss Theme" },
+        { id = "ach_merge_512", name = "Half Way There", desc = "Create a 512 tile", reward = "Candy Theme" },
+        { id = "ach_merge_1024", name = "Almost There", desc = "Create a 1024 tile", reward = "Midnight Theme" },
+        { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile", reward = "OLED Dark Theme" },
+        { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme" },
+        { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme" },
+        { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in Plus Mode", reward = "Retro Theme" },
+        { id = "ach_untouchable", name = "Untouchable", desc = "Reach 1024 without powerups in Plus Mode", reward = "Peach Theme" },
+    }
+
+    local list_y = padding + font_title:getHeight() + math.floor(20 * scale)
+    local item_h = math.floor(85 * scale)
+    local footer_h = math.floor(55 * scale)
+
+    love.graphics.setScissor(0, list_y - math.floor(5 * scale), w, h - list_y - footer_h + math.floor(5 * scale))
+
+    local current_y = list_y - (scroll * item_h)
+    for i, ach in ipairs(achievementsList) do
+        do
+            local isUnlocked = _G.achievements[ach.id]
+
+            -- Card background
+            love.graphics.setColor(board_color[1], board_color[2], board_color[3], isUnlocked and 0.9 or 0.4)
+            roundedRect("fill", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
+            
+            -- Card border
+            if isUnlocked then
+                love.graphics.setColor(help_key_color)
+            else
+                love.graphics.setColor(board_color[1]*1.2, board_color[2]*1.2, board_color[3]*1.2, 0.5)
+            end
+            love.graphics.setLineWidth(math.floor(2 * scale))
+            roundedRect("line", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
+
+            -- Icon Area (centered vertically in card)
+            local icon_s = math.floor(48 * scale)
+            local card_h = item_h - math.floor(10 * scale)
+            local icon_x = padding + math.floor(12 * scale)
+            local icon_y = current_y + (card_h - icon_s) / 2
+            
+            if isUnlocked then
+                -- Solid green circle background
+                local cx = icon_x + icon_s / 2
+                local cy = icon_y + icon_s / 2
+                local r = icon_s / 2
+                love.graphics.setColor(0.18, 0.72, 0.35)
+                love.graphics.circle("fill", cx, cy, r)
+                -- Darker green border
+                love.graphics.setColor(0.12, 0.55, 0.25)
+                love.graphics.setLineWidth(math.max(1, math.floor(2 * scale)))
+                love.graphics.circle("line", cx, cy, r)
+                
+                -- White checkmark drawn with thick lines
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
+                local check_s = icon_s * 0.3
+                love.graphics.line(
+                    cx - check_s, cy,
+                    cx - check_s * 0.3, cy + check_s * 0.7,
+                    cx + check_s, cy - check_s * 0.6
+                )
+            else
+                -- Muted circle background using ui_text at low alpha
+                local cx = icon_x + icon_s / 2
+                local cy = icon_y + icon_s / 2
+                local r = icon_s / 2
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.15)
+                love.graphics.circle("fill", cx, cy, r)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
+                love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+                love.graphics.circle("line", cx, cy, r)
+                
+                -- Draw Padlock using ui_text color (always visible)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                local lock_w = math.floor(20 * scale)
+                local lock_h = math.floor(15 * scale)
+                local lock_x = cx - lock_w / 2
+                local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
+                
+                -- Lock body
+                roundedRect("fill", lock_x, lock_y, lock_w, lock_h, math.floor(3 * scale))
+                
+                -- Lock keyhole
+                love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3], 0.8)
+                love.graphics.circle("fill", lock_x + lock_w/2, lock_y + lock_h * 0.4, math.max(1, math.floor(2 * scale)))
+                love.graphics.rectangle("fill", lock_x + lock_w/2 - math.floor(1 * scale), lock_y + lock_h * 0.4, math.floor(2 * scale), math.floor(5 * scale))
+                
+                -- Lock shackle (arc + vertical lines)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                local shackle_r = math.floor(7 * scale)
+                local shackle_cy = lock_y - math.floor(1 * scale)
+                love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
+                love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
+                love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
+                love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
+            end
+
+            -- Name & Desc
+            local text_x = icon_x + icon_s + math.floor(15 * scale)
+            love.graphics.setColor(isUnlocked and ui_text or dark_text)
+            love.graphics.setFont(font_label)
+            love.graphics.print(ach.name, text_x, current_y + math.floor(12 * scale))
+            
+            love.graphics.setFont(font_help_label)
+            if isUnlocked then
+                love.graphics.setColor(ui_text[1]*0.8, ui_text[2]*0.8, ui_text[3]*0.8)
+            else
+                love.graphics.setColor(dark_text[1]*0.7, dark_text[2]*0.7, dark_text[3]*0.7)
+            end
+            love.graphics.print(ach.desc, text_x, current_y + math.floor(42 * scale))
+            
+            -- Reward Tag
+            love.graphics.setFont(font_help_label)
+            local rew_text = "Unlocks: " .. ach.reward
+            local rw = font_help_label:getWidth(rew_text)
+            local tag_x = w - padding - rw - math.floor(25 * scale)
+            local tag_y = current_y + math.floor(22 * scale)
+            
+            -- Tag background
+            if isUnlocked then
+                love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 0.2)
+            else
+                love.graphics.setColor(0, 0, 0, 0.2)
+            end
+            roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_help_label:getHeight() + math.floor(8 * scale), math.floor(6 * scale))
+            
+            love.graphics.setColor(isUnlocked and super_tile_color or dark_text)
+            love.graphics.print(rew_text, tag_x, tag_y)
+
+            current_y = current_y + item_h
+        end
+    end
+
+    love.graphics.setScissor()
+
+    -- Footer bar
+    local badge_h = math.floor(28 * scale)
+    local hy = h - badge_h - math.floor(10 * scale)
+
+    -- Back button hint (left side)
+    love.graphics.setFont(font_help_label)
+    local back_text = "Back"
+    drawKeyBadge("B", padding, hy, math.floor(28 * scale), badge_h)
+    love.graphics.setColor(ui_text)
+    love.graphics.print(back_text, padding + math.floor(34 * scale), hy + (badge_h - font_help_label:getHeight()) / 2 - math.floor(2 * scale))
+
+    -- Theme button hint (right side)
+    local lbl_text = "Theme"
+    local lbl_w = font_help_label:getWidth(lbl_text)
+    local key_w = math.floor(28 * scale)
+    local theme_x = w - lbl_w - key_w - math.floor(24 * scale)
+    drawKeyBadge("Y", theme_x, hy, key_w, badge_h)
+    love.graphics.setColor(ui_text)
+    love.graphics.print(lbl_text, theme_x + key_w + math.floor(4 * scale), hy + (badge_h - font_help_label:getHeight()) / 2 - math.floor(2 * scale))
+
+    -- Theme transition overlay
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
 end
 
 return renderer

@@ -93,6 +93,10 @@ function Game.new(mode)
             _G.theme = savedState.theme
         end
     end
+    -- Trigger "First Steps" achievement
+    if _G.unlockAchievement then
+        _G.unlockAchievement("ach_first_game")
+    end
 
     return self
 end
@@ -247,8 +251,24 @@ function Game:move(direction)
 
                     -- Check for win (2048 tile!)
                     if merged.value == 2048 and self.state == Game.STATE_PLAYING then
-                        self.state = Game.STATE_WON
                         self.won = true
+                        self.state = Game.STATE_WON
+                    end
+                    
+                    if merged.value >= 2048 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_2048")
+                    end
+                    
+                    if merged.value >= 512 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_merge_512")
+                    end
+
+                    if merged.value >= 1024 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_merge_1024")
+                    end
+                    
+                    if self.mode == "plus" and merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_untouchable")
                     end
 
                     moved = true
@@ -270,7 +290,17 @@ function Game:move(direction)
         self.canUndo = true
         self:addRandomTile()
         self.animationTimer = self.animationDuration
-
+        if _G.achievements.powerups_used_this_run == nil then
+            _G.achievements.powerups_used_this_run = 0
+        end
+        if _G.unlockAchievement then
+            if self.score >= 1000 then _G.unlockAchievement("ach_score_1k") end
+            if self.score >= 2000 then _G.unlockAchievement("ach_score_2k") end
+            if self.score >= 5000 then _G.unlockAchievement("ach_score_5k") end
+            if self.score >= 7500 then _G.unlockAchievement("ach_score_7k") end
+            if self.score >= 10000 then _G.unlockAchievement("ach_score_10k") end
+        end
+        self:saveGameState()
         -- Check for loss
         if not self:movesAvailable() then
             self.state = Game.STATE_LOST
@@ -312,6 +342,9 @@ function Game:undo()
         if self.mode == "plus" then
             if self.powerups.undo <= 0 then return end
             self.powerups.undo = self.powerups.undo - 1
+            if _G.achievements.powerups_used_this_run then
+                _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
+            end
         end
 
         -- Snapshot the current tiles before restoring the old grid
@@ -469,6 +502,22 @@ function Game:confirmTarget()
 
             self.grid.cells[cx][cy] = nil
             self.powerups.bomb = self.powerups.bomb - 1
+            
+            if _G.achievements.bombs_used then
+                _G.achievements.bombs_used = _G.achievements.bombs_used + 1
+                if _G.unlockAchievement then
+                    if _G.achievements.bombs_used >= 1 then
+                        _G.unlockAchievement("ach_first_bomb")
+                    end
+                    if _G.achievements.bombs_used >= 10 then
+                        _G.unlockAchievement("ach_demolition")
+                    end
+                end
+            end
+            if _G.achievements.powerups_used_this_run then
+                _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
+            end
+
             self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
             self:saveGameState()
         end
@@ -508,6 +557,11 @@ function Game:confirmTarget()
 
             self.powerups.swap = self.powerups.swap - 1
             self.swapTarget = nil
+            
+            if _G.achievements.powerups_used_this_run then
+                _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
+            end
+
             self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
             self:saveGameState()
         else

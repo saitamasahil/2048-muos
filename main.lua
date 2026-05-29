@@ -43,10 +43,74 @@ function love.load(args)
     _G.WORK_DIR = love.filesystem.getWorkingDirectory() or "."
     save.init(_G.WORK_DIR .. "/static")
 
-    -- Load theme early for renderer and splash screen
-    local savedState = save.loadState()
-    if savedState and savedState.theme then
-        _G.theme = savedState.theme
+    -- Load achievements
+    local loadedAchievements = save.loadAchievements()
+    if loadedAchievements then
+        -- Merge loaded achievements to avoid overwriting new ones in future updates
+        for k, v in pairs(loadedAchievements) do
+            _G.achievements[k] = v
+        end
+    end
+    -- Rebuild unlocked themes based on loaded achievements
+    _G.unlocked_themes = {"light", "dark"}
+    if _G.achievements.ach_first_game then table.insert(_G.unlocked_themes, "ocean") end
+    if _G.achievements.ach_score_1k then table.insert(_G.unlocked_themes, "forest") end
+    if _G.achievements.ach_score_5k then table.insert(_G.unlocked_themes, "sunset") end
+    if _G.achievements.ach_merge_512 then table.insert(_G.unlocked_themes, "candy") end
+    if _G.achievements.ach_2048 then table.insert(_G.unlocked_themes, "oled") end
+    if _G.achievements.ach_score_10k then table.insert(_G.unlocked_themes, "neon") end
+    if _G.achievements.ach_demolition then table.insert(_G.unlocked_themes, "retro") end
+    if _G.achievements.ach_untouchable then table.insert(_G.unlocked_themes, "peach") end
+    if _G.achievements.ach_merge_1024 then table.insert(_G.unlocked_themes, "midnight") end
+    if _G.achievements.ach_score_2k then table.insert(_G.unlocked_themes, "volcano") end
+    if _G.achievements.ach_score_7k then table.insert(_G.unlocked_themes, "abyss") end
+    if _G.achievements.ach_first_bomb then table.insert(_G.unlocked_themes, "eclipse") end
+
+    function _G.unlockAchievement(id)
+        if not _G.achievements[id] then
+            _G.achievements[id] = true
+            save.saveAchievements(_G.achievements)
+            
+            local theme_map = {
+                ach_first_game = "ocean",
+                ach_score_1k = "forest",
+                ach_score_5k = "sunset",
+                ach_merge_512 = "candy",
+                ach_2048 = "oled",
+                ach_score_10k = "neon",
+                ach_demolition = "retro",
+                ach_untouchable = "peach",
+                ach_merge_1024 = "midnight",
+                ach_score_2k = "volcano",
+                ach_score_7k = "abyss",
+                ach_first_bomb = "eclipse"
+            }
+            if theme_map[id] then
+                table.insert(_G.unlocked_themes, theme_map[id])
+            end
+            
+            local names = {
+                ach_first_game = "First Steps",
+                ach_score_1k = "Getting Started",
+                ach_score_5k = "Rising Star",
+                ach_merge_512 = "Half Way There",
+                ach_2048 = "2048 Master",
+                ach_score_10k = "High Roller",
+                ach_demolition = "Demolition Expert",
+                ach_untouchable = "Untouchable",
+                ach_merge_1024 = "Almost There",
+                ach_score_2k = "Gaining Momentum",
+                ach_score_7k = "High Scorer",
+                ach_first_bomb = "Boom!"
+            }
+            renderer.showToast("Unlocked: " .. (names[id] or id) .. "!")
+        end
+    end
+
+    -- Load theme from dedicated file
+    local savedTheme = save.loadTheme()
+    if savedTheme then
+        _G.theme = savedTheme
     end
     -- Crucially apply the loaded theme to the renderer NOW
     renderer.applyTheme()
@@ -73,6 +137,17 @@ function love.update(dt)
 
     -- Update timer system (drives splash animations)
     timer.update(dt)
+
+    -- Smooth scroll interpolation for achievements
+    if _G.achievements_scroll == nil then _G.achievements_scroll = 0 end
+    if _G.achievements_scroll_target == nil then _G.achievements_scroll_target = 0 end
+    if _G.achievements_scroll ~= _G.achievements_scroll_target then
+        local diff = _G.achievements_scroll_target - _G.achievements_scroll
+        _G.achievements_scroll = _G.achievements_scroll + diff * 15 * dt
+        if math.abs(_G.achievements_scroll - _G.achievements_scroll_target) < 0.01 then
+            _G.achievements_scroll = _G.achievements_scroll_target
+        end
+    end
 
     -- Don't process game input during splash
     if not splash.finished then
@@ -101,20 +176,31 @@ function love.update(dt)
         if event == input.events.Y then
             if _G.appState == "MENU" then
                 renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection, true) end)
+            elseif _G.appState == "ACHIEVEMENTS" then
+                renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
             else
                 renderer.startThemeTransition(game)
             end
-            _G.theme = _G.theme == "light" and "dark" or "light"
+            local current_idx = 1
+            for i, t in ipairs(_G.unlocked_themes) do
+                if t == _G.theme then
+                    current_idx = i
+                    break
+                end
+            end
+            local next_idx = (current_idx % #_G.unlocked_themes) + 1
+            _G.theme = _G.unlocked_themes[next_idx]
             renderer.applyTheme()
+            save.saveTheme(_G.theme)
             if game then game:saveGameState() end
             return
         end
 
         if _G.appState == "MENU" then
             if event == input.events.UP then
-                menuSelection = menuSelection > 1 and (menuSelection - 1) or 3
+                menuSelection = menuSelection > 1 and (menuSelection - 1) or 4
             elseif event == input.events.DOWN then
-                menuSelection = menuSelection < 3 and (menuSelection + 1) or 1
+                menuSelection = menuSelection < 4 and (menuSelection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if menuSelection == 1 then
                     _G.appState = "GAME"
@@ -123,8 +209,31 @@ function love.update(dt)
                     _G.appState = "GAME"
                     game = Game.new("plus")
                 elseif menuSelection == 3 then
+                    _G.appState = "ACHIEVEMENTS"
+                elseif menuSelection == 4 then
                     love.event.quit()
                 end
+            end
+            return
+        elseif _G.appState == "ACHIEVEMENTS" then
+            if event == input.events.BACK then
+                _G.appState = "MENU"
+                _G.achievements_scroll = 0
+                _G.achievements_scroll_target = 0
+            elseif event == input.events.UP then
+                _G.achievements_scroll_target = math.max(0, (_G.achievements_scroll_target or 0) - 1)
+            elseif event == input.events.DOWN then
+                -- 8 achievements total, allow scrolling only if items overflow visible area
+                local w, h = love.graphics.getDimensions()
+                local scale = _G.scale
+                local item_h = math.floor(85 * scale)
+                local header_h = math.floor(90 * scale)
+                local footer_h = math.floor(55 * scale)
+                local visible_area = h - header_h - footer_h
+                local total_items = 12
+                local total_height = total_items * item_h
+                local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h) + 1)
+                _G.achievements_scroll_target = math.min(max_scroll, (_G.achievements_scroll_target or 0) + 1)
             end
             return
         end
@@ -211,6 +320,8 @@ function love.draw()
         splash.draw()
     elseif _G.appState == "MENU" then
         renderer.drawMainMenu(menuSelection)
+    elseif _G.appState == "ACHIEVEMENTS" then
+        renderer.drawAchievements(_G.achievements_scroll or 0)
     else
         renderer.draw(game)
     end

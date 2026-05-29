@@ -46,5 +46,32 @@ end
 -- Working directory (set after love.load)
 _G.WORK_DIR = ""
 
--- Current visual theme (light / dark)
+-- Current visual theme (light / dark / oled / neon / retro / peach / ocean / forest / sunset / candy)
 _G.theme = "light"
+
+-- Achievements and Unlockables
+_G.achievements = {
+    -- Simple achievements (color-only themes, no custom tiles)
+    ach_first_game = false,  -- First Steps -> unlocks 'ocean'
+    ach_score_1k = false,    -- Getting Started -> unlocks 'forest'
+    ach_score_5k = false,    -- Rising Star -> unlocks 'sunset'
+    ach_merge_512 = false,   -- Half Way There -> unlocks 'candy'
+    
+    -- Premium achievements (full custom tile themes)
+    ach_2048 = false,        -- 2048 Master -> unlocks 'oled'
+    ach_score_10k = false,   -- High Roller -> unlocks 'neon'
+    ach_demolition = false,  -- Demolition Expert (10 bombs used) -> unlocks 'retro'
+    ach_untouchable = false, -- Untouchable (1024 without powerups) -> unlocks 'peach'
+    
+    -- Dark simple achievements (color-only dark themes)
+    ach_merge_1024 = false,  -- Almost There -> unlocks 'midnight'
+    ach_score_2k = false,    -- Gaining Momentum -> unlocks 'volcano'
+    ach_score_7k = false,    -- High Scorer -> unlocks 'abyss'
+    ach_first_bomb = false,  -- Boom! -> unlocks 'eclipse'
+    
+    -- Hidden tracking stats
+    bombs_used = 0,
+    powerups_used_this_run = 0
+}
+
+_G.unlocked_themes = {"light", "dark"}
