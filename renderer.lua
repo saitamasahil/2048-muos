@@ -750,8 +750,8 @@ function renderer.init()
     font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
     font_score      = love.graphics.newFont(font_path, math.floor(20 * scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale))
-    font_main_menu_title = love.graphics.newFont(font_path, math.floor(96 * scale))
-    font_cheats_title = love.graphics.newFont(font_path, math.floor(54 * scale))
+    font_main_menu_title = love.graphics.newFont(font_path, math.floor(120 * scale))
+    font_cheats_title = love.graphics.newFont(font_path, math.floor(64 * scale))
     font_label      = love.graphics.newFont(font_path, math.floor(16 * scale))
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale))
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale))
@@ -1736,7 +1736,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     local title = "2048"
     local tw = font_main_menu_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.08)
+    love.graphics.print(title, (w - tw) / 2, h * 0.02)
     
     local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", "Quit"}
     if _G.cheats_unlocked then
@@ -1812,7 +1812,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     local title = "Cheats Menu"
     local tw = font_cheats_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.10)
+    love.graphics.print(title, (w - tw) / 2, h * 0.04)
 
 
 
