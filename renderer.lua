@@ -683,6 +683,8 @@ local font_tile_small
 local font_tile_tiny   -- for 5+ digit numbers
 local font_score
 local font_title
+local font_main_menu_title
+local font_cheats_title
 local font_label
 local font_message
 local font_help_key
@@ -744,7 +746,8 @@ function renderer.init()
     font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
     font_score      = love.graphics.newFont(font_path, math.floor(20 * scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale))
-    font_main_menu_title = love.graphics.newFont(font_path, math.floor(72 * scale))
+    font_main_menu_title = love.graphics.newFont(font_path, math.floor(96 * scale))
+    font_cheats_title = love.graphics.newFont(font_path, math.floor(54 * scale))
     font_label      = love.graphics.newFont(font_path, math.floor(16 * scale))
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale))
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale))
@@ -1718,13 +1721,13 @@ function renderer.drawMainMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     local title = "2048"
     local tw = font_main_menu_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.15)
+    love.graphics.print(title, (w - tw) / 2, h * 0.08)
     
     local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", "Quit"}
     if _G.cheats_unlocked then
         table.insert(options, 5, "Cheats")
     end
-    local start_y = h * 0.45
+    local start_y = h * 0.35
     local gap = math.floor(40 * scale)
 
     love.graphics.setFont(font_message)
@@ -1777,11 +1780,11 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
 
-    love.graphics.setFont(font_title)
+    love.graphics.setFont(font_cheats_title)
     love.graphics.setColor(ui_text)
     local title = "Cheats Menu"
-    local tw = font_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.2)
+    local tw = font_cheats_title:getWidth(title)
+    love.graphics.print(title, (w - tw) / 2, h * 0.10)
 
 
 
@@ -1794,7 +1797,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Debug: Two 1024 Tiles: " .. (_G.cheat_two_1024s and "ON" or "OFF"),
         "Back"
     }
-    local start_y = h * 0.35
+    local start_y = h * 0.28
     local gap = math.floor(40 * scale)
 
     love.graphics.setFont(font_message)
