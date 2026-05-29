@@ -601,6 +601,7 @@ function Game:confirmTarget()
             if _G.achievements.powerups_used_this_run then
                 _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
             end
+            save.saveAchievements(_G.achievements)
 
             self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
             self:saveGameState()
@@ -645,6 +646,7 @@ function Game:confirmTarget()
             if _G.achievements.powerups_used_this_run then
                 _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
             end
+            save.saveAchievements(_G.achievements)
 
             self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
             self:saveGameState()
