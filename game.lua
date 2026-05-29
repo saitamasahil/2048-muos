@@ -134,6 +134,18 @@ function Game:addStartTiles()
         return
     end
 
+    if _G.cheat_two_1024s then
+        _G.cheat_two_1024s = false
+        local tile1 = Tile.new(1, 1, 1024)
+        tile1.isNew = true
+        self.grid:insertTile(tile1)
+        
+        local tile2 = Tile.new(2, 1, 1024)
+        tile2.isNew = true
+        self.grid:insertTile(tile2)
+        return
+    end
+
     local starting_tiles = 2
     
     if self.mode == "classic" and _G.cheat_start_1024_classic then
