@@ -21,7 +21,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
 - **Accurate Aesthetics**: Uses the exact color palette, typography, and smooth slide/merge animations from the beloved Android version, complete with an elegant glowing win animation.
 - **Standalone Package**: Bundled as a standard `.muxapp` package for effortless installation on muOS with dynamic UI scaling for different resolutions.
 
-*Note: This isn't a Konami game, so the classic Konami Code definitely shouldn't do anything here... right?*
+*Note: Perhaps a well-known secret sequence of buttons might reveal something special...?*
 
 ## Installation on muOS
 
