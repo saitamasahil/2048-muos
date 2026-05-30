@@ -1894,7 +1894,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     love.graphics.print(title, (w - tw) / 2, math.floor(-25 * scale))
     
     local text_size_lbl = "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal")
-    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", text_size_lbl, "Quit"}
+    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", text_size_lbl, "About", "Quit"}
     if _G.cheats_unlocked then
         table.insert(options, 5, "Cheats")
     end
@@ -2297,6 +2297,93 @@ function renderer.drawAchievements(scroll, skip_transition)
         love.graphics.draw(transition_canvas, 0, 0)
         love.graphics.setStencilTest()
     end
+end
+
+-- ============================================================================
+-- About Screen
+-- ============================================================================
+local qr_image
+function renderer.drawAbout(skip_transition)
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+    local padding = math.floor(20 * scale)
+
+    love.graphics.setFont(font_title)
+    love.graphics.setColor(ui_text)
+    local title = "About 2048"
+    local tw = font_title:getWidth(title)
+    love.graphics.print(title, (w - tw) / 2, padding)
+
+    local start_y = padding + font_title:getHeight() + math.floor(20 * scale)
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text)
+
+    local text = "Developed by saitamasahil for muOS.\n" ..
+                 "A port of the classic 2048 puzzle game.\n\n" ..
+                 "If you enjoy the game, consider supporting!"
+
+    local text_w = font_help_label:getWidth("Developed by saitamasahil for muOS.")
+    love.graphics.printf(text, 0, start_y, w, "center")
+
+    if not qr_image then
+        local success, img = pcall(love.graphics.newImage, "assets/kofi_qr.png")
+        if success then qr_image = img end
+    end
+
+    if qr_image then
+        local iw, ih = qr_image:getDimensions()
+        local qr_size = math.floor(160 * scale)
+        local qr_scale = qr_size / math.max(iw, ih)
+        local scaled_w = iw * qr_scale
+        local scaled_h = ih * qr_scale
+
+        -- Calculate position
+        local _, wrapped = font_help_label:getWrap(text, w)
+        local qr_y = start_y + #wrapped * font_help_label:getHeight() + math.floor(30 * scale)
+        local qr_x = (w - scaled_w) / 2
+
+        -- Draw white background behind QR
+        local bg_pad = math.floor(6 * scale)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("fill", qr_x - bg_pad, qr_y - bg_pad, scaled_w + bg_pad * 2, scaled_h + bg_pad * 2, math.floor(4 * scale), math.floor(4 * scale))
+
+        -- Draw QR
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(qr_image, qr_x, qr_y, 0, qr_scale, qr_scale)
+        
+        -- Caption
+        love.graphics.setFont(font_help_label)
+        love.graphics.setColor(ui_text)
+        love.graphics.printf("Scan to support on Ko-fi", 0, qr_y + scaled_h + math.floor(10 * scale), w, "center")
+    end
+
+    -- Draw back hint
+    local badge_h = math.floor(28 * scale)
+    local hy = h - badge_h - math.floor(20 * scale)
+    
+    love.graphics.setFont(font_help_label)
+    local lbl_text = "Back"
+    local lbl_w = font_help_label:getWidth(lbl_text)
+    local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth("B") + math.floor(12 * scale))
+    local total_w = key_w + math.floor(4 * scale) + lbl_w
+    local start_x = (w - total_w) / 2
+
+    drawKeyBadge("B", start_x, hy, key_w, badge_h)
+    love.graphics.setColor(ui_text)
+    love.graphics.print(lbl_text, start_x + key_w + math.floor(4 * scale), hy + (badge_h - font_help_label:getHeight()) / 2)
+
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
+
+    drawToast()
 end
 
 return renderer

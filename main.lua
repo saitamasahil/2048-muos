@@ -209,6 +209,8 @@ function love.update(dt)
                 renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
             elseif _G.appState == "TUTORIAL" then
                 renderer.startThemeTransition(function() renderer.drawTutorial(_G.tutorial_page or 1, true) end)
+            elseif _G.appState == "ABOUT" then
+                renderer.startThemeTransition(function() renderer.drawAbout(true) end)
             else
                 renderer.startThemeTransition(game)
             end
@@ -253,7 +255,7 @@ function love.update(dt)
                 end
             end
             
-            local max_menu = _G.cheats_unlocked and 7 or 6
+            local max_menu = _G.cheats_unlocked and 8 or 7
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
@@ -286,6 +288,8 @@ function love.update(dt)
                             save.saveTextSize(_G.text_size)
                             renderer.init()
                         elseif menuSelection == 7 then
+                            _G.appState = "ABOUT"
+                        elseif menuSelection == 8 then
                             love.event.quit()
                         end
                     else
@@ -294,6 +298,8 @@ function love.update(dt)
                             save.saveTextSize(_G.text_size)
                             renderer.init()
                         elseif menuSelection == 6 then
+                            _G.appState = "ABOUT"
+                        elseif menuSelection == 7 then
                             love.event.quit()
                         end
                     end
@@ -321,6 +327,11 @@ function love.update(dt)
                 if (_G.tutorial_page or 1) > 1 then
                     _G.tutorial_page = _G.tutorial_page - 1
                 end
+            end
+            return
+        elseif _G.appState == "ABOUT" then
+            if event == input.events.BACK or event == input.events.CONFIRM then
+                _G.appState = "MENU"
             end
             return
         elseif _G.appState == "ACHIEVEMENTS" then
@@ -484,6 +495,8 @@ function love.draw()
         renderer.drawMainMenu(menuSelection)
     elseif _G.appState == "TUTORIAL" then
         renderer.drawTutorial(_G.tutorial_page or 1)
+    elseif _G.appState == "ABOUT" then
+        renderer.drawAbout()
     elseif _G.appState == "CHEATS_MENU" then
         renderer.drawCheatsMenu(_G.cheats_selection or 1)
     elseif _G.appState == "ACHIEVEMENTS" then
