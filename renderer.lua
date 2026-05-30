@@ -1969,9 +1969,15 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     local title = "Cheats Menu"
     local tw = font_cheats_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.04)
+    local title_y = h * 0.04
+    love.graphics.print(title, (w - tw) / 2, title_y)
 
-
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+    local subtitle = "Cheats will reset when you quit the game"
+    local sw = font_help_label:getWidth(subtitle)
+    local subtitle_y = title_y + font_cheats_title:getHeight() + math.floor(5 * scale)
+    love.graphics.print(subtitle, (w - sw) / 2, subtitle_y)
 
     local options = {
         "Unlock All Themes",
@@ -1980,6 +1986,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Start with 1024 (Plus Mode): " .. (_G.cheat_start_1024_plus and "ON" or "OFF"),
         "Debug: Test All Tiles: " .. (_G.cheat_test_tiles and "ON" or "OFF"),
         "Debug: Two 1024 Tiles: " .. (_G.cheat_two_1024s and "ON" or "OFF"),
+        "Lock Cheats",
         "Back"
     }
     local start_y = h * 0.28
@@ -2011,14 +2018,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         end
         love.graphics.print(opt, block_x, oy)
     end
-
-    love.graphics.setFont(font_help_label)
-    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-    local subtitle = "Cheats are only active for the current session"
-    local sw = font_help_label:getWidth(subtitle)
-    local subtitle_y = start_y + (#options * gap) + math.floor(10 * scale)
-    love.graphics.print(subtitle, (w - sw) / 2, subtitle_y)
-
+    
     if not skip_transition and transition_timer > 0 and transition_canvas then
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)

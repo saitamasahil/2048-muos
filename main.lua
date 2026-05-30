@@ -359,9 +359,9 @@ function love.update(dt)
             if event == input.events.BACK then
                 _G.appState = "MENU"
             elseif event == input.events.UP then
-                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 7
+                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 8
             elseif event == input.events.DOWN then
-                _G.cheats_selection = _G.cheats_selection < 7 and (_G.cheats_selection + 1) or 1
+                _G.cheats_selection = _G.cheats_selection < 8 and (_G.cheats_selection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if _G.cheats_selection == 1 then
                     local all_themes = {"ocean", "forest", "sunset", "candy", "oled", "neon", "retro", "peach", "midnight", "volcano", "abyss", "eclipse", "cyberpunk", "matrix", "vaporwave", "dracula", "gold", "matcha"}
@@ -405,6 +405,11 @@ function love.update(dt)
                         renderer.showToast("Two 1024 Tiles is OFF.")
                     end
                 elseif _G.cheats_selection == 7 then
+                    _G.cheats_unlocked = false
+                    save.saveCheats(false)
+                    _G.appState = "MENU"
+                    renderer.showToast("Cheats Locked. Enter the code to unlock again.", 4.0)
+                elseif _G.cheats_selection == 8 then
                     _G.appState = "MENU"
                 end
             end
