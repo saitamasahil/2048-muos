@@ -18,6 +18,16 @@ _G.cheats_unlocked = false
 local konami_sequence = { "up", "up", "down", "down", "left", "right", "left", "right", "backspace", "return", "space" }
 local konami_progress = 1
 
+local transition_delay_timer = 0
+local transition_delay_action = nil
+local transition_delay_key = nil
+
+local function queueTransitionAction(key, delay, action)
+    transition_delay_key = key
+    transition_delay_timer = 0.12 -- Extended visual hold duration for a satisfying physical button click
+    transition_delay_action = action
+end
+
 function love.load(args)
     love.math.setRandomSeed(os.time())
 
@@ -165,6 +175,32 @@ function love.update(dt)
     -- Update timer system (drives splash animations)
     timer.update(dt)
 
+    -- Handle visual transition delays to show key badge animations
+    if transition_delay_timer > 0 then
+        transition_delay_timer = transition_delay_timer - dt
+        if transition_delay_key then
+            input.state[transition_delay_key] = true
+        end
+        if transition_delay_timer <= 0 then
+            transition_delay_timer = 0
+            if transition_delay_key then
+                input.state[transition_delay_key] = false
+                transition_delay_key = nil
+            end
+            if transition_delay_action then
+                local action = transition_delay_action
+                transition_delay_action = nil
+                action()
+            end
+        end
+        if game then
+            game:update(dt)
+        end
+        renderer.updateTransition(dt)
+        input.update(dt)
+        return
+    end
+
     -- Smooth scroll interpolation for achievements
     if _G.achievements_scroll == nil then _G.achievements_scroll = 0 end
     if _G.achievements_scroll_target == nil then _G.achievements_scroll_target = 0 end
@@ -201,31 +237,33 @@ function love.update(dt)
     -- Process input events
     input.processEvents(function(event)
         if event == input.events.Y then
-            if _G.appState == "MENU" then
-                renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection, true) end)
-            elseif _G.appState == "CHEATS_MENU" then
-                renderer.startThemeTransition(function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end)
-            elseif _G.appState == "ACHIEVEMENTS" then
-                renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
-            elseif _G.appState == "TUTORIAL" then
-                renderer.startThemeTransition(function() renderer.drawTutorial(_G.tutorial_page or 1, true) end)
-            elseif _G.appState == "ABOUT" then
-                renderer.startThemeTransition(function() renderer.drawAbout(true) end)
-            else
-                renderer.startThemeTransition(game)
-            end
-            local current_idx = 1
-            for i, t in ipairs(_G.unlocked_themes) do
-                if t == _G.theme then
-                    current_idx = i
-                    break
+            queueTransitionAction(event, 0.08, function()
+                if _G.appState == "MENU" then
+                    renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection, true) end)
+                elseif _G.appState == "CHEATS_MENU" then
+                    renderer.startThemeTransition(function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end)
+                elseif _G.appState == "ACHIEVEMENTS" then
+                    renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
+                elseif _G.appState == "TUTORIAL" then
+                    renderer.startThemeTransition(function() renderer.drawTutorial(_G.tutorial_page or 1, true) end)
+                elseif _G.appState == "ABOUT" then
+                    renderer.startThemeTransition(function() renderer.drawAbout(true) end)
+                else
+                    renderer.startThemeTransition(game)
                 end
-            end
-            local next_idx = (current_idx % #_G.unlocked_themes) + 1
-            _G.theme = _G.unlocked_themes[next_idx]
-            renderer.applyTheme()
-            save.saveTheme(_G.theme)
-            if game then game:saveGameState() end
+                local current_idx = 1
+                for i, t in ipairs(_G.unlocked_themes) do
+                    if t == _G.theme then
+                        current_idx = i
+                        break
+                    end
+                end
+                local next_idx = (current_idx % #_G.unlocked_themes) + 1
+                _G.theme = _G.unlocked_themes[next_idx]
+                renderer.applyTheme()
+                save.saveTheme(_G.theme)
+                if game then game:saveGameState() end
+            end)
             return
         end
 
@@ -261,49 +299,51 @@ function love.update(dt)
             elseif event == input.events.DOWN then
                 menuSelection = menuSelection < max_menu and (menuSelection + 1) or 1
             elseif event == input.events.CONFIRM then
-                if menuSelection == 1 then
-                    _G.appState = "GAME"
-                    game = Game.new("classic")
-                elseif menuSelection == 2 then
-                    _G.appState = "GAME"
-                    game = Game.new("plus")
-                elseif menuSelection == 3 then
-                    _G.appState = "ACHIEVEMENTS"
-                elseif menuSelection == 4 then
-                    _G.appState = "TUTORIAL"
-                    _G.tutorial_page = 1
-                else
-                    if _G.cheats_unlocked then
-                        if menuSelection == 5 then
-                            if not _G.achievements.ach_secret_ascii then
-                                _G.achievements.ach_secret_ascii = true
-                                table.insert(_G.unlocked_themes, "ascii")
-                                save.saveAchievements(_G.achievements)
-                                renderer.showToast("Beep Boop! Cheater detected! Enjoy your punishment: the super-retro ASCII Art Theme!", 4.0)
-                            end
-                            _G.appState = "CHEATS_MENU"
-                            _G.cheats_selection = 1
-                        elseif menuSelection == 6 then
-                            _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                            save.saveTextSize(_G.text_size)
-                            renderer.init()
-                        elseif menuSelection == 7 then
-                            _G.appState = "ABOUT"
-                        elseif menuSelection == 8 then
-                            love.event.quit()
-                        end
+                queueTransitionAction(event, 0.08, function()
+                    if menuSelection == 1 then
+                        _G.appState = "GAME"
+                        game = Game.new("classic")
+                    elseif menuSelection == 2 then
+                        _G.appState = "GAME"
+                        game = Game.new("plus")
+                    elseif menuSelection == 3 then
+                        _G.appState = "ACHIEVEMENTS"
+                    elseif menuSelection == 4 then
+                        _G.appState = "TUTORIAL"
+                        _G.tutorial_page = 1
                     else
-                        if menuSelection == 5 then
-                            _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                            save.saveTextSize(_G.text_size)
-                            renderer.init()
-                        elseif menuSelection == 6 then
-                            _G.appState = "ABOUT"
-                        elseif menuSelection == 7 then
-                            love.event.quit()
+                        if _G.cheats_unlocked then
+                            if menuSelection == 5 then
+                                if not _G.achievements.ach_secret_ascii then
+                                    _G.achievements.ach_secret_ascii = true
+                                    table.insert(_G.unlocked_themes, "ascii")
+                                    save.saveAchievements(_G.achievements)
+                                    renderer.showToast("Beep Boop! Cheater detected! Enjoy your punishment: the super-retro ASCII Art Theme!", 4.0)
+                                end
+                                _G.appState = "CHEATS_MENU"
+                                _G.cheats_selection = 1
+                            elseif menuSelection == 6 then
+                                _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                                save.saveTextSize(_G.text_size)
+                                renderer.init()
+                            elseif menuSelection == 7 then
+                                _G.appState = "ABOUT"
+                            elseif menuSelection == 8 then
+                                love.event.quit()
+                            end
+                        else
+                            if menuSelection == 5 then
+                                _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                                save.saveTextSize(_G.text_size)
+                                renderer.init()
+                            elseif menuSelection == 6 then
+                                _G.appState = "ABOUT"
+                            elseif menuSelection == 7 then
+                                love.event.quit()
+                            end
                         end
                     end
-                end
+                end)
             end
             return
         elseif _G.appState == "TUTORIAL" then
@@ -311,13 +351,17 @@ function love.update(dt)
                 if (_G.tutorial_page or 1) > 1 then
                     _G.tutorial_page = _G.tutorial_page - 1
                 else
-                    _G.appState = "MENU"
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "MENU"
+                    end)
                 end
             elseif event == input.events.CONFIRM then
                 if (_G.tutorial_page or 1) < 8 then
                     _G.tutorial_page = (_G.tutorial_page or 1) + 1
                 else
-                    _G.appState = "MENU"
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "MENU"
+                    end)
                 end
             elseif event == input.events.RIGHT then
                 if (_G.tutorial_page or 1) < 8 then
@@ -331,14 +375,18 @@ function love.update(dt)
             return
         elseif _G.appState == "ABOUT" then
             if event == input.events.BACK or event == input.events.CONFIRM then
-                _G.appState = "MENU"
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                end)
             end
             return
         elseif _G.appState == "ACHIEVEMENTS" then
             if event == input.events.BACK then
-                _G.appState = "MENU"
-                _G.achievements_scroll = 0
-                _G.achievements_scroll_target = 0
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                    _G.achievements_scroll = 0
+                    _G.achievements_scroll_target = 0
+                end)
             elseif event == input.events.UP then
                 _G.achievements_scroll_target = math.max(0, (_G.achievements_scroll_target or 0) - 1)
             elseif event == input.events.DOWN then
@@ -357,7 +405,9 @@ function love.update(dt)
             return
         elseif _G.appState == "CHEATS_MENU" then
             if event == input.events.BACK then
-                _G.appState = "MENU"
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                end)
             elseif event == input.events.UP then
                 _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 8
             elseif event == input.events.DOWN then
@@ -405,12 +455,16 @@ function love.update(dt)
                         renderer.showToast("Two 1024 Tiles is OFF.")
                     end
                 elseif _G.cheats_selection == 7 then
-                    _G.cheats_unlocked = false
-                    save.saveCheats(false)
-                    _G.appState = "MENU"
-                    renderer.showToast("Cheats Locked. Enter the code to unlock again.", 4.0)
+                    queueTransitionAction(event, 0.08, function()
+                        _G.cheats_unlocked = false
+                        save.saveCheats(false)
+                        _G.appState = "MENU"
+                        renderer.showToast("Cheats Locked. Enter the code to unlock again.", 4.0)
+                    end)
                 elseif _G.cheats_selection == 8 then
-                    _G.appState = "MENU"
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "MENU"
+                    end)
                 end
             end
             return
@@ -463,31 +517,49 @@ function love.update(dt)
                 end
             -- Pause menu (select or start button)
             elseif event == input.events.SELECT or event == input.events.START then
-                game:togglePause()
+                queueTransitionAction(event, 0.08, function()
+                    game:togglePause()
+                end)
             end
         elseif game.state == Game.STATE_PAUSED then
             if event == input.events.CONFIRM then
-                game:restart()
+                queueTransitionAction(event, 0.08, function()
+                    game:restart()
+                end)
             elseif event == input.events.BACK or event == input.events.SELECT or event == input.events.START then
-                game:cancelPause()
+                queueTransitionAction(event, 0.08, function()
+                    game:cancelPause()
+                end)
             elseif event == input.events.X then
-                if game then game:saveGameState() end
-                _G.appState = "MENU"
-                game = nil
+                queueTransitionAction(event, 0.08, function()
+                    if game then game:saveGameState() end
+                    _G.appState = "MENU"
+                    game = nil
+                end)
             end
         elseif game.state == Game.STATE_WON then
             if event == input.events.CONFIRM then
-                game:continueGame()
+                queueTransitionAction(event, 0.08, function()
+                    game:continueGame()
+                end)
             elseif event == input.events.BACK then
-                game:undo()
+                queueTransitionAction(event, 0.08, function()
+                    game:undo()
+                end)
             elseif event == input.events.SELECT then
-                game:restart()
+                queueTransitionAction(event, 0.08, function()
+                    game:restart()
+                end)
             end
         elseif game.state == Game.STATE_LOST then
             if event == input.events.CONFIRM or event == input.events.SELECT then
-                game:restart()
+                queueTransitionAction(event, 0.08, function()
+                    game:restart()
+                end)
             elseif event == input.events.BACK then
-                game:undo()
+                queueTransitionAction(event, 0.08, function()
+                    game:undo()
+                end)
             end
         end
     end)

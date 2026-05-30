@@ -12,6 +12,8 @@ local transition_timer = 0
 local transition_duration = 0.5
 local transition_center_x = 0
 local transition_center_y = 0
+renderer.theme_button_x = nil
+renderer.theme_button_y = nil
 
 -- Menu selection animation state
 local menu_anim_y = nil
@@ -904,7 +906,11 @@ function renderer.drawBoard()
     love.graphics.setColor(board_color)
     roundedRect("fill", bx, by, bs, bs, cr * 2)
 
-    love.graphics.setColor(tile_colors[0])
+    if _G.theme == "ascii" then
+        love.graphics.setColor(board_color)
+    else
+        love.graphics.setColor(tile_colors[0])
+    end
     for col = 1, 4 do
         for row = 1, 4 do
             local cx = bx + cg + (col - 1) * (cs + cg)
@@ -1147,22 +1153,231 @@ end
 -- Draw a key badge (rounded rectangle with text inside)
 -- ============================================================================
 local function drawKeyBadge(text, x, y, w, h)
-    local cr = math.floor(h * 0.3)
     local scale = _G.scale
+    local visual_offset_y = -math.max(1, math.floor(1.5 * scale))
 
-    -- Badge shadow (smooth depth effect)
+    -- Save dynamically tracked coordinates for the Theme Y button
+    if text == "Y" then
+        renderer.theme_button_x = x + w / 2
+        renderer.theme_button_y = y + h / 2
+    end
+
+    -- Determine if this button is currently pressed for visual feedback
+    local is_pressed = false
+    local is_left = false
+    local is_right = false
+    local is_up = false
+    local is_down = false
+
+    local success, Input = pcall(require, "input")
+    if success and Input and Input.state then
+        if text == "DPAD" then
+            is_left = Input.state["left"] == true
+            is_right = Input.state["right"] == true
+            is_up = Input.state["up"] == true
+            is_down = Input.state["down"] == true
+            is_pressed = is_left or is_right or is_up or is_down
+        else
+            if text == "START" then
+                is_pressed = (Input.state["space"] == true) or (Input.state["rshift"] == true)
+            else
+                local mapping = {
+                    A = "return",
+                    B = "backspace",
+                    X = "x",
+                    Y = "y",
+                    L1 = "l1",
+                    R1 = "r1"
+                }
+                local mapped = mapping[text]
+                if mapped then
+                    is_pressed = Input.state[mapped] == true
+                end
+            end
+        end
+    end
+
+    -- Apply tactile button depression shifts
+    local press_shift_y = 0
+    local shadow_shrink = 1.0
+    if is_pressed then
+        press_shift_y = math.max(1, math.floor(1.5 * scale))
+        shadow_shrink = 0.3
+    end
+
+    if text == "DPAD" then
+        local aw = w * 0.32
+        local cr = math.floor(aw * 0.25)
+        
+        if _G.theme == "ascii" then
+            -- Black background cross (shifted by press_shift_y)
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.rectangle("fill", x, y + (h - aw) / 2 + press_shift_y, w, aw)
+            love.graphics.rectangle("fill", x + (w - aw) / 2, y + press_shift_y, aw, h)
+            
+            -- Green outline cross (shifted by press_shift_y)
+            love.graphics.setColor(help_key_color)
+            love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+            love.graphics.rectangle("line", x, y + (h - aw) / 2 + press_shift_y, w, aw)
+            love.graphics.rectangle("line", x + (w - aw) / 2, y + press_shift_y, aw, h)
+            
+            -- Center core circle outline
+            love.graphics.circle("line", x + w/2, y + h/2 + press_shift_y, aw * 0.7)
+
+            -- Draw four small direction dots inside in help_key_text (press-feedback highlights)
+            love.graphics.setColor(help_key_text)
+            local dot_r = math.max(1.2 * scale, 1)
+            local offset = w * 0.35
+            
+            local dot_l = is_left and math.max(2.5 * scale, 2) or dot_r
+            local dot_r_active = is_right and math.max(2.5 * scale, 2) or dot_r
+            local dot_u = is_up and math.max(2.5 * scale, 2) or dot_r
+            local dot_d = is_down and math.max(2.5 * scale, 2) or dot_r
+            
+            love.graphics.circle("fill", x + w/2 - offset, y + h/2 + press_shift_y, dot_l) -- Left
+            love.graphics.circle("fill", x + w/2 + offset, y + h/2 + press_shift_y, dot_r_active) -- Right
+            love.graphics.circle("fill", x + w/2, y + h/2 - offset + press_shift_y, dot_u) -- Up
+            love.graphics.circle("fill", x + w/2, y + h/2 + offset + press_shift_y, dot_d) -- Down
+            return
+        end
+
+        -- D-Pad shadow (shrinks when depressed)
+        love.graphics.setColor(0, 0, 0, 0.2)
+        local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
+        love.graphics.rectangle("fill", x, y + (h - aw) / 2 + sh, w, aw, cr)
+        love.graphics.rectangle("fill", x + (w - aw) / 2, y + sh, aw, h, cr)
+
+        -- D-Pad body (shifted by press_shift_y)
+        love.graphics.setColor(help_key_color)
+        love.graphics.rectangle("fill", x, y + (h - aw) / 2 + press_shift_y, w, aw, cr)
+        love.graphics.rectangle("fill", x + (w - aw) / 2, y + press_shift_y, aw, h, cr)
+        
+        -- Center core circle to blend the intersection
+        love.graphics.circle("fill", x + w/2, y + h/2 + press_shift_y, aw * 0.7)
+
+        -- Draw four small direction dots inside in help_key_text (press-feedback highlights)
+        love.graphics.setColor(help_key_text)
+        local dot_r = math.max(1.2 * scale, 1)
+        local offset = w * 0.35
+        
+        local dot_l = is_left and math.max(2.5 * scale, 2) or dot_r
+        local dot_r_active = is_right and math.max(2.5 * scale, 2) or dot_r
+        local dot_u = is_up and math.max(2.5 * scale, 2) or dot_r
+        local dot_d = is_down and math.max(2.5 * scale, 2) or dot_r
+        
+        love.graphics.circle("fill", x + w/2 - offset, y + h/2 + press_shift_y, dot_l) -- Left
+        love.graphics.circle("fill", x + w/2 + offset, y + h/2 + press_shift_y, dot_r_active) -- Right
+        love.graphics.circle("fill", x + w/2, y + h/2 - offset + press_shift_y, dot_u) -- Up
+        love.graphics.circle("fill", x + w/2, y + h/2 + offset + press_shift_y, dot_d) -- Down
+        return
+    end
+
+    if text == "A" or text == "B" or text == "X" or text == "Y" then
+        local cx, cy = x + w/2, y + h/2
+        local r = h * 0.45
+        
+        if _G.theme == "ascii" then
+            -- Black background circle
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.circle("fill", cx, cy + press_shift_y, r)
+            
+            -- Green outline circle
+            love.graphics.setColor(help_key_color)
+            love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+            love.graphics.circle("line", cx, cy + press_shift_y, r)
+            
+            -- Text letter
+            love.graphics.setFont(font_help_key)
+            love.graphics.setColor(help_key_text)
+            local tw = font_help_key:getWidth(text)
+            local th = font_help_key:getHeight()
+            love.graphics.print(text, cx - tw/2, cy - th/2 + visual_offset_y + press_shift_y)
+            return
+        end
+
+        -- Button shadow (shrinks when depressed)
+        love.graphics.setColor(0, 0, 0, 0.25)
+        local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
+        love.graphics.circle("fill", cx, cy + sh, r)
+        
+        -- Button body (shifted by press_shift_y)
+        love.graphics.setColor(help_key_color)
+        love.graphics.circle("fill", cx, cy + press_shift_y, r)
+        
+        -- Button border
+        love.graphics.setColor(1, 1, 1, 0.15)
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        love.graphics.circle("line", cx, cy + press_shift_y, r)
+        
+        -- Text letter
+        love.graphics.setFont(font_help_key)
+        love.graphics.setColor(help_key_text)
+        local tw = font_help_key:getWidth(text)
+        local th = font_help_key:getHeight()
+        love.graphics.print(text, cx - tw/2, cy - th/2 + visual_offset_y + press_shift_y)
+        return
+    end
+
+    if text == "L1" or text == "R1" or text == "L" or text == "R" then
+        local cr = math.floor(h * 0.4)
+        
+        if _G.theme == "ascii" then
+            -- Black background capsule
+            love.graphics.setColor(0, 0, 0, 1)
+            roundedRect("fill", x, y + press_shift_y, w, h, cr)
+            
+            -- Green outline capsule
+            love.graphics.setColor(help_key_color)
+            love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+            roundedRect("line", x, y + press_shift_y, w, h, cr)
+            
+            -- Text
+            love.graphics.setFont(font_help_key)
+            love.graphics.setColor(help_key_text)
+            local tw = font_help_key:getWidth(text)
+            local th = font_help_key:getHeight()
+            love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2 + visual_offset_y + press_shift_y)
+            return
+        end
+
+        -- Shadow (shrinks when depressed)
+        love.graphics.setColor(0, 0, 0, 0.2)
+        local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
+        roundedRect("fill", x, y + sh, w, h, cr)
+        
+        -- Body (shifted by press_shift_y)
+        love.graphics.setColor(help_key_color)
+        roundedRect("fill", x, y + press_shift_y, w, h, cr)
+        
+        -- Border
+        love.graphics.setColor(1, 1, 1, 0.15)
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        roundedRect("line", x, y + press_shift_y, w, h, cr)
+        
+        -- Text
+        love.graphics.setFont(font_help_key)
+        love.graphics.setColor(help_key_text)
+        local tw = font_help_key:getWidth(text)
+        local th = font_help_key:getHeight()
+        love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2 + visual_offset_y + press_shift_y)
+        return
+    end
+
+    local cr = math.floor(h * 0.3)
+
+    -- Badge shadow (smooth depth effect, shrinks when depressed)
     love.graphics.setColor(0, 0, 0, 0.2)
-    local sh_off = math.max(1, math.floor(2 * scale))
+    local sh_off = math.max(1, math.floor(2 * scale)) * shadow_shrink
     roundedRect("fill", x, y + sh_off, w, h, cr)
 
-    -- Badge background
+    -- Badge background (shifted by press_shift_y)
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", x, y, w, h, cr)
+    roundedRect("fill", x, y + press_shift_y, w, h, cr)
 
     -- Subtle border for a clean, premium feel
     love.graphics.setColor(1, 1, 1, 0.15)
     love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
-    roundedRect("line", x, y, w, h, cr)
+    roundedRect("line", x, y + press_shift_y, w, h, cr)
 
     -- Badge text
     love.graphics.setFont(font_help_key)
@@ -1171,12 +1386,12 @@ local function drawKeyBadge(text, x, y, w, h)
     local th = font_help_key:getHeight()
 
     -- Visual alignment corrections for arrows in ClearSans
-    local offset_x, offset_y = 0, 0
+    local offset_x, offset_y = 0, visual_offset_y + press_shift_y
     if text == "←" then
-        offset_y = -math.floor(2 * scale)
+        offset_y = offset_y - math.floor(2 * scale)
         offset_x = math.floor(1 * scale)
     elseif text == "→" then
-        offset_y = -math.floor(2 * scale)
+        offset_y = offset_y - math.floor(2 * scale)
         offset_x = -math.floor(1 * scale)
     end
 
@@ -1196,12 +1411,7 @@ function renderer.drawHelp(game)
     local hh = layout.help_h
     local cr = math.floor(8 * scale)
 
-    -- Help background bar — solid with subtle border
-    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.45)
-    roundedRect("fill", bar_x, hy, bar_w, hh, cr)
-    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.25)
-    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
-    roundedRect("line", bar_x, hy, bar_w, hh, cr)
+
 
     local badge_h = math.floor(28 * scale)
     local badge_y = hy + (hh - badge_h) / 2
@@ -1210,14 +1420,16 @@ function renderer.drawHelp(game)
 
     -- --- D-PAD section (left side) ---
     local dpad_x = bar_x + math.floor(10 * scale)
-
-    -- Arrow key badges (the 'Move' label has been removed to free up space)
-    local arrow_w = math.floor(30 * scale)
-    local arrows = {"←", "↑", "↓", "→"}
-    for _, arrow in ipairs(arrows) do
-        drawKeyBadge(arrow, dpad_x, badge_y, arrow_w, badge_h)
-        dpad_x = dpad_x + arrow_w + math.floor(4 * scale)
-    end
+    local dpad_size = math.floor(24 * scale)
+    
+    -- Draw unified vector D-pad icon
+    drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+    dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+    
+    -- D-pad Label
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text)
+    love.graphics.print("Move", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
     -- Action buttons (right side) ---
     local right_x = bar_x + bar_w - math.floor(10 * scale)
@@ -1227,9 +1439,14 @@ function renderer.drawHelp(game)
 
     if game.state == Game.STATE_WON then
         table.insert(actions, 1, {key = "A", label = "Continue"})
+        table.insert(actions, 1, {key = "SELECT", label = "Restart"})
         table.insert(actions, 1, {key = "Y", label = "Theme"})
-        if game.mode ~= "plus" then
-            table.insert(actions, 1, {key = "B", label = "Undo"})
+        if game.canUndo then
+            if game.mode == "plus" and game.powerups.undo > 0 then
+                table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
+            elseif game.mode ~= "plus" then
+                table.insert(actions, 1, {key = "B", label = "Undo"})
+            end
         end
     elseif game.state == Game.STATE_LOST then
         table.insert(actions, 1, {key = "A", label = "New Game"})
@@ -1244,13 +1461,13 @@ function renderer.drawHelp(game)
     elseif game.state == Game.STATE_PAUSED then
         table.insert(actions, 1, {key = "A", label = "Restart"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
-        table.insert(actions, 1, {key = "B", label = "Resume"})
+        table.insert(actions, 1, {key = "START", label = "Resume"})
     elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
         table.insert(actions, 1, {key = "A", label = "Confirm"})
         table.insert(actions, 1, {key = "B", label = "Cancel"})
     else
         if game.mode == "plus" then
-            -- Theme is hidden in Plus Mode to prevent overlapping the D-Pad
+            table.insert(actions, 1, {key = "START", label = "Pause"})
             table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
             table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
             table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
@@ -1387,9 +1604,9 @@ function renderer.startThemeTransition(drawTarget)
     love.graphics.setCanvas()
     
     transition_timer = transition_duration
-    -- The Y button is approximately at the bottom right
-    transition_center_x = w - math.floor(90 * _G.scale)
-    transition_center_y = h - math.floor(30 * _G.scale)
+    -- The Y button coordinates are tracked dynamically!
+    transition_center_x = renderer.theme_button_x or (w - math.floor(90 * _G.scale))
+    transition_center_y = renderer.theme_button_y or (h - math.floor(30 * _G.scale))
 end
 
 function renderer.updateTransition(dt)
@@ -1540,7 +1757,11 @@ local function drawMiniBoard(bx, by, board_size, tiles, highlight)
 
             -- Tile background
             local color = getTileColor(val)
-            love.graphics.setColor(color)
+            if _G.theme == "ascii" and val == 0 then
+                love.graphics.setColor(board_color)
+            else
+                love.graphics.setColor(color)
+            end
             roundedRect("fill", cx, cy, cell_size, cell_size, cr)
 
             -- Tile text
@@ -1846,6 +2067,14 @@ function renderer.drawTutorial(page, skip_transition)
     local page_text = page .. "/" .. total_pages
     love.graphics.print(page_text, padding, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
+    -- DPAD on the left
+    local dpad_x = padding + math.floor(45 * scale)
+    local dpad_size = math.floor(24 * scale)
+    drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+    dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+    love.graphics.setColor(ui_text)
+    love.graphics.print("Page", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
     -- Draw actions right-to-left
     local right_x = w - math.floor(10 * scale)
     for _, action in ipairs(actions) do
@@ -1928,20 +2157,43 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.print(opt, block_x, oy)
     end
 
-    -- Draw Theme hint at the bottom right
+    -- Footer bar for Main Menu
     local badge_h = math.floor(28 * scale)
-    local hy = h - badge_h - math.floor(20 * scale)
-    
-    love.graphics.setFont(font_help_label)
-    local lbl_text = "Theme"
-    local lbl_w = font_help_label:getWidth(lbl_text)
-    local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth("Y") + math.floor(12 * scale))
-    local total_w = key_w + math.floor(4 * scale) + lbl_w
-    local start_x = w - total_w - math.floor(20 * scale) -- Align right with 20px padding
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
 
-    drawKeyBadge("Y", start_x, hy, key_w, badge_h)
+    -- DPAD on the left
+    local dpad_x = math.floor(20 * scale)
+    local dpad_size = math.floor(24 * scale)
+    drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+    dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+    love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
-    love.graphics.print(lbl_text, start_x + key_w + math.floor(4 * scale), hy + (badge_h - font_help_label:getHeight()) / 2)
+    love.graphics.print("Navigate", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+    -- Right side actions: A (Select), Y (Theme)
+    local right_x = w - math.floor(20 * scale)
+    local actions = {
+        {key = "A", label = "Select"},
+        {key = "Y", label = "Theme"}
+    }
+    for _, action in ipairs(actions) do
+        -- Label
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(ui_text)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Badge
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+        right_x = right_x - item_gap
+    end
 
     if not skip_transition and transition_timer > 0 and transition_canvas then
         love.graphics.stencil(drawStencilCircle, "replace", 1)
@@ -2016,6 +2268,45 @@ function renderer.drawCheatsMenu(selection, skip_transition)
             love.graphics.setColor(ui_text)
         end
         love.graphics.print(opt, block_x, oy)
+    end
+
+    -- Footer bar for Cheats Menu
+    local badge_h = math.floor(28 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
+
+    -- DPAD on the left
+    local dpad_x = math.floor(20 * scale)
+    local dpad_size = math.floor(24 * scale)
+    drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+    dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text)
+    love.graphics.print("Navigate", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+    -- Right side actions: B (Back), A (Toggle), Y (Theme)
+    local right_x = w - math.floor(20 * scale)
+    local actions = {
+        {key = "B", label = "Back"},
+        {key = "A", label = "Toggle"},
+        {key = "Y", label = "Theme"}
+    }
+    for _, action in ipairs(actions) do
+        -- Label
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(ui_text)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Badge
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+        right_x = right_x - item_gap
     end
     
     if not skip_transition and transition_timer > 0 and transition_canvas then
@@ -2268,25 +2559,43 @@ function renderer.drawAchievements(scroll, skip_transition)
 
     love.graphics.setScissor()
 
-    -- Footer bar
+    -- Footer bar for Achievements
     local badge_h = math.floor(28 * scale)
-    local hy = h - badge_h - math.floor(10 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
 
-    -- Back button hint (left side)
+    -- Left side: DPAD (Scroll)
+    local dpad_x = padding
+    local dpad_size = math.floor(24 * scale)
+    drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+    dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
     love.graphics.setFont(font_help_label)
-    local back_text = "Back"
-    drawKeyBadge("B", padding, hy, math.floor(28 * scale), badge_h)
     love.graphics.setColor(ui_text)
-    love.graphics.print(back_text, padding + math.floor(34 * scale), hy + (badge_h - font_help_label:getHeight()) / 2 - math.floor(2 * scale))
+    love.graphics.print("Scroll", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
-    -- Theme button hint (right side)
-    local lbl_text = "Theme"
-    local lbl_w = font_help_label:getWidth(lbl_text)
-    local key_w = math.floor(28 * scale)
-    local theme_x = w - lbl_w - key_w - math.floor(24 * scale)
-    drawKeyBadge("Y", theme_x, hy, key_w, badge_h)
-    love.graphics.setColor(ui_text)
-    love.graphics.print(lbl_text, theme_x + key_w + math.floor(4 * scale), hy + (badge_h - font_help_label:getHeight()) / 2 - math.floor(2 * scale))
+    -- Right side actions: B (Back), Y (Theme)
+    local right_x = w - padding
+    local actions = {
+        {key = "B", label = "Back"},
+        {key = "Y", label = "Theme"}
+    }
+    for _, action in ipairs(actions) do
+        -- Label
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(ui_text)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Badge
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+        right_x = right_x - item_gap
+    end
 
     -- Theme transition overlay
     if not skip_transition and transition_timer > 0 and transition_canvas then
@@ -2359,20 +2668,34 @@ function renderer.drawAbout(skip_transition)
         love.graphics.printf("Scan to support on Ko-fi", 0, qr_y + scaled_h + math.floor(10 * scale), w, "center")
     end
 
-    -- Draw back hint
+    -- Footer bar for About
     local badge_h = math.floor(28 * scale)
-    local hy = h - badge_h - math.floor(20 * scale)
-    
-    love.graphics.setFont(font_help_label)
-    local lbl_text = "Back"
-    local lbl_w = font_help_label:getWidth(lbl_text)
-    local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth("B") + math.floor(12 * scale))
-    local total_w = key_w + math.floor(4 * scale) + lbl_w
-    local start_x = (w - total_w) / 2
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
 
-    drawKeyBadge("B", start_x, hy, key_w, badge_h)
-    love.graphics.setColor(ui_text)
-    love.graphics.print(lbl_text, start_x + key_w + math.floor(4 * scale), hy + (badge_h - font_help_label:getHeight()) / 2)
+    -- Right side actions: B (Back), Y (Theme)
+    local right_x = w - math.floor(20 * scale)
+    local actions = {
+        {key = "B", label = "Back"},
+        {key = "Y", label = "Theme"}
+    }
+    for _, action in ipairs(actions) do
+        -- Label
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(ui_text)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Badge
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+        right_x = right_x - item_gap
+    end
 
     if not skip_transition and transition_timer > 0 and transition_canvas then
         love.graphics.stencil(drawStencilCircle, "replace", 1)
