@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1] (upcoming)
+
+### Added
+- Tactile button animations: Buttons now physically press down when changing menus or unpausing for satisfying retro click feedback.
+- Complete help footers: Rebuilt the bottom helper bars on all screens to show a complete list of every available control.
+
 ## [2.0.0]
 
 ### Added
