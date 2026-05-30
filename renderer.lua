@@ -1250,7 +1250,6 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "B", label = "Cancel"})
     else
         if game.mode == "plus" then
-            table.insert(actions, 1, {key = "START", label = "Pause"})
             -- Theme is hidden in Plus Mode to prevent overlapping the D-Pad
             table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
             table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
