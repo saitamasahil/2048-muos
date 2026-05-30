@@ -1078,8 +1078,8 @@ function renderer.drawScores(game)
     local bs = layout.board_size
     local scale = _G.scale
 
-    local box_w = math.floor(105 * scale)
-    local box_h = math.floor(48 * scale)
+    local box_w = math.floor((_G.text_size == "large" and 115 or 105) * scale)
+    local box_h = math.floor((_G.text_size == "large" and 56 or 48) * scale)
     local box_gap = math.floor(8 * scale)
     local cr = math.floor(6 * scale)
 
