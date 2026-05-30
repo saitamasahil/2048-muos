@@ -61,6 +61,30 @@ function save.loadTheme()
     return nil
 end
 
+local TEXT_SIZE_FILE = "text_size.dat"
+
+function save.saveTextSize(size)
+    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. TEXT_SIZE_FILE) or TEXT_SIZE_FILE
+    local file = io.open(path, "w")
+    if file then
+        file:write(size)
+        file:close()
+    end
+end
+
+function save.loadTextSize()
+    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. TEXT_SIZE_FILE) or TEXT_SIZE_FILE
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "normal"
+end
+
 local CHEATS_FILE = "cheats.dat"
 
 function save.saveCheats(unlocked)

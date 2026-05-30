@@ -138,6 +138,7 @@ function love.load(args)
     end
     
     _G.cheats_unlocked = save.loadCheats()
+    _G.text_size = save.loadTextSize() or "normal"
     -- Crucially apply the loaded theme to the renderer NOW
     renderer.applyTheme()
 
@@ -252,7 +253,7 @@ function love.update(dt)
                 end
             end
             
-            local max_menu = _G.cheats_unlocked and 6 or 5
+            local max_menu = _G.cheats_unlocked and 7 or 6
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
@@ -281,10 +282,18 @@ function love.update(dt)
                             _G.appState = "CHEATS_MENU"
                             _G.cheats_selection = 1
                         elseif menuSelection == 6 then
+                            _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                            save.saveTextSize(_G.text_size)
+                            renderer.init()
+                        elseif menuSelection == 7 then
                             love.event.quit()
                         end
                     else
                         if menuSelection == 5 then
+                            _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                            save.saveTextSize(_G.text_size)
+                            renderer.init()
+                        elseif menuSelection == 6 then
                             love.event.quit()
                         end
                     end

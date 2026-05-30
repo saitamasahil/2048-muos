@@ -48,6 +48,7 @@ _G.WORK_DIR = ""
 
 -- Current visual theme (light / dark / oled / neon / retro / peach / ocean / forest / sunset / candy)
 _G.theme = "light"
+_G.text_size = "normal"
 
 -- Achievements and Unlockables
 _G.achievements = {

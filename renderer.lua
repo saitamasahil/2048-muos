@@ -785,20 +785,27 @@ function renderer.init()
     layout.help_h = help_h
 
     -- Load fonts — sizes relative to cell size for proper scaling
-    local tile_font_size = math.floor(cell_size * 0.45)
-    local tile_small_size = math.floor(cell_size * 0.35)
-    local tile_tiny_size = math.floor(cell_size * 0.28)
+    local text_scale = 1.0
+    local tile_scale = 1.0
+    if _G.text_size == "large" then
+        text_scale = 1.15
+        tile_scale = 1.05
+    end
+
+    local tile_font_size = math.floor(cell_size * 0.45 * tile_scale)
+    local tile_small_size = math.floor(cell_size * 0.35 * tile_scale)
+    local tile_tiny_size = math.floor(cell_size * 0.28 * tile_scale)
     font_tile_large = love.graphics.newFont(font_path, tile_font_size)
     font_tile_small = love.graphics.newFont(font_path, tile_small_size)
     font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
-    font_score      = love.graphics.newFont(font_path, math.floor(20 * scale))
-    font_title      = love.graphics.newFont(font_path, math.floor(36 * scale))
-    font_main_menu_title = love.graphics.newFont(font_path, math.floor(120 * scale))
-    font_cheats_title = love.graphics.newFont(font_path, math.floor(64 * scale))
-    font_label      = love.graphics.newFont(font_path, math.floor(16 * scale))
-    font_message    = love.graphics.newFont(font_path, math.floor(28 * scale))
-    font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale))
-    font_help_label = love.graphics.newFont(font_path, math.floor(16 * scale))
+    font_score      = love.graphics.newFont(font_path, math.floor(20 * scale * text_scale))
+    font_title      = love.graphics.newFont(font_path, math.floor(36 * scale * text_scale))
+    font_main_menu_title = love.graphics.newFont(font_path, math.floor(140 * scale))
+    font_cheats_title = love.graphics.newFont(font_path, math.floor(56 * scale))
+    font_label      = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
+    font_message    = love.graphics.newFont(font_path, math.floor(28 * scale * text_scale))
+    font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
+    font_help_label = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
 end
 
 -- ============================================================================
@@ -1755,12 +1762,19 @@ function renderer.drawTutorial(page, skip_transition)
 
     -- Message box area
     local msg_y = dots_y + dot_r * 2 + math.floor(12 * scale)
+    local max_content_w = math.min(w - padding * 2, math.floor(480 * scale))
     local msg_pad = math.floor(15 * scale)
-    local msg_box_x = padding
-    local msg_box_w = w - padding * 2
+
+    love.graphics.setFont(font_help_label)
+    local max_line_w = 0
+    for _, line in ipairs(slide.lines) do
+        local lw = font_help_label:getWidth(line)
+        if lw > max_line_w then max_line_w = lw end
+    end
+    local msg_box_w = math.min(max_content_w, max_line_w + msg_pad * 2)
+    local msg_box_x = math.floor((w - msg_box_w) / 2)
 
     -- Calculate message box height from lines
-    love.graphics.setFont(font_help_label)
     local line_h = font_help_label:getHeight()
     local num_lines = #slide.lines
     local msg_box_h = msg_pad * 2 + num_lines * (line_h + math.floor(3 * scale))
@@ -1786,11 +1800,26 @@ function renderer.drawTutorial(page, skip_transition)
     local board_top = msg_y + msg_box_h + math.floor(12 * scale)
     local footer_h = math.floor(55 * scale)
     local available_h = h - board_top - footer_h - math.floor(10 * scale)
-    local available_w = w - padding * 2
+    local available_w = max_content_w
     local board_size = math.min(available_w, available_h)
+
+    -- Limit the mini-board size to keep it perfectly symmetrical and consistent
+    local max_board_size = math.floor(204 * scale)
+    if board_size > max_board_size then
+        board_size = max_board_size
+    end
+
+    -- Snap board_size so cells fit perfectly with no floating point gaps
+    local cell_gap = math.floor(board_size * 0.022)
+    local cell_size = math.floor((board_size - cell_gap * 5) / 4)
+    board_size = cell_size * 4 + cell_gap * 5
+
+    -- Center the board vertically in the remaining space
+    local extra_y = (available_h - board_size) / 2
+    local board_y = board_top + math.floor(extra_y)
     local board_x = math.floor((w - board_size) / 2)
 
-    drawMiniBoard(board_x, board_top, board_size, slide.tiles, slide.highlight)
+    drawMiniBoard(board_x, board_y, board_size, slide.tiles, slide.highlight)
 
     -- Footer: navigation hints
     local badge_h = math.floor(28 * scale)
@@ -1862,14 +1891,16 @@ function renderer.drawMainMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     local title = "2048"
     local tw = font_main_menu_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, h * 0.02)
+    love.graphics.print(title, (w - tw) / 2, math.floor(-25 * scale))
     
-    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", "Quit"}
+    local text_size_lbl = "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal")
+    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", text_size_lbl, "Quit"}
     if _G.cheats_unlocked then
         table.insert(options, 5, "Cheats")
     end
-    local start_y = h * 0.35
     local gap = math.floor(40 * scale)
+    local menu_h = #options * gap
+    local start_y = math.floor(150 * scale + (280 * scale - menu_h) / 2)
 
     love.graphics.setFont(font_message)
     local max_ow = 0
@@ -1886,7 +1917,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     if not menu_anim_y then menu_anim_y = target_oy end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 2 * scale, max_ow + 40 * scale, font_message:getHeight() + 4 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
