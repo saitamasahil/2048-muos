@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.0] - Upcoming
+## [2.0.0]
 
 ### Added
 - Plus Mode: A brand new game mode featuring powerful power-ups like Swap and Bomb to help you get out of tricky situations.
