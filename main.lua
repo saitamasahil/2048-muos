@@ -230,7 +230,7 @@ function love.update(dt)
             if not _G.cheats_unlocked then
                 if event == konami_sequence[konami_progress] then
                     konami_progress = konami_progress + 1
-                    if konami_progress == 5 then
+                    if konami_progress == 7 then
                         renderer.showToast("What you think this is a Konami game?")
                     elseif konami_progress == 9 then
                         renderer.showToast("Wait, what are you doing?")
