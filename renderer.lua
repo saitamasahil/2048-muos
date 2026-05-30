@@ -2126,11 +2126,14 @@ function renderer.drawMainMenu(selection, skip_transition)
     if _G.cheats_unlocked then
         table.insert(options, 5, "Cheats")
     end
-    local gap = math.floor(40 * scale)
-    local menu_h = #options * gap
-    local start_y = math.floor(150 * scale + (280 * scale - menu_h) / 2)
-
     love.graphics.setFont(font_message)
+    local gap = (_G.text_size == "large" and 38 or 33) * scale
+    local menu_h = (#options - 1) * gap + font_message:getHeight()
+    local badge_h = math.floor(28 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local available_h = badge_y - math.floor(135 * scale)
+    local start_y = math.floor(135 * scale + (available_h - menu_h) / 2)
+
     local max_ow = 0
     for _, opt in ipairs(options) do
         local ow = font_message:getWidth(opt)
@@ -2240,10 +2243,15 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Lock Cheats",
         "Back"
     }
-    local start_y = h * 0.28
-    local gap = math.floor(40 * scale)
-
     love.graphics.setFont(font_message)
+    local gap = (_G.text_size == "large" and 38 or 33) * scale
+    local menu_h = (#options - 1) * gap + font_message:getHeight()
+    local badge_h = math.floor(28 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local subtitle_h = font_help_label:getHeight()
+    local available_h = badge_y - subtitle_y - subtitle_h
+    local start_y = math.floor(subtitle_y + subtitle_h + (available_h - menu_h) / 2)
+
     local max_ow = 0
     for _, opt in ipairs(options) do
         local ow = font_message:getWidth(opt)
@@ -2258,7 +2266,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     if not menu_anim_y then menu_anim_y = target_oy end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 5 * scale, max_ow + 40 * scale, font_message:getHeight() + 10 * scale, 8 * scale)
+    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 2 * scale, max_ow + 40 * scale, font_message:getHeight() + 4 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
