@@ -1143,19 +1143,19 @@ local function drawKeyBadge(text, x, y, w, h)
     local cr = math.floor(h * 0.3)
     local scale = _G.scale
 
-    -- Badge shadow (depth effect) - inset to prevent edge fringing
-    love.graphics.setColor(0, 0, 0, 0.15)
-    local sh_in = math.max(1, math.floor(1 * scale))
+    -- Badge shadow (smooth depth effect)
+    love.graphics.setColor(0, 0, 0, 0.2)
     local sh_off = math.max(1, math.floor(2 * scale))
-    roundedRect("fill", x + sh_in, y + sh_off, w - sh_in * 2, h, cr)
+    roundedRect("fill", x, y + sh_off, w, h, cr)
 
     -- Badge background
     love.graphics.setColor(help_key_color)
     roundedRect("fill", x, y, w, h, cr)
 
-    -- Subtle highlight on top half
+    -- Subtle border for a clean, premium feel
     love.graphics.setColor(1, 1, 1, 0.15)
-    roundedRect("fill", x, y, w, math.floor(h * 0.5), cr)
+    love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+    roundedRect("line", x, y, w, h, cr)
 
     -- Badge text
     love.graphics.setFont(font_help_key)
