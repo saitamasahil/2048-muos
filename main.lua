@@ -10,7 +10,7 @@ local save     = require("save")
 local splash   = require("splash")
 
 _G.appState = "MENU" -- "MENU" or "GAME"
-local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Achievements, 4: Tutorial, 5: Quit
+local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Theme Selection, 4: Achievements, 5: Tutorial, 6: Text, 7: About, 8: Quit
 
 local game
 
@@ -237,33 +237,42 @@ function love.update(dt)
     -- Process input events
     input.processEvents(function(event)
         if event == input.events.Y then
-            queueTransitionAction(event, 0.08, function()
+            local function getCurrentDrawTarget()
                 if _G.appState == "MENU" then
-                    renderer.startThemeTransition(function() renderer.drawMainMenu(menuSelection, true) end)
-                elseif _G.appState == "CHEATS_MENU" then
-                    renderer.startThemeTransition(function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end)
+                    return function() renderer.drawMainMenu(menuSelection, true) end
+                elseif _G.appState == "GAME" and game then
+                    return game
                 elseif _G.appState == "ACHIEVEMENTS" then
-                    renderer.startThemeTransition(function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end)
+                    return function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end
                 elseif _G.appState == "TUTORIAL" then
-                    renderer.startThemeTransition(function() renderer.drawTutorial(_G.tutorial_page or 1, true) end)
+                    return function() renderer.drawTutorial(_G.tutorial_page or 1, true) end
                 elseif _G.appState == "ABOUT" then
-                    renderer.startThemeTransition(function() renderer.drawAbout(true) end)
-                else
-                    renderer.startThemeTransition(game)
+                    return function() renderer.drawAbout(true) end
+                elseif _G.appState == "CHEATS_MENU" then
+                    return function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end
+                elseif _G.appState == "THEME_SELECT" then
+                    return function() renderer.drawThemeSelect(true) end
                 end
-                local current_idx = 1
-                for i, t in ipairs(_G.unlocked_themes) do
-                    if t == _G.theme then
-                        current_idx = i
-                        break
-                    end
+                return function() end
+            end
+
+            local drawTarget = getCurrentDrawTarget()
+            renderer.startThemeTransition(drawTarget)
+
+            local current_idx = 1
+            for i, t in ipairs(_G.unlocked_themes) do
+                if t == _G.theme then
+                    current_idx = i
+                    break
                 end
-                local next_idx = (current_idx % #_G.unlocked_themes) + 1
-                _G.theme = _G.unlocked_themes[next_idx]
-                renderer.applyTheme()
+            end
+            local next_idx = (current_idx % #_G.unlocked_themes) + 1
+            _G.theme = _G.unlocked_themes[next_idx]
+            renderer.applyTheme()
+            if _G.appState ~= "THEME_SELECT" then
                 save.saveTheme(_G.theme)
                 if game then game:saveGameState() end
-            end)
+            end
             return
         end
 
@@ -293,7 +302,7 @@ function love.update(dt)
                 end
             end
             
-            local max_menu = _G.cheats_unlocked and 8 or 7
+            local max_menu = _G.cheats_unlocked and 9 or 8
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
@@ -307,13 +316,17 @@ function love.update(dt)
                         _G.appState = "GAME"
                         game = Game.new("plus")
                     elseif menuSelection == 3 then
-                        _G.appState = "ACHIEVEMENTS"
+                        _G.themeSelectPrevState = "MENU"
+                        _G.themeSelectInitialTheme = _G.theme
+                        _G.appState = "THEME_SELECT"
                     elseif menuSelection == 4 then
+                        _G.appState = "ACHIEVEMENTS"
+                    elseif menuSelection == 5 then
                         _G.appState = "TUTORIAL"
                         _G.tutorial_page = 1
                     else
                         if _G.cheats_unlocked then
-                            if menuSelection == 5 then
+                            if menuSelection == 6 then
                                 if not _G.achievements.ach_secret_ascii then
                                     _G.achievements.ach_secret_ascii = true
                                     table.insert(_G.unlocked_themes, "ascii")
@@ -322,23 +335,23 @@ function love.update(dt)
                                 end
                                 _G.appState = "CHEATS_MENU"
                                 _G.cheats_selection = 1
-                            elseif menuSelection == 6 then
+                            elseif menuSelection == 7 then
+                                _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                                save.saveTextSize(_G.text_size)
+                                renderer.init()
+                            elseif menuSelection == 8 then
+                                _G.appState = "ABOUT"
+                            elseif menuSelection == 9 then
+                                love.event.quit()
+                            end
+                        else
+                            if menuSelection == 6 then
                                 _G.text_size = (_G.text_size == "large") and "normal" or "large"
                                 save.saveTextSize(_G.text_size)
                                 renderer.init()
                             elseif menuSelection == 7 then
                                 _G.appState = "ABOUT"
                             elseif menuSelection == 8 then
-                                love.event.quit()
-                            end
-                        else
-                            if menuSelection == 5 then
-                                _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                                save.saveTextSize(_G.text_size)
-                                renderer.init()
-                            elseif menuSelection == 6 then
-                                _G.appState = "ABOUT"
-                            elseif menuSelection == 7 then
                                 love.event.quit()
                             end
                         end
@@ -409,9 +422,9 @@ function love.update(dt)
                     _G.appState = "MENU"
                 end)
             elseif event == input.events.UP then
-                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 8
+                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 9
             elseif event == input.events.DOWN then
-                _G.cheats_selection = _G.cheats_selection < 8 and (_G.cheats_selection + 1) or 1
+                _G.cheats_selection = _G.cheats_selection < 9 and (_G.cheats_selection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if _G.cheats_selection == 1 then
                     local all_themes = {"ocean", "forest", "sunset", "candy", "oled", "neon", "retro", "peach", "midnight", "volcano", "abyss", "eclipse", "cyberpunk", "matrix", "vaporwave", "dracula", "gold", "matcha"}
@@ -455,17 +468,39 @@ function love.update(dt)
                         renderer.showToast("Two 1024 Tiles is OFF.")
                     end
                 elseif _G.cheats_selection == 7 then
+                    _G.cheat_fill_24816 = not _G.cheat_fill_24816
+                    if _G.cheat_fill_24816 then
+                        renderer.showToast("Fill 2,4,8,16,32... is ON. Start a new game to see it.")
+                    else
+                        renderer.showToast("Fill 2,4,8,16,32... is OFF.")
+                    end
+                elseif _G.cheats_selection == 8 then
                     queueTransitionAction(event, 0.08, function()
                         _G.cheats_unlocked = false
                         save.saveCheats(false)
                         _G.appState = "MENU"
                         renderer.showToast("Cheats Locked. Enter the code to unlock again.", 4.0)
                     end)
-                elseif _G.cheats_selection == 8 then
+                elseif _G.cheats_selection == 9 then
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)
                 end
+            end
+            return
+        elseif _G.appState == "THEME_SELECT" then
+            if event == input.events.CONFIRM then
+                queueTransitionAction(event, 0.08, function()
+                    save.saveTheme(_G.theme)
+                    if game then game:saveGameState() end
+                    _G.appState = _G.themeSelectPrevState or "MENU"
+                end)
+            elseif event == input.events.BACK then
+                queueTransitionAction(event, 0.08, function()
+                    _G.theme = _G.themeSelectInitialTheme or "light"
+                    renderer.applyTheme()
+                    _G.appState = _G.themeSelectPrevState or "MENU"
+                end)
             end
             return
         end
@@ -578,6 +613,8 @@ function love.draw()
         renderer.drawCheatsMenu(_G.cheats_selection or 1)
     elseif _G.appState == "ACHIEVEMENTS" then
         renderer.drawAchievements(_G.achievements_scroll or 0)
+    elseif _G.appState == "THEME_SELECT" then
+        renderer.drawThemeSelect()
     elseif _G.appState == "GAME" and game then
         renderer.draw(game)
     end

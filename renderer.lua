@@ -18,6 +18,7 @@ renderer.theme_button_y = nil
 -- Menu selection animation state
 local menu_anim_y = nil
 local menu_anim_target_y = nil
+local logo_2048 = nil
 
 -- Win animation state
 local win_timer = 0
@@ -802,12 +803,13 @@ function renderer.init()
     font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
     font_score      = love.graphics.newFont(font_path, math.floor(20 * scale * text_scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale * text_scale))
-    font_main_menu_title = love.graphics.newFont(font_path, math.floor(140 * scale))
+    font_main_menu_title = love.graphics.newFont(font_path, math.floor(72 * scale))
     font_cheats_title = love.graphics.newFont(font_path, math.floor(56 * scale))
     font_label      = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale * text_scale))
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
     font_help_label = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
+    logo_2048 = love.graphics.newImage("assets/logo_2048.png")
 end
 
 -- ============================================================================
@@ -1440,7 +1442,7 @@ function renderer.drawHelp(game)
     if game.state == Game.STATE_WON then
         table.insert(actions, 1, {key = "A", label = "Continue"})
         table.insert(actions, 1, {key = "SELECT", label = "Restart"})
-        table.insert(actions, 1, {key = "Y", label = "Theme"})
+        table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         if game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
@@ -1450,7 +1452,7 @@ function renderer.drawHelp(game)
         end
     elseif game.state == Game.STATE_LOST then
         table.insert(actions, 1, {key = "A", label = "New Game"})
-        table.insert(actions, 1, {key = "Y", label = "Theme"})
+        table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         if game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
@@ -1473,7 +1475,7 @@ function renderer.drawHelp(game)
             table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
         else
             table.insert(actions, 1, {key = "START", label = "Pause"})
-            table.insert(actions, 1, {key = "Y", label = "Theme"})
+            table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
             if game.canUndo then
                 table.insert(actions, 1, {key = "B", label = "Undo"})
             end
@@ -2054,7 +2056,7 @@ function renderer.drawTutorial(page, skip_transition)
     else
         table.insert(actions, 1, {key = "A", label = "Exit"})
     end
-    table.insert(actions, 1, {key = "Y", label = "Theme"})
+    table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
     if page > 1 then
         table.insert(actions, 1, {key = "B", label = "Back"})
     else
@@ -2115,24 +2117,20 @@ function renderer.drawMainMenu(selection, skip_transition)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
 
-    love.graphics.setFont(font_main_menu_title)
-    love.graphics.setColor(ui_text)
-    local title = "2048"
-    local tw = font_main_menu_title:getWidth(title)
-    love.graphics.print(title, (w - tw) / 2, math.floor(-25 * scale))
-    
     local text_size_lbl = "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal")
-    local options = {"Play Classic Mode", "Play Plus Mode", "Achievements", "Tutorial", text_size_lbl, "About", "Quit"}
+    local theme_name = _G.theme:gsub("^%l", string.upper)
+    local options = {"Play Classic Mode", "Play Plus Mode", "Select Theme: " .. theme_name, "Achievements", "Tutorial", text_size_lbl, "About", "Quit"}
     if _G.cheats_unlocked then
-        table.insert(options, 5, "Cheats")
+        table.insert(options, 6, "Cheats")
     end
     love.graphics.setFont(font_message)
     local gap = (_G.text_size == "large" and 38 or 33) * scale
     local menu_h = (#options - 1) * gap + font_message:getHeight()
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
-    local available_h = badge_y - math.floor(135 * scale)
-    local start_y = math.floor(135 * scale + (available_h - menu_h) / 2)
+    local start_offset = math.floor(35 * scale)
+    local available_h = badge_y - start_offset
+    local start_y = math.floor(start_offset + (available_h - menu_h) / 2)
 
     local max_ow = 0
     for _, opt in ipairs(options) do
@@ -2179,7 +2177,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     local right_x = w - math.floor(20 * scale)
     local actions = {
         {key = "A", label = "Select"},
-        {key = "Y", label = "Theme"}
+        {key = "Y", label = "Switch Theme"}
     }
     for _, action in ipairs(actions) do
         -- Label
@@ -2219,18 +2217,18 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
 
-    love.graphics.setFont(font_cheats_title)
+    love.graphics.setFont(font_title)
     love.graphics.setColor(ui_text)
     local title = "Cheats Menu"
-    local tw = font_cheats_title:getWidth(title)
-    local title_y = h * 0.04
+    local tw = font_title:getWidth(title)
+    local title_y = math.floor(8 * scale)
     love.graphics.print(title, (w - tw) / 2, title_y)
 
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
     local subtitle = "Cheats will reset when you quit the game"
     local sw = font_help_label:getWidth(subtitle)
-    local subtitle_y = title_y + font_cheats_title:getHeight() + math.floor(5 * scale)
+    local subtitle_y = title_y + font_title:getHeight() - math.floor(2 * scale)
     love.graphics.print(subtitle, (w - sw) / 2, subtitle_y)
 
     local options = {
@@ -2240,11 +2238,12 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Start with 1024 (Plus Mode): " .. (_G.cheat_start_1024_plus and "ON" or "OFF"),
         "Debug: Test All Tiles: " .. (_G.cheat_test_tiles and "ON" or "OFF"),
         "Debug: Two 1024 Tiles: " .. (_G.cheat_two_1024s and "ON" or "OFF"),
+        "Debug: Fill 2,4,8,16,32...: " .. (_G.cheat_fill_24816 and "ON" or "OFF"),
         "Lock Cheats",
         "Back"
     }
     love.graphics.setFont(font_message)
-    local gap = (_G.text_size == "large" and 38 or 33) * scale
+    local gap = (_G.text_size == "large" and 37 or 32) * scale
     local menu_h = (#options - 1) * gap + font_message:getHeight()
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
@@ -2298,7 +2297,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     local actions = {
         {key = "B", label = "Back"},
         {key = "A", label = "Toggle"},
-        {key = "Y", label = "Theme"}
+        {key = "Y", label = "Switch Theme"}
     }
     for _, action in ipairs(actions) do
         -- Label
@@ -2325,6 +2324,175 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         love.graphics.setStencilTest()
     end
     
+    drawToast()
+end
+
+
+-- ============================================================================
+-- Theme Selection / Preview Screen
+-- ============================================================================
+function renderer.drawThemeSelect(skip_transition)
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    -- Title: "Select Theme"
+    love.graphics.setFont(font_cheats_title)
+    love.graphics.setColor(ui_text)
+    local title = "Select Theme"
+    local tw = font_cheats_title:getWidth(title)
+    local title_y = h * 0.04
+    love.graphics.print(title, (w - tw) / 2, title_y)
+
+    -- Subtitle showing Theme Name (index/total)
+    local theme_disp = _G.theme:gsub("^%l", string.upper)
+    local current_idx = 1
+    for i, t in ipairs(_G.unlocked_themes) do
+        if t == _G.theme then current_idx = i break end
+    end
+    local subtitle = theme_disp .. " (" .. current_idx .. "/" .. #_G.unlocked_themes .. ")"
+
+    love.graphics.setFont(font_help_label)
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+    local sw = font_help_label:getWidth(subtitle)
+    local subtitle_y = title_y + font_cheats_title:getHeight() + math.floor(5 * scale)
+    love.graphics.print(subtitle, (w - sw) / 2, subtitle_y)
+
+    -- Draw preview swatches (2x2 palette card) and horizontal color strip
+    local badge_h = math.floor(28 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+    local board_top = subtitle_y + font_help_label:getHeight() + math.floor(10 * scale)
+    local board_bottom = badge_y - math.floor(10 * scale)
+    local avail_h = board_bottom - board_top
+    
+    -- Define palette strip height and padding
+    local strip_h = math.floor(14 * scale)
+    local pad_x = math.floor(6 * scale)
+    local pad_y = math.floor(5 * scale)
+    local panel_h = strip_h + pad_y * 2
+    local strip_gap = math.floor(12 * scale)
+    local avail_h_for_board = avail_h - (panel_h + strip_gap)
+    
+    -- Keep the palette card as a beautifully sized square/rect
+    local board_size = math.min(math.floor(190 * scale), avail_h_for_board)
+    local board_x = math.floor((w - board_size) / 2)
+    
+    -- Calculate vertical positions so everything is perfectly centered as a single block!
+    local total_block_h = board_size + strip_gap + panel_h
+    local block_y = board_top + (avail_h - total_block_h) / 2
+    
+    local board_y = block_y
+    local strip_y = board_y + board_size + strip_gap
+    local strip_x = board_x
+
+    local cell_gap = math.floor(board_size * 0.05)
+    local cell_size = math.floor((board_size - cell_gap * 3) / 2)
+    local cr = math.floor(cell_size * 0.06)
+    
+    -- Draw board background (representing theme board_color)
+    love.graphics.setColor(board_color)
+    roundedRect("fill", board_x, board_y, board_size, board_size, cr * 2)
+
+    -- Swatches to display
+    local swatches = {
+        { color = bg_color, label = "BG", textColor = ui_text, hasOutline = true },
+        { color = board_color, label = "BOARD", textColor = ui_text, hasOutline = true },
+        { color = tile_colors[2], label = "2", textColor = getTileTextColor(2) },
+        { color = tile_colors[2048] or tile_colors[2], label = "2048", textColor = getTileTextColor(2048) }
+    }
+
+    local positions = {
+        { x = board_x + cell_gap, y = board_y + cell_gap },
+        { x = board_x + cell_gap * 2 + cell_size, y = board_y + cell_gap },
+        { x = board_x + cell_gap, y = board_y + cell_gap * 2 + cell_size },
+        { x = board_x + cell_gap * 2 + cell_size, y = board_y + cell_gap * 2 + cell_size }
+    }
+
+    -- Set up font for swatch labels
+    local font_swatch = love.graphics.newFont(font_path, math.max(10, math.floor(cell_size * 0.20)))
+
+    for i, sw in ipairs(swatches) do
+        local sx = positions[i].x
+        local sy = positions[i].y
+
+        -- Draw swatch color block
+        love.graphics.setColor(sw.color)
+        roundedRect("fill", sx, sy, cell_size, cell_size, cr)
+
+        if sw.hasOutline then
+            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.2)
+            love.graphics.setLineWidth(math.floor(1 * scale))
+            roundedRect("line", sx, sy, cell_size, cell_size, cr)
+        end
+
+        -- Draw centered swatch label text
+        love.graphics.setFont(font_swatch)
+        love.graphics.setColor(sw.textColor)
+        local th = font_swatch:getHeight()
+        love.graphics.printf(sw.label, sx, sy + (cell_size - th) / 2, cell_size, "center")
+    end
+
+    -- Draw horizontal color palette strip representing all tile colors with a glassy background card
+    -- Glassy dark backing card (0, 0, 0, 0.4) that provides gorgeous contrast against theme backgrounds
+    love.graphics.setColor(0, 0, 0, 0.4)
+    roundedRect("fill", strip_x, strip_y, board_size, panel_h, cr)
+    -- Glassy light outline (ui_text with 0.15 opacity) for a clean, professional frosted look
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.15)
+    love.graphics.setLineWidth(math.floor(1 * scale))
+    roundedRect("line", strip_x, strip_y, board_size, panel_h, cr)
+
+    -- Draw the 11 tile color blocks inside the glassy capsule
+    local tile_values = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
+    local bgap = math.max(1, math.floor(2 * scale))
+    local avail_w = board_size - pad_x * 2
+    local block_w = (avail_w - bgap * 10) / 11
+    local bcr = math.max(2, math.floor(block_w * 0.20))
+    
+    for idx, val in ipairs(tile_values) do
+        local color = tile_colors[val] or tile_colors[2]
+        love.graphics.setColor(color)
+        local bx = strip_x + pad_x + (idx - 1) * (block_w + bgap)
+        roundedRect("fill", bx, strip_y + pad_y, block_w, strip_h, bcr)
+    end
+
+    -- Draw standardized help footer
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
+
+    -- Right side actions: B (Cancel), A (Select), Y (Switch Theme)
+    local right_x = w - math.floor(20 * scale)
+    local actions = {
+        {key = "B", label = "Cancel"},
+        {key = "A", label = "Select"},
+        {key = "Y", label = "Switch Theme"}
+    }
+    for _, action in ipairs(actions) do
+        -- Label
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(ui_text)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Badge
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+        right_x = right_x - item_gap
+    end
+
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
+
     drawToast()
 end
 
@@ -2586,7 +2754,7 @@ function renderer.drawAchievements(scroll, skip_transition)
     local right_x = w - padding
     local actions = {
         {key = "B", label = "Back"},
-        {key = "Y", label = "Theme"}
+        {key = "Y", label = "Switch Theme"}
     }
     for _, action in ipairs(actions) do
         -- Label
@@ -2686,7 +2854,7 @@ function renderer.drawAbout(skip_transition)
     local right_x = w - math.floor(20 * scale)
     local actions = {
         {key = "B", label = "Back"},
-        {key = "Y", label = "Theme"}
+        {key = "Y", label = "Switch Theme"}
     }
     for _, action in ipairs(actions) do
         -- Label
