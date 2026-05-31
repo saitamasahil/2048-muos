@@ -2134,7 +2134,11 @@ function renderer.drawMainMenu(selection, skip_transition)
 
     local max_ow = 0
     for _, opt in ipairs(options) do
-        local ow = font_message:getWidth(opt)
+        local display_opt = opt
+        if opt:find("^Select Theme:") then
+            display_opt = "Select Theme: Cyberpunk"
+        end
+        local ow = font_message:getWidth(display_opt)
         if ow > max_ow then
             max_ow = ow
         end
