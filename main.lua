@@ -548,7 +548,9 @@ function love.update(dt)
                 if game.mode == "plus" and game.powerups.undo <= 0 then
                     renderer.showToast("No Undo Powerup!")
                 else
-                    game:undo()
+                    queueTransitionAction(event, 0.08, function()
+                        game:undo()
+                    end)
                 end
             -- Pause menu (select or start button)
             elseif event == input.events.SELECT or event == input.events.START then
