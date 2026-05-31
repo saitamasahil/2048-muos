@@ -535,13 +535,17 @@ function love.update(dt)
                 if game.mode == "plus" and game.powerups.swap <= 0 then
                     renderer.showToast("No Swap Powerup!")
                 else
-                    game:startSwapTargeting()
+                    queueTransitionAction(event, 0.08, function()
+                        game:startSwapTargeting()
+                    end)
                 end
             elseif event == input.events.R1 then
                 if game.mode == "plus" and game.powerups.bomb <= 0 then
                     renderer.showToast("No Bomb Powerup!")
                 else
-                    game:startBombTargeting()
+                    queueTransitionAction(event, 0.08, function()
+                        game:startBombTargeting()
+                    end)
                 end
             -- Undo
             elseif event == input.events.BACK then
