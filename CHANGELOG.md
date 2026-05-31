@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.1] (upcoming)
+## [2.0.1]
 
 ### Added
 - Tactile button animations: Buttons now physically press down when changing menus or unpausing for satisfying retro click feedback.
