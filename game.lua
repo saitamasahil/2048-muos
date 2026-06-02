@@ -309,39 +309,54 @@ function Game:move(direction)
                         save.saveHighScore(self.highScore, self.mode)
                     end
 
-                    -- Check milestones for powerup replenishment (Plus Mode)
+                    -- Check milestones for powerup replenishment (Plus Mode) - once per milestone value per run
                     if self.mode == "plus" and merged.value >= 128 then
-                        local function grantRandomPowerup(g)
-                            local p = love.math.random(1, 3)
-                            if p == 1 then
-                                g.powerups.undo = g.powerups.undo + 1
-                                return "Undo"
-                            elseif p == 2 then
-                                g.powerups.swap = g.powerups.swap + 1
-                                return "Swap"
-                            else
-                                g.powerups.bomb = g.powerups.bomb + 1
-                                return "Bomb"
+                        local m_str = tostring(merged.value)
+                        if not self.milestonesReached[m_str] then
+                            self.milestonesReached[m_str] = true
+                            
+                            local function grantRandomPowerup(g)
+                                local p = love.math.random(1, 3)
+                                if p == 1 then
+                                    g.powerups.undo = g.powerups.undo + 1
+                                    return "Undo"
+                                elseif p == 2 then
+                                    g.powerups.swap = g.powerups.swap + 1
+                                    return "Swap"
+                                else
+                                    g.powerups.bomb = g.powerups.bomb + 1
+                                    return "Bomb"
+                                end
                             end
-                        end
 
-                        if merged.value == 128 then
-                            local name = grantRandomPowerup(self)
-                            self:addFloatingNotification("+" .. name, merged.x, merged.y)
-                        elseif merged.value == 256 then
-                            local name = grantRandomPowerup(self)
-                            self.powerups.undo = self.powerups.undo + 1
-                            self:addFloatingNotification("+" .. name .. " & +1 Undo", merged.x, merged.y)
-                        elseif merged.value == 512 then
-                            self.powerups.undo = self.powerups.undo + 1
-                            self.powerups.bomb = self.powerups.bomb + 1
-                            self.powerups.swap = self.powerups.swap + 1
-                            self:addFloatingNotification("All Powerups +1", merged.x, merged.y)
-                        elseif merged.value >= 1024 then
-                            self.powerups.undo = self.powerups.undo + 2
-                            self.powerups.bomb = self.powerups.bomb + 2
-                            self.powerups.swap = self.powerups.swap + 2
-                            self:addFloatingNotification("All Powerups +2", merged.x, merged.y)
+                            if merged.value == 128 then
+                                local name = grantRandomPowerup(self)
+                                self:addFloatingNotification("+" .. name, merged.x, merged.y)
+                            elseif merged.value == 256 then
+                                local name = grantRandomPowerup(self)
+                                self.powerups.undo = self.powerups.undo + 1
+                                self:addFloatingNotification("+" .. name .. " & +1 Undo", merged.x, merged.y)
+                            elseif merged.value == 512 then
+                                self.powerups.undo = self.powerups.undo + 1
+                                self.powerups.bomb = self.powerups.bomb + 1
+                                self.powerups.swap = self.powerups.swap + 1
+                                self:addFloatingNotification("All Powerups +1", merged.x, merged.y)
+                            elseif merged.value == 1024 then
+                                self.powerups.undo = self.powerups.undo + 2
+                                self.powerups.bomb = self.powerups.bomb + 2
+                                self.powerups.swap = self.powerups.swap + 2
+                                self:addFloatingNotification("All Powerups +2", merged.x, merged.y)
+                            elseif merged.value == 2048 then
+                                self.powerups.undo = self.powerups.undo + 2
+                                self.powerups.bomb = self.powerups.bomb + 2
+                                self.powerups.swap = self.powerups.swap + 2
+                                self:addFloatingNotification("All Powerups +2", merged.x, merged.y)
+                            elseif merged.value >= 4096 then
+                                self.powerups.undo = self.powerups.undo + 3
+                                self.powerups.bomb = self.powerups.bomb + 3
+                                self.powerups.swap = self.powerups.swap + 3
+                                self:addFloatingNotification("All Powerups +3", merged.x, merged.y)
+                            end
                         end
                     end
 
@@ -546,6 +561,7 @@ function Game:restart()
     if self.mode == "plus" then
         local initial_powerups = _G.cheat_max_powerups and 99 or 1
         self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
+        self.milestonesReached = {}
     end
     self:addStartTiles()
     if _G.achievements then
