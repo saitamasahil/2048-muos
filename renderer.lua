@@ -1143,7 +1143,22 @@ function renderer.drawHeader(game)
         love.graphics.print("2048", bx, title_y)
         
         love.graphics.setFont(font_label)
-        love.graphics.print("Endless Mode", bx, title_y + font_title:getHeight() - math.floor(4 * scale))
+        local offset = math.floor((_G.text_size == "large" and 10 or 4) * scale)
+        
+        local text = "Endless Mode"
+        local tw = font_label:getWidth(text)
+        local box_w = math.floor((_G.text_size == "large" and 115 or 105) * scale)
+        local box_gap = math.floor(8 * scale)
+        local best_x = bx + layout.board_size - box_w
+        local score_x = best_x - box_w - box_gap
+        
+        local avail_w = math.max(1, score_x - bx - math.floor(6 * scale))
+        local text_s = 1.0
+        if tw > avail_w then
+            text_s = avail_w / tw
+        end
+        
+        love.graphics.print(text, bx, title_y + font_title:getHeight() - offset, 0, text_s, text_s)
     else
         -- Center title vertically in the header area
         local title_y = math.floor((layout.board_y - font_title:getHeight()) / 2)
