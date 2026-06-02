@@ -2139,13 +2139,49 @@ function renderer.drawMainMenu(selection, skip_transition)
         table.insert(options, 6, "Cheats")
     end
     love.graphics.setFont(font_message)
-    local gap = (_G.text_size == "large" and 38 or 33) * scale
+    local gap = (_G.text_size == "large" and 34 or 31) * scale
     local menu_h = (#options - 1) * gap + font_message:getHeight()
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
-    local start_offset = math.floor(35 * scale)
-    local available_h = badge_y - start_offset
-    local start_y = math.floor(start_offset + (available_h - menu_h) / 2)
+    
+    -- Dynamically space a beautiful theme-colored 2048 tile logo header
+    local header_h = math.floor((_G.text_size == "large" and 80 or 95) * scale)
+    
+    local total_h = header_h + math.floor(15 * scale) + menu_h
+    local available_h = badge_y - math.floor(10 * scale)
+    local start_y = math.max(math.floor(10 * scale), math.floor(math.floor(10 * scale) + (available_h - total_h) / 2))
+    
+    -- Draw beautifully stylized header
+    local tile_size = header_h - math.floor((_G.text_size == "large" and 15 or 20) * scale)
+    if tile_size > 0 then
+        local tile_x = (w - tile_size) / 2
+        local tile_y = start_y + (header_h - tile_size) / 2
+        
+        -- Draw tile background (using 2048 tile color from active theme!)
+        love.graphics.setColor(getTileColor(2048))
+        roundedRect("fill", tile_x, tile_y, tile_size, tile_size, tile_size * 0.12)
+        
+        -- Draw "2048" text
+        love.graphics.setColor(getTileTextColor(2048))
+        local f_logo = font_tile_small
+        if tile_size < math.floor(50 * scale) then
+            f_logo = font_tile_tiny
+        end
+        love.graphics.setFont(f_logo)
+        local tw = f_logo:getWidth("2048")
+        local th = f_logo:getHeight()
+        
+        -- Safe dynamic scaling for logo text inside the tile
+        local logo_s = 1.0
+        local max_w = tile_size - math.floor(8 * scale)
+        if tw > max_w then
+            logo_s = max_w / tw
+        end
+        love.graphics.print("2048", tile_x + (tile_size - tw * logo_s) / 2, tile_y + (tile_size - th * logo_s) / 2, 0, logo_s, logo_s)
+    end
+    
+    -- Menu options start position
+    local menu_start_y = start_y + header_h + math.floor(15 * scale)
 
     local max_ow = 0
     for _, opt in ipairs(options) do
@@ -2160,7 +2196,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     end
     local block_x = (w - max_ow) / 2
 
-    local target_oy = start_y + (selection - 1) * gap
+    local target_oy = menu_start_y + (selection - 1) * gap
     menu_anim_target_y = target_oy
     if not menu_anim_y then menu_anim_y = target_oy end
 
@@ -2168,12 +2204,13 @@ function renderer.drawMainMenu(selection, skip_transition)
     roundedRect("fill", block_x - 20 * scale, menu_anim_y - 2 * scale, max_ow + 40 * scale, font_message:getHeight() + 4 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
-        local oy = start_y + (i - 1) * gap
+        local oy = menu_start_y + (i - 1) * gap
         if i == selection then
             love.graphics.setColor(help_key_text)
         else
             love.graphics.setColor(ui_text)
         end
+        love.graphics.setFont(font_message)
         love.graphics.print(opt, block_x, oy)
     end
 
