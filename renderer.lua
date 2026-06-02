@@ -2857,7 +2857,13 @@ function renderer.drawAbout(skip_transition)
     local tw = font_title:getWidth(title)
     love.graphics.print(title, (w - tw) / 2, padding)
 
-    local start_y = padding + font_title:getHeight() + math.floor(20 * scale)
+    love.graphics.setFont(font_label)
+    love.graphics.setColor(ui_text)
+    local version_text = _G.version or "v2.0.1"
+    local vw = font_label:getWidth(version_text)
+    love.graphics.print(version_text, (w - vw) / 2, padding + font_title:getHeight() - math.floor(2 * scale))
+
+    local start_y = padding + font_title:getHeight() + font_label:getHeight() + math.floor(15 * scale)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
 
