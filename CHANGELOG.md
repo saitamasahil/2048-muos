@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.2]
+
+### Added
+- Main menu heading logo: Re-balanced the main menu layout to include a beautifully styled, dynamically themed 2048 tile logo.
+- Version tracking: The version number is now displayed on the About screen.
+
+### Fixed
+- Endless Mode layout: Fixed horizontal text overlap with the SCORE box in Large Text mode by dynamically scaling and shifting the label safely.
+
 ## [2.0.1]
 
 ### Added
