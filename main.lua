@@ -9,8 +9,9 @@ local renderer = require("renderer")
 local save     = require("save")
 local splash   = require("splash")
 
-_G.appState = "MENU" -- "MENU" or "GAME"
+_G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", etc.
 local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Theme Selection, 4: Achievements, 5: Tutorial, 6: Text, 7: About, 8: Quit
+_G.arcade_selection = 1
 
 local game
 
@@ -87,6 +88,7 @@ function love.load(args)
     if _G.achievements.ach_score_100k then table.insert(_G.unlocked_themes, "gold") end
     if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
     if _G.achievements.ach_secret_ascii then table.insert(_G.unlocked_themes, "ascii") end
+    if _G.achievements.ach_timeattack_2048 then table.insert(_G.unlocked_themes, "aurora") end
 
     function _G.unlockAchievement(id)
         if not _G.achievements[id] then
@@ -111,7 +113,8 @@ function love.load(args)
                 ach_score_25k = "vaporwave",
                 ach_score_50k = "dracula",
                 ach_score_100k = "gold",
-                ach_untouchable_2048 = "matcha"
+                ach_untouchable_2048 = "matcha",
+                ach_timeattack_2048 = "aurora"
             }
             if theme_map[id] then
                 table.insert(_G.unlocked_themes, theme_map[id])
@@ -135,7 +138,8 @@ function love.load(args)
                 ach_score_25k = "Aesthetic",
                 ach_score_50k = "Vampire Lord",
                 ach_score_100k = "Midas Touch",
-                ach_untouchable_2048 = "Zen Master"
+                ach_untouchable_2048 = "Zen Master",
+                ach_timeattack_2048 = "Aurora"
             }
             renderer.showToast("Unlocked: " .. (names[id] or id) .. "!")
         end
@@ -252,6 +256,8 @@ function love.update(dt)
                     return function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end
                 elseif _G.appState == "THEME_SELECT" then
                     return function() renderer.drawThemeSelect(true) end
+                elseif _G.appState == "ARCADE_MENU" then
+                    return function() renderer.drawArcadeMenu(_G.arcade_selection or 1, true) end
                 end
                 return function() end
             end
@@ -302,6 +308,16 @@ function love.update(dt)
                 end
             end
             
+            -- X button → Arcade Modes menu
+            if event == input.events.X then
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "ARCADE_MENU"
+                    _G.arcade_selection = 1
+                    renderer.setArcadeMenuOpen(true)
+                end)
+                return
+            end
+
             local max_menu = _G.cheats_unlocked and 9 or 8
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
@@ -359,6 +375,27 @@ function love.update(dt)
                 end)
             end
             return
+        elseif _G.appState == "ARCADE_MENU" then
+            if event == input.events.UP then
+                _G.arcade_selection = _G.arcade_selection > 1 and (_G.arcade_selection - 1) or 1
+            elseif event == input.events.DOWN then
+                -- Only 1 real mode for now (Time Attack); slot 2 is "Coming Soon"
+                _G.arcade_selection = math.min(1, _G.arcade_selection + 1)
+            elseif event == input.events.CONFIRM then
+                if _G.arcade_selection == 1 then
+                    queueTransitionAction(event, 0.08, function()
+                        renderer.setArcadeMenuOpen(false)
+                        _G.appState = "GAME"
+                        game = Game.new("timeattack")
+                    end)
+                end
+            elseif event == input.events.BACK or event == input.events.X then
+                queueTransitionAction(event, 0.08, function()
+                    renderer.setArcadeMenuOpen(false)
+                    _G.appState = "MENU"
+                end)
+            end
+            return
         elseif _G.appState == "TUTORIAL" then
             if event == input.events.BACK then
                 if (_G.tutorial_page or 1) > 1 then
@@ -410,7 +447,7 @@ function love.update(dt)
                 local header_h = math.floor(90 * scale)
                 local footer_h = math.floor(55 * scale)
                 local visible_area = h - header_h - footer_h
-                local total_items = 18
+                local total_items = 19
                 local total_height = total_items * item_h
                 local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h) + 1)
                 _G.achievements_scroll_target = math.min(max_scroll, (_G.achievements_scroll_target or 0) + 1)
@@ -549,7 +586,9 @@ function love.update(dt)
                 end
             -- Undo
             elseif event == input.events.BACK then
-                if game.mode == "plus" and game.powerups.undo <= 0 then
+                if game.mode == "timeattack" then
+                    renderer.showToast("No Undo in Time Attack!")
+                elseif game.mode == "plus" and game.powerups.undo <= 0 then
                     renderer.showToast("No Undo Powerup!")
                 else
                     queueTransitionAction(event, 0.08, function()
@@ -573,8 +612,15 @@ function love.update(dt)
                 end)
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
+                    local was_timeattack = game and (game.mode == "timeattack")
                     if game then game:saveGameState() end
-                    _G.appState = "MENU"
+                    if was_timeattack then
+                        _G.appState = "ARCADE_MENU"
+                        _G.arcade_selection = 1
+                        renderer.setArcadeMenuOpen(true)
+                    else
+                        _G.appState = "MENU"
+                    end
                     game = nil
                 end)
             end
@@ -584,12 +630,29 @@ function love.update(dt)
                     game:continueGame()
                 end)
             elseif event == input.events.BACK then
-                queueTransitionAction(event, 0.08, function()
-                    game:undo()
-                end)
+                if game.mode == "timeattack" then
+                    renderer.showToast("No Undo in Time Attack!")
+                else
+                    queueTransitionAction(event, 0.08, function()
+                        game:undo()
+                    end)
+                end
             elseif event == input.events.SELECT then
                 queueTransitionAction(event, 0.08, function()
                     game:restart()
+                end)
+            elseif event == input.events.X then
+                queueTransitionAction(event, 0.08, function()
+                    local was_timeattack = game and (game.mode == "timeattack")
+                    if game then game:saveGameState() end
+                    if was_timeattack then
+                        _G.appState = "ARCADE_MENU"
+                        _G.arcade_selection = 1
+                        renderer.setArcadeMenuOpen(true)
+                    else
+                        _G.appState = "MENU"
+                    end
+                    game = nil
                 end)
             end
         elseif game.state == Game.STATE_LOST then
@@ -598,8 +661,25 @@ function love.update(dt)
                     game:restart()
                 end)
             elseif event == input.events.BACK then
+                if game.mode == "timeattack" then
+                    renderer.showToast("No Undo in Time Attack!")
+                else
+                    queueTransitionAction(event, 0.08, function()
+                        game:undo()
+                    end)
+                end
+            elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    game:undo()
+                    local was_timeattack = game and (game.mode == "timeattack")
+                    if game then game:saveGameState() end
+                    if was_timeattack then
+                        _G.appState = "ARCADE_MENU"
+                        _G.arcade_selection = 1
+                        renderer.setArcadeMenuOpen(true)
+                    else
+                        _G.appState = "MENU"
+                    end
+                    game = nil
                 end)
             end
         end
@@ -611,6 +691,8 @@ function love.draw()
         splash.draw()
     elseif _G.appState == "MENU" then
         renderer.drawMainMenu(menuSelection)
+    elseif _G.appState == "ARCADE_MENU" then
+        renderer.drawArcadeMenu(_G.arcade_selection or 1, false, menuSelection)
     elseif _G.appState == "TUTORIAL" then
         renderer.drawTutorial(_G.tutorial_page or 1)
     elseif _G.appState == "ABOUT" then

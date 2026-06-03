@@ -43,6 +43,13 @@ function Game.new(mode)
     self.won = false
     self.moved = false
 
+    -- Time Attack state
+    self.timeLeft = nil
+    self.totalTime = nil
+    self.timeAttackBonus = 0  -- accumulated bonus time for this move
+    self.timePopups = {}
+    self.timerFlashTimer = 0
+
     -- Plus Mode state
     local initial_powerups = _G.cheat_max_powerups and 99 or 1
     self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
@@ -67,6 +74,10 @@ function Game.new(mode)
     -- Try to load saved game state
     local savedState = save.loadState(self.mode)
     if savedState and savedState.gridState then
+        -- Time Attack does not restore saved state (volatile mode)
+        if mode == "timeattack" then
+            self:addStartTiles()
+        else
         self.score = savedState.score or 0
         self.state = savedState.state or Game.STATE_PLAYING
         self.won = savedState.won or false
@@ -89,6 +100,7 @@ function Game.new(mode)
         if savedState.milestonesReached then
             self.milestonesReached = savedState.milestonesReached
         end
+        end -- end time-attack guard
     else
         -- Start a fresh game if no save state exists
         self:addStartTiles()
@@ -103,10 +115,18 @@ function Game.new(mode)
         _G.unlockAchievement("ach_first_game")
     end
 
+    -- Time Attack: initialize timer after everything is set up
+    if mode == "timeattack" then
+        self.totalTime = 90.0
+        self.timeLeft = self.totalTime
+    end
+
     return self
 end
 
 function Game:saveGameState()
+    -- Time Attack games are volatile; never save to disk
+    if self.mode == "timeattack" then return end
     local stateTable = {
         score = self.score,
         state = self.state,
@@ -361,7 +381,7 @@ function Game:move(direction)
                     end
 
                     -- Check for win (2048 tile!)
-                    if merged.value == 2048 and self.state == Game.STATE_PLAYING then
+                    if merged.value == 2048 and self.state == Game.STATE_PLAYING and self.mode ~= "timeattack" then
                         self.won = true
                         self.state = Game.STATE_WON
                     end
@@ -394,6 +414,33 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_untouchable_2048")
                     end
 
+                    -- Time Attack: add bonus time for merges (challenging balance)
+                    if self.mode == "timeattack" and self.timeLeft then
+                        local bonus = 0
+                        if merged.value == 32 then
+                            bonus = 2
+                        elseif merged.value == 64 then
+                            bonus = 4
+                        elseif merged.value == 128 then
+                            bonus = 6
+                        elseif merged.value == 256 then
+                            bonus = 8
+                        elseif merged.value == 512 then
+                            bonus = 15
+                        elseif merged.value == 1024 then
+                            bonus = 25
+                        elseif merged.value >= 2048 then
+                            bonus = 50
+                        end
+                        -- Special: hitting 2048 gives a massive bonus + achievement
+                        if merged.value == 2048 then
+                            if _G.unlockAchievement then
+                                _G.unlockAchievement("ach_timeattack_2048")
+                            end
+                        end
+                        self.timeAttackBonus = (self.timeAttackBonus or 0) + bonus
+                    end
+
                     moved = true
                 else
                     -- Just move to farthest available position
@@ -407,6 +454,25 @@ function Game:move(direction)
     end
 
     if moved then
+        -- Apply accumulated time attack bonus (capped at 30s per move for balance)
+        if self.mode == "timeattack" and self.timeLeft and (self.timeAttackBonus or 0) > 0 then
+            local cap = 30.0
+            -- 2048 merge bypasses cap
+            local merged_2048 = self.timeAttackBonus >= 50
+            local bonus = merged_2048 and self.timeAttackBonus or math.min(self.timeAttackBonus, cap)
+            self.timeLeft = math.min(self.totalTime, self.timeLeft + bonus)
+            
+            -- Trigger visual feedback (floating text + flash timer)
+            self.timePopups = self.timePopups or {}
+            table.insert(self.timePopups, {
+                text = "+" .. tostring(math.floor(bonus)) .. "s",
+                y_offset = 0,
+                alpha = 1.0
+            })
+            self.timerFlashTimer = 0.3
+            
+            self.timeAttackBonus = 0
+        end
         self.undoState = pendingUndoState
         self.undoScore = pendingUndoScore
         self.undoRNG = pendingUndoRNG
@@ -563,6 +629,15 @@ function Game:restart()
         self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
         self.milestonesReached = {}
     end
+    -- Reset Time Attack timer
+    if self.mode == "timeattack" and self.totalTime then
+        self.timeLeft = self.totalTime
+        self.timeAttackBonus = 0
+        self.shownUrgentWarning = false
+        self.timesUp = false
+        self.timePopups = {}
+        self.timerFlashTimer = 0
+    end
     self:addStartTiles()
     if _G.achievements then
         _G.achievements.powerups_used_this_run = 0
@@ -718,6 +793,24 @@ function Game:update(dt)
         end
     end
 
+    -- Time Attack: countdown
+    if self.mode == "timeattack" and self.timeLeft ~= nil then
+        if self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS then
+            self.timeLeft = self.timeLeft - dt
+            if self.timeLeft <= 10 and not self.shownUrgentWarning then
+                self.shownUrgentWarning = true
+                -- Toast is shown by renderer's pulse; no explicit toast here to avoid spam
+            end
+            if self.timeLeft <= 0 then
+                self.timeLeft = 0
+                self.state = Game.STATE_LOST
+                self.timesUp = true  -- flag for renderer to show "Time's Up!"
+                self:saveGameState()  -- saves high score only (saveGameState returns early for timeattack)
+                save.saveHighScore(self.highScore, self.mode)
+            end
+        end
+    end
+
     if self.bombAnimation then
         self.bombAnimation.timer = self.bombAnimation.timer - dt
         if self.bombAnimation.timer <= 0 then
@@ -731,6 +824,26 @@ function Game:update(dt)
             if self.swapAnimation.t1Ref then self.swapAnimation.t1Ref.isSwapping = false end
             if self.swapAnimation.t2Ref then self.swapAnimation.t2Ref.isSwapping = false end
             self.swapAnimation = nil
+        end
+    end
+
+    -- Update floating time popups
+    if self.timePopups then
+        for i = #self.timePopups, 1, -1 do
+            local p = self.timePopups[i]
+            p.y_offset = p.y_offset - dt * 35 * _G.scale
+            p.alpha = p.alpha - dt * 1.8
+            if p.alpha <= 0 then
+                table.remove(self.timePopups, i)
+            end
+        end
+    end
+
+    -- Update timer flash
+    if self.timerFlashTimer and self.timerFlashTimer > 0 then
+        self.timerFlashTimer = self.timerFlashTimer - dt
+        if self.timerFlashTimer < 0 then
+            self.timerFlashTimer = 0
         end
     end
 

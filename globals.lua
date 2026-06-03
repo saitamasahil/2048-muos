@@ -78,6 +78,9 @@ _G.achievements = {
     
     -- Secret tracking stats
     ach_secret_ascii = false, -- Hacker Mode -> unlocks 'ascii'
+
+    -- Arcade Mode achievements
+    ach_timeattack_2048 = false, -- Aurora -- Reach 2048 in Time Attack -> unlocks 'aurora'
     
     -- Hidden tracking stats
     bombs_used = 0,

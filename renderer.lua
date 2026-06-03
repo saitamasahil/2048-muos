@@ -3,6 +3,7 @@
 -- Colors extracted from the original Android XML drawables
 
 local Game = require("game")
+local save = require("save")
 
 local renderer = {}
 
@@ -22,6 +23,20 @@ local logo_2048 = nil
 
 -- Win animation state
 local win_timer = 0
+
+-- Arcade Menu animation state
+local arcade_panel_y_offset = 9999  -- starts fully hidden (off screen below)
+local arcade_panel_target = 9999    -- target offset
+local arcade_menu_bg_alpha = 0      -- dim overlay alpha (0..0.75)
+
+function renderer.setArcadeMenuOpen(open)
+    if open then
+        arcade_panel_target = 0
+    else
+        -- Will be set to panel height by drawArcadeMenu; use a big number for now
+        arcade_panel_target = 9999
+    end
+end
 
 -- Toast state
 local toast_message = nil
@@ -681,6 +696,39 @@ local themes = {
         help_bg_color    = {hex("#bcaaa4")},
         help_key_color   = {hex("#8bc34a")},
         help_key_text    = {hex("#4e342e")},
+    },
+    aurora = {
+        -- Deep-space Northern Lights: pitch-black void, tiles shift from
+        -- electric teal → violet → magenta → blinding white as they grow.
+        -- UI text is a soft spectral cyan that pops against the darkness.
+        tile_colors = {
+            [0]    = {hex("#050d14")},   -- near-void dark
+            [2]    = {hex("#062e2e")},   -- deep teal abyss
+            [4]    = {hex("#0a3d3d")},   -- dark teal
+            [8]    = {hex("#0e6666")},   -- glowing teal
+            [16]   = {hex("#0aabb5")},   -- electric cyan
+            [32]   = {hex("#0dd4e0")},   -- bright arctic
+            [64]   = {hex("#2854a0")},   -- deep violet-blue
+            [128]  = {hex("#5b2c8b")},   -- royal violet
+            [256]  = {hex("#8b24a0")},   -- deep magenta-violet
+            [512]  = {hex("#bf1ea8")},   -- vivid magenta
+            [1024] = {hex("#e01d9e")},   -- hot pink-magenta
+            [2048] = {hex("#ffffff")},   -- pure blinding white — the peak
+        },
+        super_tile_color = {hex("#ffffff")},
+        dark_text        = {hex("#010810")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#5efcee")},   -- spectral aurora cyan
+        bg_color         = {hex("#010810")},   -- deep space black
+        board_color      = {hex("#050d14")},   -- near-void board
+        score_bg_color   = {hex("#050d14")},
+        score_label      = {hex("#2cd4c4")},   -- aurora teal label
+        score_value      = {hex("#5efcee")},   -- spectral cyan value
+        overlay_win      = {hex("#0dd4e0")},   -- arctic cyan win
+        overlay_lose     = {hex("#050d14")},
+        help_bg_color    = {hex("#050d14")},
+        help_key_color   = {hex("#0aabb5")},   -- electric teal highlight
+        help_key_text    = {hex("#ffffff")},
     }
 }
 
@@ -1114,17 +1162,81 @@ function renderer.drawScores(game)
     love.graphics.setColor(score_value)
     love.graphics.printf(tostring(game.score), score_x, score_y, box_w, "center")
 
-    -- BEST box
-    love.graphics.setColor(score_bg_color)
-    roundedRect("fill", best_x, box_y, box_w, box_h, cr)
+    if game.mode == "timeattack" and game.timeLeft ~= nil then
+        -- TIMER box (replaces BEST in Time Attack)
+        local t = math.max(0, game.timeLeft)
+        local mins = math.floor(t / 60)
+        local secs = math.floor(t % 60)
+        local timer_str = string.format("%d:%02d", mins, secs)
 
-    love.graphics.setFont(font_label)
-    love.graphics.setColor(score_label)
-    love.graphics.printf("BEST", best_x, label_y, box_w, "center")
+        -- Box background (subtly different tint when urgent or flashing)
+        if game.timerFlashTimer and game.timerFlashTimer > 0 then
+            local f = game.timerFlashTimer / 0.3
+            local r_col = score_bg_color[1] * (1 - f) + 0.0 * f
+            local g_col = score_bg_color[2] * (1 - f) + 0.8 * f
+            local b_col = score_bg_color[3] * (1 - f) + 0.7 * f
+            love.graphics.setColor(r_col, g_col, b_col, 0.95)
+        else
+            love.graphics.setColor(score_bg_color)
+        end
+        roundedRect("fill", best_x, box_y, box_w, box_h, cr)
 
-    love.graphics.setFont(font_score)
-    love.graphics.setColor(score_value)
-    love.graphics.printf(tostring(game.highScore), best_x, score_y, box_w, "center")
+        -- "TIME" label
+        love.graphics.setFont(font_label)
+        if t <= 10 then
+            -- Pulsing red label
+            local pulse = (math.sin(love.timer.getTime() * 8) * 0.5 + 0.5)
+            love.graphics.setColor(1.0, 0.25 + pulse * 0.25, 0.2, 1.0)
+        elseif t <= 30 then
+            love.graphics.setColor(1.0, 0.65, 0.1, 1.0)   -- warm orange
+        else
+            love.graphics.setColor(score_label)
+        end
+        love.graphics.printf("TIME", best_x, label_y, box_w, "center")
+
+        -- Timer value
+        love.graphics.setFont(font_score)
+        if t <= 10 then
+            local pulse = (math.sin(love.timer.getTime() * 8) * 0.5 + 0.5)
+            love.graphics.setColor(1.0, 0.2 + pulse * 0.3, 0.2, 1.0)
+        elseif t <= 30 then
+            love.graphics.setColor(1.0, 0.65, 0.1, 1.0)
+        else
+            love.graphics.setColor(score_value)
+        end
+        love.graphics.printf(timer_str, best_x, score_y, box_w, "center")
+
+        -- Draw floating time attack popups
+        if game.timePopups then
+            love.graphics.setFont(font_help_label)
+            for _, p in ipairs(game.timePopups) do
+                local p_str = p.text
+                local p_w = font_help_label:getWidth(p_str)
+                local px = best_x + (box_w - p_w) / 2
+                local py = box_y - math.floor(10 * scale) + p.y_offset
+                
+                -- Shadow
+                love.graphics.setColor(0, 0, 0, p.alpha * 0.75)
+                love.graphics.print(p_str, px + 1, py + 1)
+                
+                -- Main text
+                love.graphics.setColor(0.18, 0.85, 0.45, p.alpha)
+                love.graphics.print(p_str, px)
+            end
+        end
+    else
+        -- Normal BEST box
+        love.graphics.setColor(score_bg_color)
+        roundedRect("fill", best_x, box_y, box_w, box_h, cr)
+
+        love.graphics.setFont(font_label)
+        love.graphics.setColor(score_label)
+        love.graphics.printf("BEST", best_x, label_y, box_w, "center")
+
+        love.graphics.setFont(font_score)
+        love.graphics.setColor(score_value)
+        love.graphics.printf(tostring(game.highScore), best_x, score_y, box_w, "center")
+    end
 end
 
 -- ============================================================================
@@ -1456,9 +1568,10 @@ function renderer.drawHelp(game)
 
     if game.state == Game.STATE_WON then
         table.insert(actions, 1, {key = "A", label = "Continue"})
+        table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "SELECT", label = "Restart"})
         table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-        if game.canUndo then
+        if game.mode ~= "timeattack" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode ~= "plus" then
@@ -1467,8 +1580,9 @@ function renderer.drawHelp(game)
         end
     elseif game.state == Game.STATE_LOST then
         table.insert(actions, 1, {key = "A", label = "New Game"})
+        table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-        if game.canUndo then
+        if game.mode ~= "timeattack" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode ~= "plus" then
@@ -1479,6 +1593,7 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "A", label = "Restart"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "START", label = "Resume"})
+        table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
     elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
         table.insert(actions, 1, {key = "A", label = "Confirm"})
         table.insert(actions, 1, {key = "B", label = "Cancel"})
@@ -1488,6 +1603,10 @@ function renderer.drawHelp(game)
             table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
             table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
             table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
+        elseif game.mode == "timeattack" then
+            -- Time Attack: no undo, no powerups — keep it clean
+            table.insert(actions, 1, {key = "START", label = "Pause"})
+            table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         else
             table.insert(actions, 1, {key = "START", label = "Pause"})
             table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
@@ -1572,15 +1691,27 @@ function renderer.drawOverlay(game)
         
         if game.state == Game.STATE_PAUSED then
             love.graphics.setColor(0, 0, 0, 0.65)
+        elseif game.mode == "timeattack" and game.timesUp then
+            -- Urgent orange overlay for Time's Up
+            love.graphics.setColor(0.85, 0.35, 0.1, 0.6)
         else
             love.graphics.setColor(overlay_lose[1], overlay_lose[2], overlay_lose[3], 0.5)
         end
         roundedRect("fill", bx, by, bs, bs, layout.corner_radius * 2)
 
-        local msg = game.state == Game.STATE_PAUSED and "Paused" or "Game Over!"
+        local msg
+        if game.state == Game.STATE_PAUSED then
+            msg = "Paused"
+        elseif game.mode == "timeattack" and game.timesUp then
+            msg = "Time's Up!"
+        else
+            msg = "Game Over!"
+        end
         love.graphics.setFont(font_message)
         if game.state == Game.STATE_PAUSED then
             love.graphics.setColor(light_text)
+        elseif game.mode == "timeattack" and game.timesUp then
+            love.graphics.setColor(1.0, 0.95, 0.7, 1.0)   -- warm cream text
         else
             love.graphics.setColor(ui_text)
         end
@@ -1650,6 +1781,17 @@ function renderer.updateTransition(dt)
             menu_anim_y = menu_anim_target_y
         end
     end
+
+    -- Arcade panel slide animation
+    local panel_lerp = 1 - math.exp(-20 * dt)
+    arcade_panel_y_offset = arcade_panel_y_offset + (arcade_panel_target - arcade_panel_y_offset) * panel_lerp
+    if math.abs(arcade_panel_y_offset - arcade_panel_target) < 0.5 then
+        arcade_panel_y_offset = arcade_panel_target
+    end
+    -- Bg alpha: fully visible (0.75) when panel is near open (offset ~0), fades as panel closes
+    local h = love.graphics.getHeight()
+    local raw_t = 1 - math.min(1, arcade_panel_y_offset / math.max(1, h * 0.7))
+    arcade_menu_bg_alpha = raw_t * 0.75
 end
 
 local function drawToast()
@@ -2229,10 +2371,11 @@ function renderer.drawMainMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     love.graphics.print("Navigate", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
-    -- Right side actions: A (Select), Y (Theme)
+    -- Right side actions: A (Select), X (Arcade), Y (Theme)
     local right_x = w - math.floor(20 * scale)
     local actions = {
         {key = "A", label = "Select"},
+        {key = "X", label = "Arcade"},
         {key = "Y", label = "Switch Theme"}
     }
     for _, action in ipairs(actions) do
@@ -2260,6 +2403,375 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.setStencilTest()
     end
     
+    drawToast()
+end
+
+-- ============================================================================
+-- Arcade Menu
+-- ============================================================================
+-- Vector helper to draw an animated stopwatch
+local function drawStopwatch(cx, cy, scale, is_selected)
+    local t = love.timer.getTime()
+    local r = 18 * scale
+    
+    love.graphics.push("all")
+    love.graphics.setLineWidth(math.floor(2 * scale))
+    
+    if is_selected then
+        love.graphics.setColor(0.0, 0.85, 0.8, 1.0)
+    else
+        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
+    end
+    
+    -- Outer circle
+    love.graphics.circle("line", cx, cy, r)
+    
+    -- Top crown
+    love.graphics.rectangle("fill", cx - math.floor(3 * scale), cy - r - math.floor(4 * scale), math.floor(6 * scale), math.floor(3 * scale))
+    -- Left button (rotated)
+    love.graphics.push()
+    love.graphics.translate(cx, cy)
+    love.graphics.rotate(-math.pi / 4)
+    love.graphics.rectangle("fill", -math.floor(2 * scale), -r - math.floor(3 * scale), math.floor(4 * scale), math.floor(2 * scale))
+    love.graphics.pop()
+    
+    -- Center pin
+    love.graphics.circle("fill", cx, cy, math.floor(3 * scale))
+    
+    -- Clock hands
+    -- Minute hand (pointing slightly offset)
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+    love.graphics.line(cx, cy, cx, cy - r + math.floor(6 * scale))
+    
+    -- Second hand (rotates full circle every 8 seconds, modulo prevents overflow precision issues)
+    local angle = -math.pi / 2 + (t % 8) * (2 * math.pi / 8)
+    local hand_len = r - math.floor(4 * scale)
+    love.graphics.setLineWidth(math.floor(1 * scale))
+    if is_selected then
+        love.graphics.setColor(0.95, 0.15, 0.45, 0.95) -- Active pink-red ticking hand
+    else
+        love.graphics.setColor(0.45, 0.5, 0.58, 0.6)
+    end
+    love.graphics.line(cx, cy, cx + hand_len * math.cos(angle), cy + hand_len * math.sin(angle))
+    
+    love.graphics.pop()
+end
+
+-- Vector helper to draw a modern lock
+local function drawLock(cx, cy, scale)
+    local w = math.floor(24 * scale)
+    local h = math.floor(18 * scale)
+    local r = math.floor(7 * scale)
+    
+    love.graphics.push("all")
+    love.graphics.setLineWidth(math.floor(2 * scale))
+    love.graphics.setColor(0.35, 0.38, 0.45, 0.7)
+    
+    -- Lock shackle (top arch)
+    love.graphics.arc("line", "open", cx, cy - h/2 + math.floor(3 * scale), r, math.pi, 2 * math.pi)
+    love.graphics.line(cx - r, cy - h/2 + math.floor(3 * scale), cx - r, cy - h/2 + math.floor(6 * scale))
+    love.graphics.line(cx + r, cy - h/2 + math.floor(3 * scale), cx + r, cy - h/2 + math.floor(6 * scale))
+    
+    -- Lock body
+    love.graphics.rectangle("fill", cx - w/2, cy - h/2 + math.floor(5 * scale), w, h, math.floor(3 * scale))
+    
+    -- Keyhole
+    love.graphics.setColor(0.08, 0.08, 0.12, 0.9)
+    love.graphics.circle("fill", cx, cy + math.floor(2 * scale), math.floor(3 * scale))
+    love.graphics.rectangle("fill", cx - math.floor(1 * scale), cy + math.floor(2 * scale), math.floor(2 * scale), math.floor(4 * scale))
+    
+    love.graphics.pop()
+end
+
+function renderer.drawArcadeMenu(selection, skip_transition, current_menu_selection)
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    -- First draw the main menu underneath (dimmed) using the current menu selection to prevent header jump
+    renderer.drawMainMenu(current_menu_selection or 1, true)
+
+    -- Dim overlay
+    if arcade_menu_bg_alpha > 0 then
+        love.graphics.setColor(0, 0, 0, arcade_menu_bg_alpha)
+        love.graphics.rectangle("fill", 0, 0, w, h)
+    end
+
+    -- Panel geometry
+    local panel_pad_x = math.floor(24 * scale)
+    local panel_pad_y = math.floor(16 * scale)
+    local card_gap    = math.floor(12 * scale)
+    local card_h      = math.floor(96 * scale)
+    local num_cards   = 2   -- Time Attack + Coming Soon
+    local header_h    = math.floor(74 * scale)
+    local footer_h    = math.floor(44 * scale)
+    local panel_h     = header_h + panel_pad_y + num_cards * card_h + (num_cards - 1) * card_gap + panel_pad_y + footer_h
+
+    local panel_x = math.floor(panel_pad_x)
+    local panel_w = w - panel_pad_x * 2
+
+    -- Animate sliding up from bottom
+    local raw_offset = arcade_panel_y_offset
+    if raw_offset > panel_h then raw_offset = panel_h end
+    local panel_y_base = h - panel_h
+    local panel_y = panel_y_base + raw_offset
+
+    -- Ambient floating light blobs inside the panel (aurora theme)
+    local t = love.timer.getTime()
+    local alpha_mult = 1 - raw_offset / panel_h
+
+    -- Glassy panel background
+    love.graphics.setColor(0.04, 0.04, 0.08, 0.95)
+    roundedRect("fill", panel_x, panel_y, panel_w, panel_h, math.floor(18 * scale))
+
+    -- Draw sliding/waving light blobs (aurora effect)
+    love.graphics.push("all")
+    love.graphics.setScissor(panel_x, panel_y, panel_w, panel_h)
+    
+    -- Blob 1: Aurora Teal
+    local b1x = panel_x + panel_w * 0.25 + math.sin(t * 0.6) * 50 * scale
+    local b1y = panel_y + panel_h * 0.35 + math.cos(t * 0.5) * 30 * scale
+    love.graphics.setColor(0.0, 0.78, 0.73, 0.12 * alpha_mult)
+    love.graphics.circle("fill", b1x, b1y, 110 * scale)
+
+    -- Blob 2: Aurora Purple
+    local b2x = panel_x + panel_w * 0.75 + math.cos(t * 0.7) * 60 * scale
+    local b2y = panel_y + panel_h * 0.45 + math.sin(t * 0.8) * 25 * scale
+    love.graphics.setColor(0.55, 0.20, 0.90, 0.10 * alpha_mult)
+    love.graphics.circle("fill", b2x, b2y, 120 * scale)
+
+    -- Blob 3: Aurora Magenta/Pink
+    local b3x = panel_x + panel_w * 0.5 + math.sin(t * 0.4) * 70 * scale
+    local b3y = panel_y + panel_h * 0.7 + math.sin(t * 0.7) * 35 * scale
+    love.graphics.setColor(0.90, 0.05, 0.55, 0.08 * alpha_mult)
+    love.graphics.circle("fill", b3x, b3y, 90 * scale)
+
+    love.graphics.setScissor()
+    love.graphics.pop()
+
+    -- Glassy panel border highlight
+    love.graphics.setColor(1, 1, 1, 0.08)
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+    roundedRect("line", panel_x, panel_y, panel_w, panel_h, math.floor(18 * scale))
+
+    -- ── Header ──────────────────────────────────────────────────────────────
+    local header_y = panel_y + panel_pad_y
+    love.graphics.setFont(font_title) -- Use font_title (size 36) to prevent overlap!
+    local title = "Arcade Modes"
+    local tw = font_title:getWidth(title)
+    
+    -- Draw drop shadow for text
+    love.graphics.setColor(0, 0, 0, 0.5)
+    love.graphics.print(title, panel_x + (panel_w - tw) / 2 + 1, header_y + 1)
+    
+    -- Draw main title text in glowing Teal
+    love.graphics.setColor(0.0, 0.9, 0.85, 1.0)
+    love.graphics.print(title, panel_x + (panel_w - tw) / 2, header_y)
+
+    -- Neon glow separator line
+    love.graphics.setColor(0.0, 0.78, 0.73, 0.15)
+    love.graphics.setLineWidth(math.floor(3 * scale))
+    love.graphics.line(
+        panel_x + math.floor(20 * scale),
+        header_y + font_title:getHeight() + math.floor(8 * scale),
+        panel_x + panel_w - math.floor(20 * scale),
+        header_y + font_title:getHeight() + math.floor(8 * scale)
+    )
+    love.graphics.setColor(0.0, 0.78, 0.73, 0.6)
+    love.graphics.setLineWidth(math.floor(1 * scale))
+    love.graphics.line(
+        panel_x + math.floor(30 * scale),
+        header_y + font_title:getHeight() + math.floor(8 * scale),
+        panel_x + panel_w - math.floor(30 * scale),
+        header_y + font_title:getHeight() + math.floor(8 * scale)
+    )
+
+    -- ── Mode cards ──────────────────────────────────────────────────────────
+    local cards_top = header_y + header_h
+    local card_x    = panel_x + math.floor(16 * scale)
+    local card_w    = panel_w - math.floor(32 * scale)
+    local card_cr   = math.floor(12 * scale)
+
+    local modes = {
+        {
+            name        = "Time Attack",
+            desc        = "Score as high as possible before time runs out!",
+            icon        = "stopwatch",
+            bestScore   = save.loadHighScore("timeattack"),
+            available   = true,
+            accentR = 0.0, accentG = 0.85, accentB = 0.8,
+        },
+        {
+            name        = "Coming Soon...",
+            desc        = "More exciting modes are on their way.",
+            icon        = "lock",
+            available   = false,
+            accentR = 0.4, accentG = 0.4, accentB = 0.5,
+        }
+    }
+
+    for i, mode in ipairs(modes) do
+        local cy = cards_top + (i - 1) * (card_h + card_gap)
+        local is_sel = (i == selection) and mode.available
+
+        -- Stagger pop-in
+        local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (i - 1) * 0.05)
+        local card_scale = 0.92 + slide_t * 0.08
+
+        love.graphics.push()
+        love.graphics.translate(card_x + card_w / 2, cy + card_h / 2)
+        love.graphics.scale(card_scale, card_scale)
+        love.graphics.translate(-(card_x + card_w / 2), -(cy + card_h / 2))
+
+        if is_sel then
+            -- Rich dark glassy teal backdrop for selected
+            love.graphics.setColor(0.04, 0.12, 0.16, 0.85)
+            roundedRect("fill", card_x, cy, card_w, card_h, card_cr)
+            
+            -- Glowing pulsing border
+            local pulse = 0.65 + 0.25 * math.sin(t * 5)
+            love.graphics.setLineWidth(math.floor(2 * scale))
+            love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, pulse)
+            roundedRect("line", card_x, cy, card_w, card_h, card_cr)
+            
+            -- Accent side bar
+            love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.9)
+            local bar_h = math.floor(36 * scale)
+            local bar_w = math.floor(4 * scale)
+            local bar_y = cy + (card_h - bar_h) / 2
+            roundedRect("fill", card_x + math.floor(6 * scale), bar_y, bar_w, bar_h, math.floor(2 * scale))
+        elseif mode.available then
+            -- Elegant dark grey glassy unselected
+            love.graphics.setColor(0.08, 0.08, 0.12, 0.6)
+            roundedRect("fill", card_x, cy, card_w, card_h, card_cr)
+            love.graphics.setColor(0.2, 0.22, 0.28, 0.35)
+            love.graphics.setLineWidth(math.floor(1 * scale))
+            roundedRect("line", card_x, cy, card_w, card_h, card_cr)
+        else
+            -- Locked card styling
+            love.graphics.setColor(0.05, 0.05, 0.08, 0.5)
+            roundedRect("fill", card_x, cy, card_w, card_h, card_cr)
+            love.graphics.setColor(0.15, 0.16, 0.20, 0.2)
+            love.graphics.setLineWidth(math.floor(1 * scale))
+            roundedRect("line", card_x, cy, card_w, card_h, card_cr)
+        end
+
+        -- Draw vector icon on the left
+        local icon_cx = card_x + math.floor(36 * scale)
+        local icon_cy = cy + card_h / 2
+        if mode.icon == "stopwatch" then
+            drawStopwatch(icon_cx, icon_cy, scale, is_sel)
+        elseif mode.icon == "lock" then
+            drawLock(icon_cx, icon_cy, scale)
+        end
+
+        -- Mode name
+        local text_x = card_x + math.floor(68 * scale)
+        local name_y = cy + math.floor(14 * scale)
+        love.graphics.setFont(font_message)
+        if is_sel then
+            love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 1.0)
+        elseif mode.available then
+            love.graphics.setColor(0.9, 0.92, 0.95, 1.0)
+        else
+            love.graphics.setColor(0.4, 0.42, 0.48, 0.7)
+        end
+        love.graphics.print(mode.name, text_x, name_y)
+
+        -- Description
+        local desc_y = name_y + font_message:getHeight() + math.floor(4 * scale)
+        love.graphics.setFont(font_help_label)
+        if mode.available then
+            love.graphics.setColor(0.65, 0.68, 0.75, 1.0)
+        else
+            love.graphics.setColor(0.3, 0.32, 0.38, 0.7)
+        end
+        love.graphics.printf(mode.desc, text_x, desc_y, card_w - math.floor(68 * scale) - math.floor(110 * scale), "left")
+
+        -- Best score (drawn as a beautiful badge)
+        if mode.available and mode.bestScore and mode.bestScore > 0 then
+            love.graphics.setFont(font_help_label)
+            local best_label = "BEST"
+            local best_val   = tostring(mode.bestScore)
+            local blw = font_help_label:getWidth(best_label)
+            local bvw = font_help_label:getWidth(best_val)
+            
+            local badge_w = math.max(math.floor(70 * scale), math.max(blw, bvw) + math.floor(18 * scale))
+            local badge_h = math.floor(52 * scale) -- Larger/taller badge box
+            local br_x = card_x + card_w - math.floor(18 * scale)
+            local bx = br_x - badge_w
+            local by = cy + (card_h - badge_h) / 2
+            
+            -- Glassy badge back
+            if is_sel then
+                love.graphics.setColor(mode.accentR * 0.15, mode.accentG * 0.15, mode.accentB * 0.15, 0.4)
+                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(8 * scale))
+                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.45)
+                roundedRect("line", bx, by, badge_w, badge_h, math.floor(8 * scale))
+            else
+                love.graphics.setColor(0.12, 0.12, 0.18, 0.4)
+                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(8 * scale))
+                love.graphics.setColor(0.3, 0.32, 0.38, 0.4)
+                roundedRect("line", bx, by, badge_w, badge_h, math.floor(8 * scale))
+            end
+            
+            -- Dynamic vertical centering of text inside the badge
+            local lbl_h = font_help_label:getHeight()
+            local val_h = font_help_label:getHeight()
+            local badge_spacing = math.floor(2 * scale)
+            local badge_text_h = lbl_h + val_h + badge_spacing
+            local badge_top_pad = math.floor((badge_h - badge_text_h) / 2)
+            
+            local bl_y = by + badge_top_pad
+            local bv_y = by + badge_top_pad + lbl_h + badge_spacing
+            
+            -- Badge text
+            love.graphics.setColor(0.55, 0.58, 0.65, 0.8)
+            love.graphics.print(best_label, bx + (badge_w - blw) / 2, bl_y)
+            if is_sel then
+                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 1.0)
+            else
+                love.graphics.setColor(0.85, 0.85, 0.9, 1.0)
+            end
+            love.graphics.print(best_val, bx + (badge_w - bvw) / 2, bv_y)
+        end
+
+        love.graphics.pop()
+    end
+
+    -- ── Footer ──────────────────────────────────────────────────────────────
+    local footer_y = cards_top + num_cards * card_h + (num_cards - 1) * card_gap + math.floor(8 * scale)
+    local badge_h   = math.floor(28 * scale)
+    local badge_y   = footer_y + (footer_h - badge_h) / 2
+    local item_gap  = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
+
+    -- Right side: A (Play) + B/X (Back)
+    local right_x = panel_x + panel_w - math.floor(12 * scale)
+    local footer_actions = {
+        {key = "A", label = "Play"},
+        {key = "B", label = "Back"},
+    }
+    for _, action in ipairs(footer_actions) do
+        love.graphics.setFont(font_help_label)
+        local lbl_w = font_help_label:getWidth(action.label)
+        right_x = right_x - lbl_w
+        love.graphics.setColor(0.7, 0.75, 0.8, 1.0)
+        love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+        right_x = right_x - label_gap
+        local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+        right_x = right_x - key_w
+        drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+        right_x = right_x - item_gap
+    end
+
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setStencilTest()
+    end
+
     drawToast()
 end
 
@@ -2617,7 +3129,8 @@ function renderer.drawAchievements(scroll, skip_transition)
         { id = "ach_score_25k", name = "Aesthetic", desc = "Reach 25,000 points", reward = "Vaporwave Theme" },
         { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme" },
         { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme" },
-        { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme" }
+        { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme" },
+        { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme" }
     }
 
     local list_y = padding + font_title:getHeight() + math.floor(20 * scale)
