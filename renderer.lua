@@ -24,6 +24,10 @@ local logo_2048 = nil
 -- Win animation state
 local win_timer = 0
 
+-- Text size flash animation state (triggered when text size is toggled)
+local text_size_flash_timer = 0
+local TEXT_SIZE_FLASH_DURATION = 0.4
+
 -- Arcade Menu animation state
 local arcade_panel_y_offset = 9999  -- starts fully hidden (off screen below)
 local arcade_panel_target = 9999    -- target offset
@@ -36,6 +40,10 @@ function renderer.setArcadeMenuOpen(open)
         -- Will be set to panel height by drawArcadeMenu; use a big number for now
         arcade_panel_target = 9999
     end
+end
+
+function renderer.flashTextSize()
+    text_size_flash_timer = TEXT_SIZE_FLASH_DURATION
 end
 
 -- Toast state
@@ -731,6 +739,20 @@ local themes = {
         help_key_text    = {hex("#ffffff")},
     }
 }
+
+-- Returns all theme names defined in the themes table, excluding always-unlocked ones.
+-- Used by cheats to dynamically unlock everything without a hardcoded list.
+function renderer.getAllThemeNames()
+    -- "light" and "dark" are always unlocked; "ascii" auto-unlocks on cheat entry
+    local always_unlocked = { light = true, dark = true, ascii = true }
+    local names = {}
+    for name in pairs(themes) do
+        if not always_unlocked[name] then
+            table.insert(names, name)
+        end
+    end
+    return names
+end
 
 -- Current active colors (will be populated by applyTheme)
 local tile_colors, super_tile_color, dark_text, light_text, ui_text
@@ -1792,6 +1814,11 @@ function renderer.updateTransition(dt)
     local h = love.graphics.getHeight()
     local raw_t = 1 - math.min(1, arcade_panel_y_offset / math.max(1, h * 0.7))
     arcade_menu_bg_alpha = raw_t * 0.75
+
+    -- Text size flash timer
+    if text_size_flash_timer > 0 then
+        text_size_flash_timer = math.max(0, text_size_flash_timer - dt)
+    end
 end
 
 local function drawToast()
@@ -2393,6 +2420,15 @@ function renderer.drawMainMenu(selection, skip_transition)
         drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
 
         right_x = right_x - item_gap
+    end
+
+    -- Text size toggle flash: brief full-screen white flash, fades out cleanly
+    if text_size_flash_timer > 0 then
+        local p = text_size_flash_timer / TEXT_SIZE_FLASH_DURATION  -- 1→0
+        local alpha = p * p * 0.45  -- ease-out, max ~45% white overlay
+        love.graphics.setColor(1, 1, 1, alpha)
+        love.graphics.rectangle("fill", 0, 0, w, h)
+        love.graphics.setColor(1, 1, 1, 1)
     end
 
     if not skip_transition and transition_timer > 0 and transition_canvas then

@@ -17,13 +17,50 @@ local game
 
 _G.cheats_unlocked = false
 local konami_sequence = { "up", "up", "down", "down", "left", "right", "left", "right", "backspace", "return", "space" }
+
+-- Screen Transition System
+local last_app_state = nil
+local screen_transition_timer = 0
+local screen_transition_duration = 0.28
+local screen_canvas = nil       -- canvas of the NEW (incoming) screen
+local old_screen_canvas = nil   -- canvas of the OLD (outgoing) screen
+local transition_direction = 1  -- +1 = forward (new slides in from right), -1 = backward (from left)
 local konami_progress = 1
 
 local transition_delay_timer = 0
 local transition_delay_action = nil
 local transition_delay_key = nil
+-- Direction hint set before queueing a transition: +1 forward, -1 backward
+local transition_next_direction = 1
 
-local function queueTransitionAction(key, delay, action)
+-- Hierarchy order for determining forward/backward direction
+local STATE_DEPTH = {
+    MENU          = 0,
+    ARCADE_MENU   = 1,
+    GAME          = 2,
+    TUTORIAL      = 1,
+    ABOUT         = 1,
+    ACHIEVEMENTS  = 1,
+    THEME_SELECT  = 1,
+    CHEATS_MENU   = 1,
+}
+
+-- Forward declaration (defined later in the file, after love.update's helper logic)
+local drawCurrentScreen
+
+local function captureOldScreen()
+    local w, h = love.graphics.getDimensions()
+    if not old_screen_canvas then
+        old_screen_canvas = love.graphics.newCanvas(w, h)
+    end
+    love.graphics.setCanvas(old_screen_canvas)
+    love.graphics.clear()
+    drawCurrentScreen()
+    love.graphics.setCanvas()
+end
+
+local function queueTransitionAction(key, delay, action, direction)
+    transition_next_direction = direction or 1
     transition_delay_key = key
     transition_delay_timer = 0.12 -- Extended visual hold duration for a satisfying physical button click
     transition_delay_action = action
@@ -161,6 +198,7 @@ function love.load(args)
 
     -- Initialize renderer (compute layout, load fonts)
     renderer.init()
+    screen_canvas = love.graphics.newCanvas(love.graphics.getDimensions())
 
     -- Load splash screen
     splash.load()
@@ -169,6 +207,33 @@ end
 function love.update(dt)
     -- Cap dt to prevent animation glitches on frame drops
     dt = math.min(dt, 0.05)
+
+    -- Trigger screen transitions on appState change (smooth slide animation)
+    if _G.appState ~= last_app_state then
+        if splash.finished and last_app_state ~= nil then
+            -- ARCADE_MENU has its own panel slide animation; skip global slide for it
+            local skip_slide = (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU")
+            if not skip_slide then
+                -- Determine direction from hierarchy depth
+                local old_depth = STATE_DEPTH[last_app_state] or 0
+                local new_depth = STATE_DEPTH[_G.appState] or 0
+                if new_depth > old_depth then
+                    transition_direction = 1   -- deeper = slide from right
+                elseif new_depth < old_depth then
+                    transition_direction = -1  -- back = slide from left
+                else
+                    transition_direction = transition_next_direction
+                end
+                transition_next_direction = 1
+                screen_transition_timer = screen_transition_duration
+            end
+        end
+        last_app_state = _G.appState
+    end
+
+    if screen_transition_timer > 0 then
+        screen_transition_timer = math.max(0, screen_transition_timer - dt)
+    end
 
     -- Check for global exit combo (MENU + START)
     if input.state[input.events.MENU] and input.state[input.events.START] then
@@ -192,6 +257,8 @@ function love.update(dt)
                 transition_delay_key = nil
             end
             if transition_delay_action then
+                -- Capture the current (old) screen BEFORE state changes
+                captureOldScreen()
                 local action = transition_delay_action
                 transition_delay_action = nil
                 action()
@@ -355,6 +422,7 @@ function love.update(dt)
                                 _G.text_size = (_G.text_size == "large") and "normal" or "large"
                                 save.saveTextSize(_G.text_size)
                                 renderer.init()
+                                renderer.flashTextSize()
                             elseif menuSelection == 8 then
                                 _G.appState = "ABOUT"
                             elseif menuSelection == 9 then
@@ -365,6 +433,7 @@ function love.update(dt)
                                 _G.text_size = (_G.text_size == "large") and "normal" or "large"
                                 save.saveTextSize(_G.text_size)
                                 renderer.init()
+                                renderer.flashTextSize()
                             elseif menuSelection == 7 then
                                 _G.appState = "ABOUT"
                             elseif menuSelection == 8 then
@@ -464,8 +533,7 @@ function love.update(dt)
                 _G.cheats_selection = _G.cheats_selection < 9 and (_G.cheats_selection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if _G.cheats_selection == 1 then
-                    local all_themes = {"ocean", "forest", "sunset", "candy", "oled", "neon", "retro", "peach", "midnight", "volcano", "abyss", "eclipse", "cyberpunk", "matrix", "vaporwave", "dracula", "gold", "matcha"}
-                    for _, t in ipairs(all_themes) do
+                    for _, t in ipairs(renderer.getAllThemeNames()) do
                         local found = false
                         for _, existing in ipairs(_G.unlocked_themes) do
                             if existing == t then found = true break end
@@ -686,10 +754,8 @@ function love.update(dt)
     end)
 end
 
-function love.draw()
-    if not splash.finished then
-        splash.draw()
-    elseif _G.appState == "MENU" then
+drawCurrentScreen = function()
+    if _G.appState == "MENU" then
         renderer.drawMainMenu(menuSelection)
     elseif _G.appState == "ARCADE_MENU" then
         renderer.drawArcadeMenu(_G.arcade_selection or 1, false, menuSelection)
@@ -705,5 +771,53 @@ function love.draw()
         renderer.drawThemeSelect()
     elseif _G.appState == "GAME" and game then
         renderer.draw(game)
+    end
+end
+
+function love.draw()
+    if not splash.finished then
+        splash.draw()
+        return
+    end
+
+    if screen_transition_timer > 0 then
+        local w, h = love.graphics.getDimensions()
+        if not screen_canvas then
+            screen_canvas = love.graphics.newCanvas(w, h)
+        end
+
+        -- Draw the NEW (incoming) screen to screen_canvas
+        love.graphics.setCanvas(screen_canvas)
+        love.graphics.clear()
+        drawCurrentScreen()
+        love.graphics.setCanvas()
+
+        -- Cubic ease-out progress  (0 → 1)
+        local t_progress = 1 - (screen_transition_timer / screen_transition_duration)
+        local p = 1 - math.pow(1 - t_progress, 3)  -- ease-out cubic
+
+        local dir = transition_direction  -- +1 or -1
+
+        -- New screen: slides in from off-screen (dir=+1 → from right; dir=-1 → from left)
+        local new_x = dir * w * (1 - p)
+        -- Old screen: slides out to the opposite side, at half speed (parallax feel)
+        local old_x = -dir * w * 0.35 * p
+
+        -- Draw background fill to avoid any gaps
+        love.graphics.clear(0.05, 0.05, 0.08, 1.0)
+
+        -- Draw old screen sliding out (with slight fade-out)
+        if old_screen_canvas then
+            love.graphics.setColor(1, 1, 1, 1 - p * 0.4)
+            love.graphics.draw(old_screen_canvas, math.floor(old_x), 0)
+        end
+
+        -- Draw new screen sliding in
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(screen_canvas, math.floor(new_x), 0)
+
+        love.graphics.setColor(1, 1, 1, 1)
+    else
+        drawCurrentScreen()
     end
 end
