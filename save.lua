@@ -17,7 +17,14 @@ function save.init(dir)
 end
 
 function save.getPath(mode)
-    local file = (mode == "plus") and "highscore_plus.dat" or SAVE_FILE
+    local file
+    if mode == "plus" then
+        file = "highscore_plus.dat"
+    elseif mode == "timeattack" then
+        file = "highscore_timeattack.dat"
+    else
+        file = SAVE_FILE  -- classic
+    end
     if SAVE_DIR ~= "" then
         return SAVE_DIR .. "/" .. file
     end
@@ -25,7 +32,14 @@ function save.getPath(mode)
 end
 
 function save.getStatePath(mode)
-    local file = (mode == "plus") and "gamestate_plus.dat" or STATE_FILE
+    local file
+    if mode == "plus" then
+        file = "gamestate_plus.dat"
+    elseif mode == "timeattack" then
+        file = "gamestate_timeattack.dat"
+    else
+        file = STATE_FILE  -- classic
+    end
     if SAVE_DIR ~= "" then
         return SAVE_DIR .. "/" .. file
     end
