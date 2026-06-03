@@ -5,6 +5,7 @@
 ### Added
 - Arcade Modes: Introduced a brand-new arcade mode with different game modes to play.
   - Time Attack Mode: A fast-paced new mode where you race against a 90-second countdown clock. Merge larger tiles (32+) to earn crucial time extensions and unlock the exclusive animated Aurora theme.
+- Dynamic Screen Transitions: Added a smooth transition when changing screens.
 
 ### Changed
 - Plus Mode Balancing: Reduced the rate at which power-ups are awarded to make the gameplay significantly more strategic and challenging.
