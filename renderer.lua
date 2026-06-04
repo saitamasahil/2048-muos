@@ -19,6 +19,10 @@ renderer.theme_button_y = nil
 -- Menu selection animation state
 local menu_anim_y = nil
 local menu_anim_target_y = nil
+local menu_anim_x = nil
+local menu_anim_target_x = nil
+local menu_anim_w = nil
+local menu_anim_target_w = nil
 local logo_2048 = nil
 
 -- Win animation state
@@ -2378,6 +2382,28 @@ function renderer.updateTransition(dt)
             menu_anim_y = menu_anim_target_y
         end
     end
+    
+    if menu_anim_target_x then
+        if not menu_anim_x then
+            menu_anim_x = menu_anim_target_x
+        end
+        local lerp_factor = 1 - math.exp(-25 * dt)
+        menu_anim_x = menu_anim_x + (menu_anim_target_x - menu_anim_x) * lerp_factor
+        if math.abs(menu_anim_x - menu_anim_target_x) < 0.5 then
+            menu_anim_x = menu_anim_target_x
+        end
+    end
+
+    if menu_anim_target_w then
+        if not menu_anim_w then
+            menu_anim_w = menu_anim_target_w
+        end
+        local lerp_factor = 1 - math.exp(-25 * dt)
+        menu_anim_w = menu_anim_w + (menu_anim_target_w - menu_anim_w) * lerp_factor
+        if math.abs(menu_anim_w - menu_anim_target_w) < 0.5 then
+            menu_anim_w = menu_anim_target_w
+        end
+    end
 
     -- Arcade panel slide animation
     local panel_lerp = 1 - math.exp(-20 * dt)
@@ -2909,7 +2935,7 @@ function renderer.drawMainMenu(selection, skip_transition)
         table.insert(options, 6, "Cheats")
     end
     love.graphics.setFont(font_message)
-    local gap = (_G.text_size == "large" and 34 or 31) * scale
+    local gap = (_G.text_size == "large" and 37 or 34) * scale
     local menu_h = (#options - 1) * gap + font_message:getHeight()
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
@@ -2967,11 +2993,26 @@ function renderer.drawMainMenu(selection, skip_transition)
     local block_x = (w - max_ow) / 2
 
     local target_oy = menu_start_y + (selection - 1) * gap
+    local sel_opt = options[selection]
+    local display_sel_opt = sel_opt
+    if sel_opt:find("^Select Theme:") then
+        display_sel_opt = "Select Theme: " .. theme_name
+    end
+    local sel_ow = font_message:getWidth(display_sel_opt)
+
+    local target_ox = block_x - 12 * scale
+    local target_ow = sel_ow + 24 * scale
+
     menu_anim_target_y = target_oy
+    menu_anim_target_x = target_ox
+    menu_anim_target_w = target_ow
+
     if not menu_anim_y then menu_anim_y = target_oy end
+    if not menu_anim_x then menu_anim_x = target_ox end
+    if not menu_anim_w then menu_anim_w = target_ow end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 2 * scale, max_ow + 40 * scale, font_message:getHeight() + 4 * scale, 8 * scale)
+    roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
         local oy = menu_start_y + (i - 1) * gap
@@ -3681,7 +3722,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Back"
     }
     love.graphics.setFont(font_message)
-    local gap = (_G.text_size == "large" and 37 or 32) * scale
+    local gap = (_G.text_size == "large" and 40 or 36) * scale
     local menu_h = (#options - 1) * gap + font_message:getHeight()
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
@@ -3699,11 +3740,22 @@ function renderer.drawCheatsMenu(selection, skip_transition)
     local block_x = (w - max_ow) / 2
 
     local target_oy = start_y + (selection - 1) * gap
+    local sel_opt = options[selection]
+    local sel_ow = font_message:getWidth(sel_opt)
+
+    local target_ox = block_x - 12 * scale
+    local target_ow = sel_ow + 24 * scale
+
     menu_anim_target_y = target_oy
+    menu_anim_target_x = target_ox
+    menu_anim_target_w = target_ow
+
     if not menu_anim_y then menu_anim_y = target_oy end
+    if not menu_anim_x then menu_anim_x = target_ox end
+    if not menu_anim_w then menu_anim_w = target_ow end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", block_x - 20 * scale, menu_anim_y - 2 * scale, max_ow + 40 * scale, font_message:getHeight() + 4 * scale, 8 * scale)
+    roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
