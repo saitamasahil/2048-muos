@@ -1562,33 +1562,33 @@ local function drawGooseCardIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc
     love.graphics.rotate(waddleAngle)
 
     -- Feet
-    love.graphics.line(-7 * scale, 10 * scale, -9 * scale, 20 * scale)
-    love.graphics.line(-9 * scale, 20 * scale, -13 * scale, 20 * scale)
-    love.graphics.line(5 * scale, 10 * scale, 3 * scale, 20 * scale)
-    love.graphics.line(3 * scale, 20 * scale, -1 * scale, 20 * scale)
+    love.graphics.line(-5.25 * scale, 7.5 * scale, -6.75 * scale, 15 * scale)
+    love.graphics.line(-6.75 * scale, 15 * scale, -9.75 * scale, 15 * scale)
+    love.graphics.line(3.75 * scale, 7.5 * scale, 2.25 * scale, 15 * scale)
+    love.graphics.line(2.25 * scale, 15 * scale, -0.75 * scale, 15 * scale)
 
     -- Body outline
-    love.graphics.ellipse("line", -4 * scale, 3 * scale, 16 * scale, 11 * scale)
+    love.graphics.ellipse("line", -3 * scale, 2.25 * scale, 12 * scale, 8.25 * scale)
 
     -- Neck lines
-    love.graphics.line(3 * scale, 1 * scale, 8 * scale, -12 * scale)
-    love.graphics.line(10 * scale, 6 * scale, 14 * scale, -9 * scale)
+    love.graphics.line(2.25 * scale, 0.75 * scale, 6 * scale, -9 * scale)
+    love.graphics.line(7.5 * scale, 4.5 * scale, 10.5 * scale, -6.75 * scale)
 
     -- Head outline
-    love.graphics.ellipse("line", 11 * scale, -14 * scale, 7 * scale, 7 * scale)
+    love.graphics.ellipse("line", 8.25 * scale, -10.5 * scale, 5.25 * scale, 5.25 * scale)
 
     -- Beak outline
-    love.graphics.polygon("line", 
-        17 * scale, -16 * scale,
-        17 * scale, -12 * scale,
-        24 * scale, -14 * scale
+    love.graphics.polygon("line",
+        12.75 * scale, -12 * scale,
+        12.75 * scale, -9 * scale,
+        18 * scale, -10.5 * scale
     )
 
     -- Wing outline
-    love.graphics.ellipse("line", -6 * scale, 3 * scale, 9 * scale, 6 * scale)
+    love.graphics.ellipse("line", -4.5 * scale, 2.25 * scale, 6.75 * scale, 4.5 * scale)
 
     -- Eye (small filled dot)
-    love.graphics.circle("fill", 12.5 * scale, -15.5 * scale, 1.2 * scale)
+    love.graphics.circle("fill", 9.375 * scale, -11.625 * scale, 0.9 * scale)
 
     love.graphics.pop()
 end
