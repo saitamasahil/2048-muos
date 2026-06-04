@@ -396,16 +396,6 @@ function love.update(dt)
                     end
                 end
             end
-            
-            -- X button → Play Select menu
-            if event == input.events.X then
-                queueTransitionAction(event, 0.08, function()
-                    _G.appState = "PLAY_SELECT"
-                    _G.play_select_selection = 1
-                    renderer.setArcadeMenuOpen(true)
-                end)
-                return
-            end
 
             local max_menu = _G.cheats_unlocked and 8 or 7
             if event == input.events.UP then
