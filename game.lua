@@ -148,8 +148,8 @@ function Game:saveGameState()
 end
 
 function Game:addStartTiles()
-    if _G.cheat_test_tiles then
-        _G.cheat_test_tiles = false
+    if _G.cheat_debug_layout == "Fill Board" then
+        _G.cheat_debug_layout = "None"
         local val = 2
         for r = 1, 4 do
             for c = 1, 4 do
@@ -162,22 +162,8 @@ function Game:addStartTiles()
         return
     end
 
-    if _G.cheat_fill_24816 then
-        _G.cheat_fill_24816 = false
-        local val = 2
-        for r = 1, 4 do
-            for c = 1, 4 do
-                local tile = Tile.new(c, r, val)
-                tile.isNew = true
-                self.grid:insertTile(tile)
-                val = val * 2
-            end
-        end
-        return
-    end
-
-    if _G.cheat_two_1024s then
-        _G.cheat_two_1024s = false
+    if _G.cheat_debug_layout == "Two 1024s" then
+        _G.cheat_debug_layout = "None"
         local tile1 = Tile.new(1, 1, 1024)
         tile1.isNew = true
         self.grid:insertTile(tile1)

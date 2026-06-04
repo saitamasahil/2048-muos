@@ -568,9 +568,9 @@ function love.update(dt)
                     _G.appState = "MENU"
                 end)
             elseif event == input.events.UP then
-                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 9
+                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 7
             elseif event == input.events.DOWN then
-                _G.cheats_selection = _G.cheats_selection < 9 and (_G.cheats_selection + 1) or 1
+                _G.cheats_selection = _G.cheats_selection < 7 and (_G.cheats_selection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if _G.cheats_selection == 1 then
                     for _, t in ipairs(renderer.getAllThemeNames()) do
@@ -599,34 +599,22 @@ function love.update(dt)
                         renderer.showToast("Start with 1024 (Plus Mode) is OFF.")
                     end
                 elseif _G.cheats_selection == 5 then
-                    _G.cheat_test_tiles = not _G.cheat_test_tiles
-                    if _G.cheat_test_tiles then
-                        renderer.showToast("Test All Tiles is ON. Start a new game to see them.")
+                    if _G.cheat_debug_layout == "None" or _G.cheat_debug_layout == nil then
+                        _G.cheat_debug_layout = "Two 1024s"
+                    elseif _G.cheat_debug_layout == "Two 1024s" then
+                        _G.cheat_debug_layout = "Fill Board"
                     else
-                        renderer.showToast("Test All Tiles is OFF.")
+                        _G.cheat_debug_layout = "None"
                     end
+                    renderer.showToast("Debug Layout: " .. _G.cheat_debug_layout .. ". Start new game to apply.")
                 elseif _G.cheats_selection == 6 then
-                    _G.cheat_two_1024s = not _G.cheat_two_1024s
-                    if _G.cheat_two_1024s then
-                        renderer.showToast("Two 1024 Tiles is ON. Start a new game to apply.")
-                    else
-                        renderer.showToast("Two 1024 Tiles is OFF.")
-                    end
-                elseif _G.cheats_selection == 7 then
-                    _G.cheat_fill_24816 = not _G.cheat_fill_24816
-                    if _G.cheat_fill_24816 then
-                        renderer.showToast("Fill 2,4,8,16,32... is ON. Start a new game to see it.")
-                    else
-                        renderer.showToast("Fill 2,4,8,16,32... is OFF.")
-                    end
-                elseif _G.cheats_selection == 8 then
                     queueTransitionAction(event, 0.08, function()
                         _G.cheats_unlocked = false
                         save.saveCheats(false)
                         _G.appState = "MENU"
                         renderer.showToast("Cheats Locked. Enter the code to unlock again.", 4.0)
                     end)
-                elseif _G.cheats_selection == 9 then
+                elseif _G.cheats_selection == 7 then
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)

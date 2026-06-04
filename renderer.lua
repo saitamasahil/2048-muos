@@ -3715,9 +3715,7 @@ function renderer.drawCheatsMenu(selection, skip_transition)
         "Max Powerups: " .. (_G.cheat_max_powerups and "ON" or "OFF"),
         "Start with 1024 (Classic Mode): " .. (_G.cheat_start_1024_classic and "ON" or "OFF"),
         "Start with 1024 (Plus Mode): " .. (_G.cheat_start_1024_plus and "ON" or "OFF"),
-        "Debug: Test All Tiles: " .. (_G.cheat_test_tiles and "ON" or "OFF"),
-        "Debug: Two 1024 Tiles: " .. (_G.cheat_two_1024s and "ON" or "OFF"),
-        "Debug: Fill 2,4,8,16,32...: " .. (_G.cheat_fill_24816 and "ON" or "OFF"),
+        "Debug Layout: " .. (_G.cheat_debug_layout or "None"),
         "Lock Cheats",
         "Back"
     }
