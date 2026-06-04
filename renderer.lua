@@ -4008,6 +4008,34 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
                 end
                 love.graphics.print(badge_text, bx + math.floor(4 * scale), by + math.floor(1.5 * scale))
             end
+        else
+            -- Arcade card: show "4 Modes Available" badge instead of a best score
+            love.graphics.setFont(font_help_label)
+            local badge_text = "4 Modes Available"
+            local btw = font_help_label:getWidth(badge_text)
+            local bth = font_help_label:getHeight()
+            local badge_w = btw + math.floor(8 * scale)
+            local badge_h = bth + math.floor(3 * scale)
+            local bx = cx_pos + (card_w0 - badge_w) / 2
+
+            local _, lines = font_help_label:getWrap(pm.desc, card_w0 - math.floor(20 * scale))
+            local desc_h = #lines * font_help_label:getHeight()
+            local by = cy + math.floor(116 * scale) + desc_h + math.floor(10 * scale)
+
+            if is_sel then
+                love.graphics.setColor(pm.accentR * 0.15, pm.accentG * 0.15, pm.accentB * 0.15, 0.4)
+                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(pm.accentR, pm.accentG, pm.accentB, 0.45)
+                roundedRect("line", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(pm.accentR, pm.accentG, pm.accentB, 0.95)
+            else
+                love.graphics.setColor(0.12, 0.12, 0.18, 0.4)
+                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(0.3, 0.32, 0.38, 0.4)
+                roundedRect("line", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(0.7, 0.72, 0.78, 0.9)
+            end
+            love.graphics.print(badge_text, bx + math.floor(4 * scale), by + math.floor(1.5 * scale))
         end
 
         love.graphics.pop()
