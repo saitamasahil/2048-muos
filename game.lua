@@ -79,10 +79,6 @@ function Game.new(mode)
     -- Try to load saved game state
     local savedState = save.loadState(self.mode)
     if savedState and savedState.gridState then
-        -- Time Attack does not restore saved state (volatile mode)
-        if mode == "timeattack" then
-            self:addStartTiles()
-        else
         self.score = savedState.score or 0
         self.state = savedState.state or Game.STATE_PLAYING
         self.won = savedState.won or false
@@ -105,7 +101,12 @@ function Game.new(mode)
         if savedState.milestonesReached then
             self.milestonesReached = savedState.milestonesReached
         end
-        end -- end time-attack guard
+
+        -- Restore Time Attack state
+        if self.mode == "timeattack" then
+            self.timeLeft = savedState.timeLeft or 90.0
+            self.totalTime = savedState.totalTime or 90.0
+        end
     else
         -- Start a fresh game if no save state exists
         self:addStartTiles()
@@ -120,8 +121,8 @@ function Game.new(mode)
         _G.unlockAchievement("ach_first_game")
     end
 
-    -- Time Attack: initialize timer after everything is set up
-    if mode == "timeattack" then
+    -- Time Attack: initialize timer after everything is set up if not loaded from save
+    if mode == "timeattack" and not self.timeLeft then
         self.totalTime = 90.0
         self.timeLeft = self.totalTime
     end
@@ -130,8 +131,6 @@ function Game.new(mode)
 end
 
 function Game:saveGameState()
-    -- Time Attack games are volatile; never save to disk
-    if self.mode == "timeattack" then return end
     local stateTable = {
         score = self.score,
         state = self.state,
@@ -144,6 +143,10 @@ function Game:saveGameState()
         powerups = self.powerups,
         milestonesReached = self.milestonesReached
     }
+    if self.mode == "timeattack" then
+        stateTable.timeLeft = self.timeLeft
+        stateTable.totalTime = self.totalTime
+    end
     save.saveState(stateTable, self.mode)
 end
 
