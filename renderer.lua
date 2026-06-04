@@ -3449,7 +3449,7 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
     local modes = {
         {
             name        = "Time Attack",
-            desc        = "Score as high as possible before time runs out!",
+            desc        = "Race the clock! Merge tiles to add more time.",
             icon        = "stopwatch",
             bestScore   = save.loadHighScore("timeattack"),
             available   = true,
@@ -3457,7 +3457,7 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
         },
         {
             name        = "Huge Mode (5x5)",
-            desc        = "Spacious board. Relaxed play, chase massive tiles.",
+            desc        = "Spacious 5x5 board. Relaxed play, larger tiles.",
             icon        = "huge",
             bestScore   = save.loadHighScore("huge"),
             available   = true,
@@ -3465,7 +3465,7 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
         },
         {
             name        = "No Mercy Mode",
-            desc        = "No undo, no power-ups, and TWO tiles spawn per turn!",
+            desc        = "No undos, no powerups. Two tiles spawn per turn!",
             icon        = "skull",
             bestScore   = save.loadHighScore("nomercy"),
             available   = true,
@@ -3473,7 +3473,7 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
         },
         {
             name        = "Goose Mode",
-            desc        = "A silly Goose blocks a random cell and walks after each turn!",
+            desc        = "A silly Goose waddles and blocks cells.",
             icon        = "goose",
             bestScore   = save.loadHighScore("goose"),
             available   = true,
