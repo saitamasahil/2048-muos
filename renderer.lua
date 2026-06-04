@@ -1005,11 +1005,14 @@ function renderer.drawDynamicBackground(themeName)
         end
 
         -- Layer 2: Dense star field (50 stars with varied twinkle speeds)
+        -- Restrict stars to the area above the help footer to keep the bottom clean and readable
+        local star_pad = math.max(8 * scale, 8)
+        local max_star_y = h - math.floor(75 * scale)
         for i = 1, 50 do
             -- Use golden-ratio-based distribution for even spread
             local golden = 0.6180339887
-            local sx_pos = ((i * golden * 1.0) % 1.0) * w
-            local sy_pos = ((i * golden * 1.618) % 1.0) * h
+            local sx_pos = star_pad + (((i * golden * 1.0) % 1.0) * (w - star_pad * 2))
+            local sy_pos = star_pad + (((i * golden * 1.41421356) % 1.0) * (max_star_y - star_pad * 2))
             local speed = 1.0 + (i % 7) * 0.4
             local twinkle = math.sin(t * speed + i * 3.14159) * 0.5 + 0.5
             local size_base = 0.6 + (i % 3) * 0.4
