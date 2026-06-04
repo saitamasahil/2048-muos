@@ -13,7 +13,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
 - **Classic & Plus Modes**: Enjoy the original 2048 puzzle experience, or switch to the new Plus Mode which introduces strategic powerups!
 - **Plus Mode Powerups**: In Plus Mode, earn Bomb, Swap, and Undo powerups by reaching new tile milestones (128, 256, 512, etc.). Use them to destroy unwanted tiles, swap adjacent tiles, or revert mistakes.
 - **Arcade Modes**: Choose from 4 unique game modes — each with its own rules, challenges, and exclusive unlockable themes:
-  - **Time Attack**: Race against a 90-second countdown clock. Merge larger tiles (32+) to earn time extensions.
+  - **Time Attack**: Race against a 60-second countdown clock. Merge larger tiles (32+) to earn time extensions.
   - **Huge Mode (5x5)**: A spacious 5×5 grid for a more relaxed play style.
   - **No Mercy**: Hardcore mode — no undos, no powerups, two tiles spawn every move.
   - **Goose Mode**: A chaotic mode where a silly Goose tile waddles around the board, blocking random cells.

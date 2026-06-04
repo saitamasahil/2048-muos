@@ -104,8 +104,8 @@ function Game.new(mode)
 
         -- Restore Time Attack state
         if self.mode == "timeattack" then
-            self.timeLeft = savedState.timeLeft or 90.0
-            self.totalTime = savedState.totalTime or 90.0
+            self.timeLeft = savedState.timeLeft or 60.0
+            self.totalTime = savedState.totalTime or 60.0
         end
     else
         -- Start a fresh game if no save state exists
@@ -123,7 +123,7 @@ function Game.new(mode)
 
     -- Time Attack: initialize timer after everything is set up if not loaded from save
     if mode == "timeattack" and not self.timeLeft then
-        self.totalTime = 90.0
+        self.totalTime = 60.0
         self.timeLeft = self.totalTime
     end
 
