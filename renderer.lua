@@ -4085,7 +4085,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         },
         {
             name        = "No Mercy Mode",
-            desc        = "Hardcore play. No Undo, no powerups, 2 tiles per turn.",
+            desc        = "No Undo. 2 tiles spawn per move.",
             icon        = "skull",
             bestScore   = save.loadHighScore("nomercy"),
             available   = true,
@@ -4093,7 +4093,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         },
         {
             name        = "Goose Mode",
-            desc        = "A mischievous Goose waddles around and blocks cells.",
+            desc        = "A Goose blocks random cells. Honk!",
             icon        = "goose",
             bestScore   = save.loadHighScore("goose"),
             available   = true,
