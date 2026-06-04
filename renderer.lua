@@ -1843,15 +1843,11 @@ function renderer.drawScores(game)
                 local p_str = p.text
                 local p_w = font_help_label:getWidth(p_str)
                 local px = best_x + (box_w - p_w) / 2
-                local py = box_y - math.floor(10 * scale) + p.y_offset
-                
-                -- Shadow
-                love.graphics.setColor(0, 0, 0, p.alpha * 0.75)
-                love.graphics.print(p_str, px + 1, py + 1)
+                local py = box_y + math.floor(box_h * 0.4) + p.y_offset
                 
                 -- Main text
                 love.graphics.setColor(0.18, 0.85, 0.45, p.alpha)
-                love.graphics.print(p_str, px)
+                love.graphics.print(p_str, px, py)
             end
         end
     else
