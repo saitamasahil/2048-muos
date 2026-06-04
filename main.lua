@@ -556,7 +556,7 @@ function love.update(dt)
                 local header_h = math.floor(90 * scale)
                 local footer_h = math.floor(55 * scale)
                 local visible_area = h - header_h - footer_h
-                local total_items = 19
+                local total_items = (renderer.getAchievementsCount and renderer.getAchievementsCount()) or 22
                 local total_height = total_items * item_h
                 local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h) + 1)
                 _G.achievements_scroll_target = math.min(max_scroll, (_G.achievements_scroll_target or 0) + 1)
