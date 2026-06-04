@@ -2569,6 +2569,21 @@ function renderer.drawTutorial(page, skip_transition)
     local scale = _G.scale
     local padding = math.floor(20 * scale)
 
+    -- Slide animation state
+    local slide_offset = 0
+    local slide_alpha = 1.0
+    if _G.tutorial_slide_timer and _G.tutorial_slide_timer > 0 then
+        local dt = love.timer.getDelta()
+        _G.tutorial_slide_timer = _G.tutorial_slide_timer - dt
+        if _G.tutorial_slide_timer < 0 then _G.tutorial_slide_timer = 0 end
+        local progress = _G.tutorial_slide_timer / 0.22 -- 0 = done, 1 = just started
+        -- Ease out (cubic)
+        local eased = progress * progress * progress
+        local dir = _G.tutorial_slide_dir or 1
+        slide_offset = eased * w * 0.3 * dir  -- new page slides in from the side
+        slide_alpha = 1.0 - eased * 0.6
+    end
+
     -- Tutorial slide data
     local slides = {
         {
@@ -2713,16 +2728,22 @@ function renderer.drawTutorial(page, skip_transition)
     }
 
     local total_pages = #slides
-    local slide = slides[page] or slides[1]
+    local slide_data = slides[page] or slides[1]
+
+    -- Apply slide animation transform to content area (not header dots or footer)
+    love.graphics.push()
+    love.graphics.translate(-slide_offset, 0)
 
     -- Header: title
     love.graphics.setFont(font_title)
-    love.graphics.setColor(ui_text)
-    local title_text = slide.title
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], slide_alpha)
+    local title_text = slide_data.title
     local title_w = font_title:getWidth(title_text)
     love.graphics.print(title_text, (w - title_w) / 2, padding)
 
-    -- Page indicator (dots)
+    love.graphics.pop()
+
+    -- Page indicator (dots) — NOT animated, stays fixed
     local dot_r = math.floor(4 * scale)
     local dot_gap = math.floor(14 * scale)
     local dots_w = total_pages * (dot_r * 2 + dot_gap) - dot_gap
@@ -2740,6 +2761,10 @@ function renderer.drawTutorial(page, skip_transition)
         end
     end
 
+    -- Apply slide animation transform to the rest of the content
+    love.graphics.push()
+    love.graphics.translate(-slide_offset, 0)
+
     -- Message box area
     local msg_y = dots_y + dot_r * 2 + math.floor(12 * scale)
     local max_content_w = math.min(w - padding * 2, math.floor(480 * scale))
@@ -2747,7 +2772,7 @@ function renderer.drawTutorial(page, skip_transition)
 
     love.graphics.setFont(font_help_label)
     local max_line_w = 0
-    for _, line in ipairs(slide.lines) do
+    for _, line in ipairs(slide_data.lines) do
         local lw = font_help_label:getWidth(line)
         if lw > max_line_w then max_line_w = lw end
     end
@@ -2756,22 +2781,22 @@ function renderer.drawTutorial(page, skip_transition)
 
     -- Calculate message box height from lines
     local line_h = font_help_label:getHeight()
-    local num_lines = #slide.lines
+    local num_lines = #slide_data.lines
     local msg_box_h = msg_pad * 2 + num_lines * (line_h + math.floor(3 * scale))
 
     -- Message box background
-    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.85)
+    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.85 * slide_alpha)
     roundedRect("fill", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
 
     -- Message box border
-    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.5)
+    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.5 * slide_alpha)
     love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
     roundedRect("line", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
 
     -- Message text
-    love.graphics.setColor(ui_text)
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], slide_alpha)
     local text_y = msg_y + msg_pad
-    for _, line in ipairs(slide.lines) do
+    for _, line in ipairs(slide_data.lines) do
         love.graphics.print(line, msg_box_x + msg_pad, text_y)
         text_y = text_y + line_h + math.floor(3 * scale)
     end
@@ -2799,20 +2824,23 @@ function renderer.drawTutorial(page, skip_transition)
     local board_y = board_top + math.floor(extra_y)
     local board_x = math.floor((w - board_size) / 2)
 
-    drawMiniBoard(board_x, board_y, board_size, slide.tiles, slide.highlight)
+    drawMiniBoard(board_x, board_y, board_size, slide_data.tiles, slide_data.highlight)
 
-    -- Footer: navigation hints
+    love.graphics.pop()
+
+    -- Footer: navigation hints — NOT animated, stays fixed
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
     local item_gap = math.floor(10 * scale)
     local label_gap = math.floor(4 * scale)
 
-    -- Build action list
+    -- Build action list — consistent controls:
+    -- B = Back (page 1: Exit), A = Next (last page: Done)
     local actions = {}
     if page < total_pages then
         table.insert(actions, 1, {key = "A", label = "Next"})
     else
-        table.insert(actions, 1, {key = "A", label = "Exit"})
+        table.insert(actions, 1, {key = "A", label = "Done"})
     end
     table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
     if page > 1 then

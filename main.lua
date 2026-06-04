@@ -501,29 +501,34 @@ function love.update(dt)
             _G.arcade_selection = (row - 1) * 2 + col
             return
         elseif _G.appState == "TUTORIAL" then
+            local cur_page = _G.tutorial_page or 1
             if event == input.events.BACK then
-                if (_G.tutorial_page or 1) > 1 then
-                    _G.tutorial_page = _G.tutorial_page - 1
+                -- B always goes back; exits on first page
+                if cur_page > 1 then
+                    _G.tutorial_page = cur_page - 1
+                    _G.tutorial_slide_dir = -1
+                    _G.tutorial_slide_timer = 0.22
                 else
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)
                 end
-            elseif event == input.events.CONFIRM then
-                if (_G.tutorial_page or 1) < 8 then
-                    _G.tutorial_page = (_G.tutorial_page or 1) + 1
+            elseif event == input.events.CONFIRM or event == input.events.RIGHT then
+                -- A / Right always goes next; exits on last page
+                if cur_page < 8 then
+                    _G.tutorial_page = cur_page + 1
+                    _G.tutorial_slide_dir = 1
+                    _G.tutorial_slide_timer = 0.22
                 else
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)
-                end
-            elseif event == input.events.RIGHT then
-                if (_G.tutorial_page or 1) < 8 then
-                    _G.tutorial_page = (_G.tutorial_page or 1) + 1
                 end
             elseif event == input.events.LEFT then
-                if (_G.tutorial_page or 1) > 1 then
-                    _G.tutorial_page = _G.tutorial_page - 1
+                if cur_page > 1 then
+                    _G.tutorial_page = cur_page - 1
+                    _G.tutorial_slide_dir = -1
+                    _G.tutorial_slide_timer = 0.22
                 end
             end
             return
