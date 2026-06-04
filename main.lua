@@ -37,6 +37,7 @@ local arcade_menu_closing_action = nil
 -- Hierarchy order for determining forward/backward direction
 local STATE_DEPTH = {
     MENU          = 0,
+    PLAY_SELECT   = 1,
     ARCADE_MENU   = 1,
     GAME          = 2,
     TUTORIAL      = 1,
@@ -222,8 +223,8 @@ function love.update(dt)
     -- Trigger screen transitions on appState change (smooth slide animation)
     if _G.appState ~= last_app_state then
         if splash.finished and last_app_state ~= nil then
-            -- ARCADE_MENU has its own panel slide animation; skip global slide for it
-            local skip_slide = (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU")
+            -- ARCADE_MENU & PLAY_SELECT have their own panel slide animation; skip global slide for them
+            local skip_slide = (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU" or _G.appState == "PLAY_SELECT" or last_app_state == "PLAY_SELECT")
             if not skip_slide then
                 -- Determine direction from hierarchy depth
                 local old_depth = STATE_DEPTH[last_app_state] or 0
@@ -342,8 +343,10 @@ function love.update(dt)
                     return function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end
                 elseif _G.appState == "THEME_SELECT" then
                     return function() renderer.drawThemeSelect(true) end
+                elseif _G.appState == "PLAY_SELECT" then
+                    return function() renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, true, menuSelection) end
                 elseif _G.appState == "ARCADE_MENU" then
-                    return function() renderer.drawArcadeMenu(_G.arcade_selection or 1, true) end
+                    return function() renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, true, menuSelection) end
                 end
                 return function() end
             end
@@ -394,17 +397,17 @@ function love.update(dt)
                 end
             end
             
-            -- X button → Arcade Modes menu
+            -- X button → Play Select menu
             if event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    _G.appState = "ARCADE_MENU"
-                    _G.arcade_selection = 1
+                    _G.appState = "PLAY_SELECT"
+                    _G.play_select_selection = 1
                     renderer.setArcadeMenuOpen(true)
                 end)
                 return
             end
 
-            local max_menu = _G.cheats_unlocked and 9 or 8
+            local max_menu = _G.cheats_unlocked and 8 or 7
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
@@ -412,23 +415,21 @@ function love.update(dt)
             elseif event == input.events.CONFIRM then
                 queueTransitionAction(event, 0.08, function()
                     if menuSelection == 1 then
-                        _G.appState = "GAME"
-                        game = Game.new("classic")
+                        _G.appState = "PLAY_SELECT"
+                        _G.play_select_selection = 1
+                        renderer.setArcadeMenuOpen(true)
                     elseif menuSelection == 2 then
-                        _G.appState = "GAME"
-                        game = Game.new("plus")
-                    elseif menuSelection == 3 then
                         _G.themeSelectPrevState = "MENU"
                         _G.themeSelectInitialTheme = _G.theme
                         _G.appState = "THEME_SELECT"
-                    elseif menuSelection == 4 then
+                    elseif menuSelection == 3 then
                         _G.appState = "ACHIEVEMENTS"
-                    elseif menuSelection == 5 then
+                    elseif menuSelection == 4 then
                         _G.appState = "TUTORIAL"
                         _G.tutorial_page = 1
                     else
                         if _G.cheats_unlocked then
-                            if menuSelection == 6 then
+                            if menuSelection == 5 then
                                 if not _G.achievements.ach_secret_ascii then
                                     _G.achievements.ach_secret_ascii = true
                                     table.insert(_G.unlocked_themes, "ascii")
@@ -437,28 +438,62 @@ function love.update(dt)
                                 end
                                 _G.appState = "CHEATS_MENU"
                                 _G.cheats_selection = 1
-                            elseif menuSelection == 7 then
+                            elseif menuSelection == 6 then
                                 _G.text_size = (_G.text_size == "large") and "normal" or "large"
                                 save.saveTextSize(_G.text_size)
                                 renderer.init()
                                 renderer.flashTextSize()
-                            elseif menuSelection == 8 then
+                            elseif menuSelection == 7 then
                                 _G.appState = "ABOUT"
-                            elseif menuSelection == 9 then
+                            elseif menuSelection == 8 then
                                 love.event.quit()
                             end
                         else
-                            if menuSelection == 6 then
+                            if menuSelection == 5 then
                                 _G.text_size = (_G.text_size == "large") and "normal" or "large"
                                 save.saveTextSize(_G.text_size)
                                 renderer.init()
                                 renderer.flashTextSize()
-                            elseif menuSelection == 7 then
+                            elseif menuSelection == 6 then
                                 _G.appState = "ABOUT"
-                            elseif menuSelection == 8 then
+                            elseif menuSelection == 7 then
                                 love.event.quit()
                             end
                         end
+                    end
+                end)
+            end
+            return
+        elseif _G.appState == "PLAY_SELECT" then
+            if arcade_menu_closing_action then return end
+            if event == input.events.LEFT then
+                _G.play_select_selection = _G.play_select_selection > 1 and (_G.play_select_selection - 1) or 3
+            elseif event == input.events.RIGHT then
+                _G.play_select_selection = _G.play_select_selection < 3 and (_G.play_select_selection + 1) or 1
+            elseif event == input.events.CONFIRM then
+                queueTransitionAction(event, 0.08, function()
+                    if _G.play_select_selection == 1 then
+                        renderer.setArcadeMenuOpen(false)
+                        arcade_menu_closing_action = function()
+                            _G.appState = "GAME"
+                            game = Game.new("classic")
+                        end
+                    elseif _G.play_select_selection == 2 then
+                        renderer.setArcadeMenuOpen(false)
+                        arcade_menu_closing_action = function()
+                            _G.appState = "GAME"
+                            game = Game.new("plus")
+                        end
+                    elseif _G.play_select_selection == 3 then
+                        _G.appState = "ARCADE_MENU"
+                        _G.arcade_selection = 1
+                    end
+                end)
+            elseif event == input.events.BACK or event == input.events.X then
+                queueTransitionAction(event, 0.08, function()
+                    renderer.setArcadeMenuOpen(false)
+                    arcade_menu_closing_action = function()
+                        _G.appState = "MENU"
                     end
                 end)
             end
@@ -493,10 +528,7 @@ function love.update(dt)
                 end)
             elseif event == input.events.BACK or event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    renderer.setArcadeMenuOpen(false)
-                    arcade_menu_closing_action = function()
-                        _G.appState = "MENU"
-                    end
+                    _G.appState = "PLAY_SELECT"
                 end)
             end
             _G.arcade_selection = (row - 1) * 2 + col
@@ -819,8 +851,10 @@ end
 drawCurrentScreen = function()
     if _G.appState == "MENU" then
         renderer.drawMainMenu(menuSelection)
+    elseif _G.appState == "PLAY_SELECT" then
+        renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, false, menuSelection)
     elseif _G.appState == "ARCADE_MENU" then
-        renderer.drawArcadeMenu(_G.arcade_selection or 1, false, menuSelection)
+        renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, false, menuSelection)
     elseif _G.appState == "TUTORIAL" then
         renderer.drawTutorial(_G.tutorial_page or 1)
     elseif _G.appState == "ABOUT" then
