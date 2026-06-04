@@ -26,6 +26,8 @@ function save.getPath(mode)
         file = "highscore_huge.dat"
     elseif mode == "nomercy" then
         file = "highscore_nomercy.dat"
+    elseif mode == "goose" then
+        file = "highscore_goose.dat"
     else
         file = SAVE_FILE  -- classic
     end
@@ -45,6 +47,8 @@ function save.getStatePath(mode)
         file = "gamestate_huge.dat"
     elseif mode == "nomercy" then
         file = "gamestate_nomercy.dat"
+    elseif mode == "goose" then
+        file = "gamestate_goose.dat"
     else
         file = STATE_FILE  -- classic
     end

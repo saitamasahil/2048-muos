@@ -189,6 +189,16 @@ function Game:addStartTiles()
     end
 
     local starting_tiles = 2
+
+    if self.mode == "goose" then
+        local cell = self.grid:randomAvailableCell()
+        if cell then
+            local goose = Tile.new(cell.x, cell.y, "goose")
+            goose.isNew = true
+            self.grid:insertTile(goose)
+        end
+        starting_tiles = 1
+    end
     
     if self.mode == "classic" and _G.cheat_start_1024_classic then
         _G.cheat_start_1024_classic = false
@@ -313,7 +323,7 @@ function Game:move(direction)
     for _, x in ipairs(traversalsX) do
         for _, y in ipairs(traversalsY) do
             local tile = self.grid:cellContent(x, y)
-            if tile then
+            if tile and tile.value ~= "goose" then
                 local farthestX, farthestY, nextX, nextY = self:findFarthestPosition(x, y, direction)
                 local nextTile = self.grid:cellContent(nextX, nextY)
 
@@ -483,6 +493,9 @@ function Game:move(direction)
         self.undoScore = pendingUndoScore
         self.undoRNG = pendingUndoRNG
         self.canUndo = true
+        if self.mode == "goose" then
+            self:walkGoose()
+        end
         self:addRandomTile()
         if self.mode == "nomercy" then
             self:addRandomTile()
@@ -511,6 +524,44 @@ function Game:move(direction)
     self.moved = moved
     self:saveGameState()
     return moved
+end
+
+function Game:walkGoose()
+    local gooseTile = nil
+    self.grid:eachCell(function(x, y, tile)
+        if tile and tile.value == "goose" then
+            gooseTile = tile
+        end
+    end)
+
+    if not gooseTile then return end
+
+    local adjacentEmpties = {}
+    local dirs = {
+        {x = -1, y = 0},
+        {x = 1, y = 0},
+        {x = 0, y = -1},
+        {x = 0, y = 1}
+    }
+    for _, dir in ipairs(dirs) do
+        local nx = gooseTile.x + dir.x
+        local ny = gooseTile.y + dir.y
+        if self.grid:withinBounds(nx, ny) and self.grid:cellAvailable(nx, ny) then
+            table.insert(adjacentEmpties, {x = nx, y = ny})
+        end
+    end
+
+    local target = nil
+    if #adjacentEmpties > 0 then
+        target = adjacentEmpties[love.math.random(1, #adjacentEmpties)]
+    else
+        target = self.grid:randomAvailableCell()
+    end
+
+    if target then
+        gooseTile:savePosition()
+        self:moveTile(gooseTile, target.x, target.y)
+    end
 end
 
 function Game:movesAvailable()

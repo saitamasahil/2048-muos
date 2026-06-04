@@ -1037,6 +1037,122 @@ function renderer.drawBoard(game)
     end
 end
 
+local function drawGooseTile(cx, cy, size, scale, shouldWaddle)
+    local time = love.timer.getTime()
+    local waddleAngle = 0
+    local waddleY = 0
+    if shouldWaddle then
+        waddleAngle = math.sin(time * 12) * 0.12
+        waddleY = math.abs(math.cos(time * 12)) * 2 * scale
+    end
+    
+    -- Body offset for waddling
+    local bx = cx
+    local by = cy + waddleY
+    
+    love.graphics.push("all")
+    love.graphics.translate(bx, by)
+    love.graphics.rotate(waddleAngle)
+    
+    -- Feet
+    love.graphics.setColor(0.95, 0.5, 0.1, 1)
+    love.graphics.setLineWidth(math.max(1, 3 * scale))
+    local l_foot_osc = shouldWaddle and (math.sin(time * 12) * 4 * scale) or 0
+    love.graphics.line(-10 * scale, 15 * scale, -12 * scale + l_foot_osc, 28 * scale)
+    love.graphics.line(-12 * scale + l_foot_osc, 28 * scale, -17 * scale + l_foot_osc, 28 * scale)
+    
+    local r_foot_osc = shouldWaddle and (-math.sin(time * 12) * 4 * scale) or 0
+    love.graphics.line(8 * scale, 15 * scale, 6 * scale + r_foot_osc, 28 * scale)
+    love.graphics.line(6 * scale + r_foot_osc, 28 * scale, 1 * scale + r_foot_osc, 28 * scale)
+    
+    -- Body (white)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.ellipse("fill", -5 * scale, 5 * scale, 22 * scale, 15 * scale)
+    
+    -- Neck (white)
+    love.graphics.setLineWidth(math.max(1, 10 * scale))
+    love.graphics.line(8 * scale, 5 * scale, 14 * scale, -12 * scale)
+    
+    -- Head (white)
+    love.graphics.ellipse("fill", 15 * scale, -15 * scale, 10 * scale, 10 * scale)
+    
+    -- Wing (light gray/off-white)
+    love.graphics.setColor(0.9, 0.9, 0.9, 1)
+    love.graphics.ellipse("fill", -8 * scale, 5 * scale, 12 * scale, 8 * scale)
+    
+    -- Beak (orange triangle)
+    love.graphics.setColor(0.95, 0.5, 0.1, 1)
+    love.graphics.polygon("fill", 
+        23 * scale, -18 * scale,
+        23 * scale, -12 * scale,
+        33 * scale, -15 * scale
+    )
+    
+    -- Eye (black dot)
+    love.graphics.setColor(0.1, 0.1, 0.1, 1)
+    love.graphics.circle("fill", 17 * scale, -17 * scale, 1.8 * scale)
+    
+    love.graphics.pop()
+end
+
+local function drawGooseCardIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+    love.graphics.push("all")
+
+    local color_r = is_selected and (r_acc or 0.15) or 0.45
+    local color_g = is_selected and (g_acc or 0.55) or 0.5
+    local color_b = is_selected and (b_acc or 0.75) or 0.58
+    local alpha = is_selected and 1.0 or 0.7
+
+    love.graphics.setColor(color_r, color_g, color_b, alpha)
+    love.graphics.setLineWidth(math.floor(2 * scale))
+
+    -- Ambient float animation for selection
+    local float_y = 0
+    if is_selected then
+        float_y = math.sin(love.timer.getTime() * 4) * 2 * scale
+    end
+    cy = cy + float_y
+
+    -- Waddling/wiggle rotation when selected
+    local time = love.timer.getTime()
+    local waddleAngle = is_selected and (math.sin(time * 12) * 0.12) or 0
+    local waddleY = is_selected and (math.abs(math.cos(time * 12)) * 1.5 * scale) or 0
+    
+    love.graphics.translate(cx, cy + waddleY)
+    love.graphics.rotate(waddleAngle)
+
+    -- Feet
+    love.graphics.line(-7 * scale, 10 * scale, -9 * scale, 20 * scale)
+    love.graphics.line(-9 * scale, 20 * scale, -13 * scale, 20 * scale)
+    love.graphics.line(5 * scale, 10 * scale, 3 * scale, 20 * scale)
+    love.graphics.line(3 * scale, 20 * scale, -1 * scale, 20 * scale)
+
+    -- Body outline
+    love.graphics.ellipse("line", -4 * scale, 3 * scale, 16 * scale, 11 * scale)
+
+    -- Neck lines
+    love.graphics.line(3 * scale, 1 * scale, 8 * scale, -12 * scale)
+    love.graphics.line(10 * scale, 6 * scale, 14 * scale, -9 * scale)
+
+    -- Head outline
+    love.graphics.ellipse("line", 11 * scale, -14 * scale, 7 * scale, 7 * scale)
+
+    -- Beak outline
+    love.graphics.polygon("line", 
+        17 * scale, -16 * scale,
+        17 * scale, -12 * scale,
+        24 * scale, -14 * scale
+    )
+
+    -- Wing outline
+    love.graphics.ellipse("line", -6 * scale, 3 * scale, 9 * scale, 6 * scale)
+
+    -- Eye (small filled dot)
+    love.graphics.circle("fill", 12.5 * scale, -15.5 * scale, 1.2 * scale)
+
+    love.graphics.pop()
+end
+
 -- ============================================================================
 -- Draw a single tile
 -- ============================================================================
@@ -1078,6 +1194,13 @@ function renderer.drawTile(tile, animProgress)
     local sy = cy - scaledSize / 2
 
     -- Tile background
+    if tile.value == "goose" then
+        love.graphics.setColor(0.15, 0.55, 0.75, 1)
+        roundedRect("fill", sx, sy, scaledSize, scaledSize, cr * tileScale)
+        drawGooseTile(cx, cy, cs, scale * tileScale, true)
+        return
+    end
+
     local color = getTileColor(tile.value)
     love.graphics.setColor(color)
     roundedRect("fill", sx, sy, scaledSize, scaledSize, cr * tileScale)
@@ -1638,7 +1761,7 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "SELECT", label = "Restart"})
         table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.canUndo then
+        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode ~= "plus" then
@@ -1649,7 +1772,7 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "A", label = "New Game"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.canUndo then
+        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode ~= "plus" then
@@ -1670,8 +1793,8 @@ function renderer.drawHelp(game)
             table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
             table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
             table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
-        elseif game.mode == "timeattack" or game.mode == "nomercy" then
-            -- Time Attack / No Mercy: no undo, no powerups — keep it clean
+        elseif game.mode == "timeattack" or game.mode == "nomercy" or game.mode == "goose" then
+            -- Time Attack / No Mercy / Goose: no undo, no powerups — keep it clean
             table.insert(actions, 1, {key = "START", label = "Pause"})
             table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         else
@@ -2916,11 +3039,12 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
             accentR = 0.85, accentG = 0.10, accentB = 0.10,
         },
         {
-            name        = "Coming Soon...",
-            desc        = "More exciting modes are on their way.",
-            icon        = "lock",
-            available   = false,
-            accentR = 0.4, accentG = 0.4, accentB = 0.5,
+            name        = "Goose Mode",
+            desc        = "A silly Goose blocks a random cell and walks after each turn!",
+            icon        = "goose",
+            bestScore   = save.loadHighScore("goose"),
+            available   = true,
+            accentR = 0.15, accentG = 0.55, accentB = 0.75,
         }
     }
 
@@ -2985,6 +3109,8 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
             drawSkull(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "lock" then
             drawLock(icon_cx, icon_cy, scale)
+        elseif mode.icon == "goose" then
+            drawGooseCardIcon(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
         end
 
         -- Mode name
