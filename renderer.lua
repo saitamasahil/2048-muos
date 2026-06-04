@@ -4073,7 +4073,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
             icon        = "stopwatch",
             bestScore   = save.loadHighScore("timeattack"),
             available   = true,
-            accentR = 0.95, accentG = 0.15, accentB = 0.45,
+            accentR = 0.95, accentG = 0.80, accentB = 0.10,
         },
         {
             name        = "Huge Mode (5x5)",
