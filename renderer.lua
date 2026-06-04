@@ -1638,7 +1638,7 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "SELECT", label = "Restart"})
         table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-        if game.mode ~= "timeattack" and game.canUndo then
+        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode ~= "plus" then
@@ -1649,7 +1649,7 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "A", label = "New Game"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-        if game.mode ~= "timeattack" and game.canUndo then
+        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode ~= "plus" then
@@ -1670,8 +1670,8 @@ function renderer.drawHelp(game)
             table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
             table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
             table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
-        elseif game.mode == "timeattack" then
-            -- Time Attack: no undo, no powerups — keep it clean
+        elseif game.mode == "timeattack" or game.mode == "nomercy" then
+            -- Time Attack / No Mercy: no undo, no powerups — keep it clean
             table.insert(actions, 1, {key = "START", label = "Pause"})
             table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         else
@@ -2717,6 +2717,72 @@ local function drawHugeGrid(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     love.graphics.pop()
 end
 
+local function drawSkull(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+    love.graphics.push("all")
+    
+    local color_r = is_selected and (r_acc or 0.85) or 0.45
+    local color_g = is_selected and (g_acc or 0.10) or 0.5
+    local color_b = is_selected and (b_acc or 0.10) or 0.58
+    local alpha = is_selected and 1.0 or 0.7
+
+    love.graphics.setColor(color_r, color_g, color_b, alpha)
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+
+    -- Ambient float animation for selection
+    local float_y = 0
+    if is_selected then
+        float_y = math.sin(love.timer.getTime() * 4) * 2 * scale
+    end
+    cy = cy + float_y
+
+    -- Draw crossbones underneath
+    love.graphics.setLineWidth(math.floor(2 * scale))
+    -- Bone 1: Top-Left to Bottom-Right
+    love.graphics.line(cx - 10 * scale, cy - 10 * scale, cx + 10 * scale, cy + 10 * scale)
+    love.graphics.circle("fill", cx - 10 * scale, cy - 9 * scale, 2 * scale)
+    love.graphics.circle("fill", cx - 9 * scale, cy - 10 * scale, 2 * scale)
+    love.graphics.circle("fill", cx + 10 * scale, cy + 9 * scale, 2 * scale)
+    love.graphics.circle("fill", cx + 9 * scale, cy + 10 * scale, 2 * scale)
+
+    -- Bone 2: Top-Right to Bottom-Left
+    love.graphics.line(cx + 10 * scale, cy - 10 * scale, cx - 10 * scale, cy + 10 * scale)
+    love.graphics.circle("fill", cx + 10 * scale, cy - 9 * scale, 2 * scale)
+    love.graphics.circle("fill", cx + 9 * scale, cy - 10 * scale, 2 * scale)
+    love.graphics.circle("fill", cx - 10 * scale, cy + 9 * scale, 2 * scale)
+    love.graphics.circle("fill", cx - 9 * scale, cy + 10 * scale, 2 * scale)
+
+    -- Skull main head (drawn on top to cover crossbones intersection)
+    love.graphics.setColor(0.04, 0.04, 0.08, 1.0) -- background color to mask
+    love.graphics.circle("fill", cx, cy - 2 * scale, 7 * scale)
+    love.graphics.rectangle("fill", cx - 4 * scale, cy + 2 * scale, 8 * scale, 4 * scale)
+
+    love.graphics.setColor(color_r, color_g, color_b, alpha)
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+    love.graphics.circle("line", cx, cy - 2 * scale, 7 * scale)
+    
+    -- Skull jaw outline
+    roundedRect("line", cx - 3 * scale, cy + 3 * scale, 6 * scale, 5 * scale, 1.5 * scale)
+
+    -- Eyes
+    love.graphics.setColor(color_r, color_g, color_b, alpha)
+    love.graphics.circle("fill", cx - 2.5 * scale, cy - 2 * scale, 1.8 * scale)
+    love.graphics.circle("fill", cx + 2.5 * scale, cy - 2 * scale, 1.8 * scale)
+
+    -- Nose (triangle)
+    love.graphics.polygon("fill", 
+        cx, cy + 1 * scale,
+        cx - 1.2 * scale, cy + 2.5 * scale,
+        cx + 1.2 * scale, cy + 2.5 * scale
+    )
+
+    -- Teeth lines
+    love.graphics.line(cx - 1.2 * scale, cy + 5 * scale, cx - 1.2 * scale, cy + 7.5 * scale)
+    love.graphics.line(cx, cy + 5 * scale, cx, cy + 7.5 * scale)
+    love.graphics.line(cx + 1.2 * scale, cy + 5 * scale, cx + 1.2 * scale, cy + 7.5 * scale)
+
+    love.graphics.pop()
+end
+
 function renderer.drawArcadeMenu(selection, skip_transition, current_menu_selection)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -2842,6 +2908,14 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
             accentR = 0.58, accentG = 0.25, accentB = 0.95,
         },
         {
+            name        = "No Mercy Mode",
+            desc        = "No undo, no power-ups, and TWO tiles spawn per turn!",
+            icon        = "skull",
+            bestScore   = save.loadHighScore("nomercy"),
+            available   = true,
+            accentR = 0.85, accentG = 0.10, accentB = 0.10,
+        },
+        {
             name        = "Coming Soon...",
             desc        = "More exciting modes are on their way.",
             icon        = "lock",
@@ -2907,6 +2981,8 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
             drawStopwatch(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "huge" then
             drawHugeGrid(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
+        elseif mode.icon == "skull" then
+            drawSkull(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "lock" then
             drawLock(icon_cx, icon_cy, scale)
         end

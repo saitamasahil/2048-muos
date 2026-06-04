@@ -484,6 +484,9 @@ function Game:move(direction)
         self.undoRNG = pendingUndoRNG
         self.canUndo = true
         self:addRandomTile()
+        if self.mode == "nomercy" then
+            self:addRandomTile()
+        end
         self.animationTimer = self.animationDuration
         if _G.achievements.powerups_used_this_run == nil then
             _G.achievements.powerups_used_this_run = 0

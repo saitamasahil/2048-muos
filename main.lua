@@ -460,17 +460,13 @@ function love.update(dt)
             if event == input.events.UP then
                 row = math.max(1, row - 1)
             elseif event == input.events.DOWN then
-                if col == 1 then
-                    row = math.min(2, row + 1)
-                end
+                row = math.min(2, row + 1)
             elseif event == input.events.LEFT then
                 col = math.max(1, col - 1)
             elseif event == input.events.RIGHT then
-                if row == 1 then
-                    col = math.min(2, col + 1)
-                end
+                col = math.min(2, col + 1)
             elseif event == input.events.CONFIRM then
-                if _G.arcade_selection ~= 3 then
+                if _G.arcade_selection ~= 4 then
                     queueTransitionAction(event, 0.08, function()
                         renderer.setArcadeMenuOpen(false)
                         arcade_menu_closing_action = function()
@@ -478,6 +474,8 @@ function love.update(dt)
                             local mode = "timeattack"
                             if _G.arcade_selection == 2 then
                                 mode = "huge"
+                            elseif _G.arcade_selection == 3 then
+                                mode = "nomercy"
                             end
                             game = Game.new(mode)
                         end
@@ -682,8 +680,8 @@ function love.update(dt)
                 end
             -- Undo
             elseif event == input.events.BACK then
-                if game.mode == "timeattack" then
-                    renderer.showToast("No Undo in Time Attack!")
+                if game.mode == "timeattack" or game.mode == "nomercy" then
+                    renderer.showToast("No Undo in " .. (game.mode == "timeattack" and "Time Attack" or "No Mercy") .. "!")
                 elseif game.mode == "plus" and game.powerups.undo <= 0 then
                     renderer.showToast("No Undo Powerup!")
                 else
@@ -708,10 +706,11 @@ function love.update(dt)
                 end)
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge")
+                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy")
                     local arcade_idx = 1
                     if game then
-                        if game.mode == "huge" then arcade_idx = 2 end
+                        if game.mode == "huge" then arcade_idx = 2
+                        elseif game.mode == "nomercy" then arcade_idx = 3 end
                         game:saveGameState()
                     end
                     if is_arcade then
@@ -730,8 +729,8 @@ function love.update(dt)
                     game:continueGame()
                 end)
             elseif event == input.events.BACK then
-                if game.mode == "timeattack" then
-                    renderer.showToast("No Undo in Time Attack!")
+                if game.mode == "timeattack" or game.mode == "nomercy" then
+                    renderer.showToast("No Undo in " .. (game.mode == "timeattack" and "Time Attack" or "No Mercy") .. "!")
                 else
                     queueTransitionAction(event, 0.08, function()
                         game:undo()
@@ -743,10 +742,11 @@ function love.update(dt)
                 end)
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge")
+                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy")
                     local arcade_idx = 1
                     if game then
-                        if game.mode == "huge" then arcade_idx = 2 end
+                        if game.mode == "huge" then arcade_idx = 2
+                        elseif game.mode == "nomercy" then arcade_idx = 3 end
                         game:saveGameState()
                     end
                     if is_arcade then
@@ -765,8 +765,8 @@ function love.update(dt)
                     game:restart()
                 end)
             elseif event == input.events.BACK then
-                if game.mode == "timeattack" then
-                    renderer.showToast("No Undo in Time Attack!")
+                if game.mode == "timeattack" or game.mode == "nomercy" then
+                    renderer.showToast("No Undo in " .. (game.mode == "timeattack" and "Time Attack" or "No Mercy") .. "!")
                 else
                     queueTransitionAction(event, 0.08, function()
                         game:undo()
@@ -774,10 +774,11 @@ function love.update(dt)
                 end
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge")
+                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy")
                     local arcade_idx = 1
                     if game then
-                        if game.mode == "huge" then arcade_idx = 2 end
+                        if game.mode == "huge" then arcade_idx = 2
+                        elseif game.mode == "nomercy" then arcade_idx = 3 end
                         game:saveGameState()
                     end
                     if is_arcade then
