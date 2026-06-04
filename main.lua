@@ -21,7 +21,7 @@ local konami_sequence = { "up", "up", "down", "down", "left", "right", "left", "
 -- Screen Transition System
 local last_app_state = nil
 local screen_transition_timer = 0
-local screen_transition_duration = 0.28
+local screen_transition_duration = 0.20
 local screen_canvas = nil       -- canvas of the NEW (incoming) screen
 local old_screen_canvas = nil   -- canvas of the OLD (outgoing) screen
 local transition_direction = 1  -- +1 = forward (new slides in from right), -1 = backward (from left)
@@ -239,6 +239,7 @@ function love.update(dt)
                 screen_transition_timer = screen_transition_duration
             end
         end
+        renderer.resetMenuAnimation()
         last_app_state = _G.appState
     end
 
@@ -505,9 +506,11 @@ function love.update(dt)
             if event == input.events.BACK then
                 -- B always goes back; exits on first page
                 if cur_page > 1 then
+                    renderer.captureOldTutorialSlide(cur_page)
                     _G.tutorial_page = cur_page - 1
                     _G.tutorial_slide_dir = -1
-                    _G.tutorial_slide_timer = 0.22
+                    _G.tutorial_slide_timer = 0.20
+                    _G.tutorial_slide_ready = false
                 else
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
@@ -516,9 +519,11 @@ function love.update(dt)
             elseif event == input.events.CONFIRM or event == input.events.RIGHT then
                 -- A / Right always goes next; exits on last page
                 if cur_page < 8 then
+                    renderer.captureOldTutorialSlide(cur_page)
                     _G.tutorial_page = cur_page + 1
                     _G.tutorial_slide_dir = 1
-                    _G.tutorial_slide_timer = 0.22
+                    _G.tutorial_slide_timer = 0.20
+                    _G.tutorial_slide_ready = false
                 else
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
@@ -526,9 +531,11 @@ function love.update(dt)
                 end
             elseif event == input.events.LEFT then
                 if cur_page > 1 then
+                    renderer.captureOldTutorialSlide(cur_page)
                     _G.tutorial_page = cur_page - 1
                     _G.tutorial_slide_dir = -1
-                    _G.tutorial_slide_timer = 0.22
+                    _G.tutorial_slide_timer = 0.20
+                    _G.tutorial_slide_ready = false
                 end
             end
             return
@@ -836,43 +843,87 @@ function love.draw()
     end
 
     if screen_transition_timer > 0 then
+        -- Cubic ease-out progress (0 → 1) - starts fast, slows down smoothly
+        local t_progress = 1 - (screen_transition_timer / screen_transition_duration)
+        local p = 1 - math.pow(1 - t_progress, 3)
+
         local w, h = love.graphics.getDimensions()
         if not screen_canvas then
             screen_canvas = love.graphics.newCanvas(w, h)
         end
 
-        -- Draw the NEW (incoming) screen to screen_canvas
-        love.graphics.setCanvas({screen_canvas, stencil = true})
-        love.graphics.clear()
-        drawCurrentScreen()
-        love.graphics.setCanvas()
-
-        -- Cubic ease-out progress  (0 → 1)
-        local t_progress = 1 - (screen_transition_timer / screen_transition_duration)
-        local p = 1 - math.pow(1 - t_progress, 3)  -- ease-out cubic
-
-        local dir = transition_direction  -- +1 or -1
-
-        -- New screen: slides in from off-screen (dir=+1 → from right; dir=-1 → from left)
-        local new_x = dir * w * (1 - p)
-        -- Old screen: slides out to the opposite side, at half speed (parallax feel)
-        local old_x = -dir * w * 0.35 * p
+        -- Only render the new screen to the canvas ONCE at the start of the transition
+        if not _G.screen_canvas_ready then
+            love.graphics.setCanvas({screen_canvas, stencil = true})
+            love.graphics.clear()
+            drawCurrentScreen()
+            love.graphics.setCanvas()
+            _G.screen_canvas_ready = true
+        end
 
         -- Draw background fill to avoid any gaps
         love.graphics.clear(0.05, 0.05, 0.08, 1.0)
 
-        -- Draw old screen sliding out (with slight fade-out)
-        if old_screen_canvas then
-            love.graphics.setColor(1, 1, 1, 1 - p * 0.4)
-            love.graphics.draw(old_screen_canvas, math.floor(old_x), 0)
-        end
+        local dir = transition_direction or 1
+        local shadow_w = math.floor(20 * (_G.scale or 1))
 
-        -- Draw new screen sliding in
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(screen_canvas, math.floor(new_x), 0)
+        if dir == 1 then
+            -- Forward transition: New screen slides in on top from right (w -> 0)
+            -- Old screen slides out underneath to the left at 30% speed (0 -> -0.3*w)
+            local old_x = math.floor(-0.3 * w * p)
+            local new_x = math.floor(w * (1 - p))
+
+            -- 1. Draw old screen (underneath)
+            if old_screen_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(old_screen_canvas, old_x, 0)
+                
+                -- Dim the old screen (dimming fades in from 0% to 50% opacity)
+                love.graphics.setColor(0, 0, 0, 0.5 * p)
+                love.graphics.rectangle("fill", old_x, 0, w, h)
+            end
+
+            -- 2. Draw shadow to the left of the new screen
+            for i = 0, shadow_w - 1 do
+                local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.rectangle("fill", new_x - shadow_w + i, 0, 1, h)
+            end
+
+            -- 3. Draw new screen (on top)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(screen_canvas, new_x, 0)
+        else
+            -- Backward transition: Old screen slides out on top to the right (0 -> w)
+            -- New screen slides in underneath from the left at 30% speed (-0.3*w -> 0)
+            local new_x = math.floor(-0.3 * w * (1 - p))
+            local old_x = math.floor(w * p)
+
+            -- 1. Draw new screen (underneath)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(screen_canvas, new_x, 0)
+
+            -- Dim the new screen (dimming fades out from 50% to 0% opacity)
+            love.graphics.setColor(0, 0, 0, 0.5 * (1 - p))
+            love.graphics.rectangle("fill", new_x, 0, w, h)
+
+            if old_screen_canvas then
+                -- 2. Draw shadow to the left of the old screen (sliding on top)
+                for i = 0, shadow_w - 1 do
+                    local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                    love.graphics.setColor(0, 0, 0, alpha)
+                    love.graphics.rectangle("fill", old_x - shadow_w + i, 0, 1, h)
+                end
+
+                -- 3. Draw old screen (on top)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(old_screen_canvas, old_x, 0)
+            end
+        end
 
         love.graphics.setColor(1, 1, 1, 1)
     else
+        _G.screen_canvas_ready = false
         drawCurrentScreen()
     end
 end

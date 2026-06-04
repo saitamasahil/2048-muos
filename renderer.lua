@@ -23,6 +23,8 @@ local menu_anim_x = nil
 local menu_anim_target_x = nil
 local menu_anim_w = nil
 local menu_anim_target_w = nil
+local tutorial_old_canvas = nil
+local tutorial_new_canvas = nil
 local logo_2048 = nil
 
 -- Win animation state
@@ -56,6 +58,28 @@ end
 
 function renderer.flashTextSize()
     text_size_flash_timer = TEXT_SIZE_FLASH_DURATION
+end
+
+function renderer.resetMenuAnimation()
+    menu_anim_y = nil
+    menu_anim_target_y = nil
+    menu_anim_x = nil
+    menu_anim_target_x = nil
+    menu_anim_w = nil
+    menu_anim_target_w = nil
+    tutorial_old_canvas = nil
+    tutorial_new_canvas = nil
+end
+
+function renderer.captureOldTutorialSlide(page)
+    local w, h = love.graphics.getDimensions()
+    if not tutorial_old_canvas then
+        tutorial_old_canvas = love.graphics.newCanvas(w, h)
+    end
+    love.graphics.setCanvas({tutorial_old_canvas, stencil = true})
+    love.graphics.clear()
+    renderer.drawTutorial(page, true, true)
+    love.graphics.setCanvas()
 end
 
 -- Toast state
@@ -2514,25 +2538,40 @@ end
 
 -- Draw a mini 4x4 board at a given position with static tile data
 -- tiles is a flat table: tiles[col][row] = value (or nil/0 for empty)
-local mini_fonts = {}
-local mini_fonts_cell_size = 0
+local mini_fonts_cache = {}
 
-local function drawMiniBoard(bx, by, board_size, tiles, highlight)
+local function drawMiniBoard(bx, by, board_size, tiles, highlight, alpha_mod)
     local scale = _G.scale
     local cell_gap = math.floor(board_size * 0.022)
     local cell_size = math.floor((board_size - cell_gap * 5) / 4)
     local cr = math.floor(cell_size * 0.06)
 
+    local am = alpha_mod or 1.0
+
+    local function setColorWithAlpha(color, alpha_mult)
+        local r, g, b, a = 1, 1, 1, 1
+        if type(color) == "table" then
+            r = color[1] or 1
+            g = color[2] or 1
+            b = color[3] or 1
+            a = color[4] or 1
+        end
+        love.graphics.setColor(r, g, b, a * alpha_mult)
+    end
+
     -- Create/cache mini fonts sized for this cell size
-    if cell_size ~= mini_fonts_cell_size then
-        mini_fonts_cell_size = cell_size
-        mini_fonts.large = love.graphics.newFont(font_path, math.max(8, math.floor(cell_size * 0.45)))
-        mini_fonts.small = love.graphics.newFont(font_path, math.max(7, math.floor(cell_size * 0.35)))
-        mini_fonts.tiny  = love.graphics.newFont(font_path, math.max(6, math.floor(cell_size * 0.28)))
+    local cached_fonts = mini_fonts_cache[cell_size]
+    if not cached_fonts then
+        cached_fonts = {
+            large = love.graphics.newFont(font_path, math.max(8, math.floor(cell_size * 0.45))),
+            small = love.graphics.newFont(font_path, math.max(7, math.floor(cell_size * 0.35))),
+            tiny  = love.graphics.newFont(font_path, math.max(6, math.floor(cell_size * 0.28)))
+        }
+        mini_fonts_cache[cell_size] = cached_fonts
     end
 
     -- Board background
-    love.graphics.setColor(board_color)
+    setColorWithAlpha(board_color, am)
     roundedRect("fill", bx, by, board_size, board_size, cr * 2)
 
     -- Draw cells
@@ -2545,24 +2584,24 @@ local function drawMiniBoard(bx, by, board_size, tiles, highlight)
             -- Tile background
             local color = getTileColor(val)
             if _G.theme == "ascii" and val == 0 then
-                love.graphics.setColor(board_color)
+                setColorWithAlpha(board_color, am)
             else
-                love.graphics.setColor(color)
+                setColorWithAlpha(color, am)
             end
             roundedRect("fill", cx, cy, cell_size, cell_size, cr)
 
             -- Tile text
             if val > 0 then
                 local textColor = getTileTextColor(val)
-                love.graphics.setColor(textColor)
+                setColorWithAlpha(textColor, am)
 
                 local font
                 if val >= 10000 then
-                    font = mini_fonts.tiny
+                    font = cached_fonts.tiny
                 elseif val >= 1000 then
-                    font = mini_fonts.small
+                    font = cached_fonts.small
                 else
-                    font = mini_fonts.large
+                    font = cached_fonts.large
                 end
                 love.graphics.setFont(font)
 
@@ -2578,7 +2617,7 @@ local function drawMiniBoard(bx, by, board_size, tiles, highlight)
                     if h.col == col and h.row == row then
                         local time = love.timer.getTime()
                         local alpha = 0.3 + 0.3 * math.sin(time * 4)
-                        love.graphics.setColor(h.r or 0.3, h.g or 1, h.b or 0.3, alpha)
+                        love.graphics.setColor(h.r or 0.3, h.g or 1, h.b or 0.3, alpha * am)
                         love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
                         roundedRect("line", cx, cy, cell_size, cell_size, cr)
                     end
@@ -2588,7 +2627,7 @@ local function drawMiniBoard(bx, by, board_size, tiles, highlight)
     end
 end
 
-function renderer.drawTutorial(page, skip_transition)
+function renderer.drawTutorial(page, skip_transition, static_only)
     renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
@@ -2596,18 +2635,10 @@ function renderer.drawTutorial(page, skip_transition)
     local padding = math.floor(20 * scale)
 
     -- Slide animation state
-    local slide_offset = 0
-    local slide_alpha = 1.0
-    if _G.tutorial_slide_timer and _G.tutorial_slide_timer > 0 then
+    if not static_only and _G.tutorial_slide_timer and _G.tutorial_slide_timer > 0 then
         local dt = love.timer.getDelta()
         _G.tutorial_slide_timer = _G.tutorial_slide_timer - dt
         if _G.tutorial_slide_timer < 0 then _G.tutorial_slide_timer = 0 end
-        local progress = _G.tutorial_slide_timer / 0.22 -- 0 = done, 1 = just started
-        -- Ease out (cubic)
-        local eased = progress * progress * progress
-        local dir = _G.tutorial_slide_dir or 1
-        slide_offset = eased * w * 0.3 * dir  -- new page slides in from the side
-        slide_alpha = 1.0 - eased * 0.6
     end
 
     -- Tutorial slide data
@@ -2754,28 +2785,193 @@ function renderer.drawTutorial(page, skip_transition)
     }
 
     local total_pages = #slides
-    local slide_data = slides[page] or slides[1]
 
-    -- Apply slide animation transform to content area (not header dots or footer)
-    love.graphics.push()
-    love.graphics.translate(-slide_offset, 0)
-
-    -- Header: title
-    love.graphics.setFont(font_title)
-    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], slide_alpha)
-    local title_text = slide_data.title
-    local title_w = font_title:getWidth(title_text)
-    love.graphics.print(title_text, (w - title_w) / 2, padding)
-
-    love.graphics.pop()
-
-    -- Page indicator (dots) — NOT animated, stays fixed
     local dot_r = math.floor(4 * scale)
     local dot_gap = math.floor(14 * scale)
     local dots_w = total_pages * (dot_r * 2 + dot_gap) - dot_gap
-    local dots_x = (w - dots_w) / 2
     local dots_y = padding + font_title:getHeight() + math.floor(8 * scale)
 
+    local function drawSlide(slide_idx, offset_x, alpha_mod)
+        local slide_data = slides[slide_idx]
+        if not slide_data then return end
+
+        love.graphics.push()
+        love.graphics.translate(offset_x, 0)
+
+        -- 1. Header: title
+        love.graphics.setFont(font_title)
+        local title_text = slide_data.title
+        local title_w = font_title:getWidth(title_text)
+        
+        local r, g, b, a = 1, 1, 1, 1
+        if type(ui_text) == "table" then
+            r = ui_text[1] or 1; g = ui_text[2] or 1; b = ui_text[3] or 1; a = ui_text[4] or 1
+        end
+        love.graphics.setColor(r, g, b, a * alpha_mod)
+        love.graphics.print(title_text, (w - title_w) / 2, padding)
+
+        -- 2. Message box area
+        local msg_y = dots_y + dot_r * 2 + math.floor(12 * scale)
+        local max_content_w = math.min(w - padding * 2, math.floor(480 * scale))
+        local msg_pad = math.floor(15 * scale)
+
+        love.graphics.setFont(font_help_label)
+        local max_line_w = 0
+        for _, line in ipairs(slide_data.lines) do
+            local lw = font_help_label:getWidth(line)
+            if lw > max_line_w then max_line_w = lw end
+        end
+        local msg_box_w = math.min(max_content_w, max_line_w + msg_pad * 2)
+        local msg_box_x = math.floor((w - msg_box_w) / 2)
+
+        -- Calculate message box height from lines
+        local line_h = font_help_label:getHeight()
+        local num_lines = #slide_data.lines
+        local msg_box_h = msg_pad * 2 + num_lines * (line_h + math.floor(3 * scale))
+
+        -- Message box background
+        local br, bg, bb, ba = 1, 1, 1, 1
+        if type(board_color) == "table" then
+            br = board_color[1] or 1; bg = board_color[2] or 1; bb = board_color[3] or 1; ba = board_color[4] or 1
+        end
+        love.graphics.setColor(br, bg, bb, 0.85 * alpha_mod)
+        roundedRect("fill", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
+
+        -- Message box border
+        local hr, hg, hb, ha = 1, 1, 1, 1
+        if type(help_key_color) == "table" then
+            hr = help_key_color[1] or 1; hg = help_key_color[2] or 1; hb = help_key_color[3] or 1; ha = help_key_color[4] or 1
+        end
+        love.graphics.setColor(hr, hg, hb, 0.5 * alpha_mod)
+        love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+        roundedRect("line", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
+
+        -- Message text
+        love.graphics.setColor(r, g, b, a * alpha_mod)
+        local text_y = msg_y + msg_pad
+        for _, line in ipairs(slide_data.lines) do
+            love.graphics.print(line, msg_box_x + msg_pad, text_y)
+            text_y = text_y + line_h + math.floor(3 * scale)
+        end
+
+        -- 3. Mini board
+        local board_top = msg_y + msg_box_h + math.floor(12 * scale)
+        local footer_h = math.floor(55 * scale)
+        local available_h = h - board_top - footer_h - math.floor(10 * scale)
+        local available_w = max_content_w
+        local board_size = math.min(available_w, available_h)
+
+        -- Limit the mini-board size to keep it perfectly symmetrical and consistent
+        local max_board_size = math.floor(204 * scale)
+        if board_size > max_board_size then
+            board_size = max_board_size
+        end
+
+        -- Snap board_size so cells fit perfectly with no floating point gaps
+        local cell_gap = math.floor(board_size * 0.022)
+        local cell_size = math.floor((board_size - cell_gap * 5) / 4)
+        board_size = cell_size * 4 + cell_gap * 5
+
+        -- Center the board vertically in the remaining space
+        local extra_y = (available_h - board_size) / 2
+        local board_y = board_top + math.floor(extra_y)
+        local board_x = math.floor((w - board_size) / 2)
+
+        drawMiniBoard(board_x, board_y, board_size, slide_data.tiles, slide_data.highlight, alpha_mod)
+
+        love.graphics.pop()
+    end
+
+    if static_only then
+        drawSlide(page, 0, 1.0)
+        return
+    end
+
+    -- Draw slide content with iOS Push & Dim transition
+    if _G.tutorial_slide_timer and _G.tutorial_slide_timer > 0 then
+        local progress = 1 - (_G.tutorial_slide_timer / 0.20)
+        local p = 1 - math.pow(1 - progress, 3) -- cubic ease-out
+
+        local dir = _G.tutorial_slide_dir or 1
+        local shadow_w = math.floor(20 * scale)
+
+        -- Capture the new page to tutorial_new_canvas ONCE at the start of transition
+        if not _G.tutorial_slide_ready then
+            if not tutorial_new_canvas then
+                tutorial_new_canvas = love.graphics.newCanvas(w, h)
+            end
+            love.graphics.setCanvas({tutorial_new_canvas, stencil = true})
+            love.graphics.clear()
+            renderer.drawTutorial(page, true, true) -- skip_transition=true, static_only=true
+            love.graphics.setCanvas()
+            _G.tutorial_slide_ready = true
+        end
+
+        if dir == 1 then
+            -- Forward transition: New page slides in on top from right (w -> 0)
+            -- Old page slides out underneath to the left at 30% speed (0 -> -0.3*w)
+            local old_x = math.floor(-0.3 * w * p)
+            local new_x = math.floor(w * (1 - p))
+
+            -- 1. Draw old page (underneath)
+            if tutorial_old_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(tutorial_old_canvas, old_x, 0)
+                
+                -- Dim the old page
+                love.graphics.setColor(0, 0, 0, 0.5 * p)
+                love.graphics.rectangle("fill", old_x, 0, w, h)
+            end
+
+            -- 2. Draw shadow to the left of the new page
+            for i = 0, shadow_w - 1 do
+                local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.rectangle("fill", new_x - shadow_w + i, 0, 1, h)
+            end
+
+            -- 3. Draw new page (on top)
+            if tutorial_new_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(tutorial_new_canvas, new_x, 0)
+            end
+        else
+            -- Backward transition: Old page slides out on top to the right (0 -> w)
+            -- New page slides in underneath from the left at 30% speed (-0.3*w -> 0)
+            local new_x = math.floor(-0.3 * w * (1 - p))
+            local old_x = math.floor(w * p)
+
+            -- 1. Draw new page (underneath)
+            if tutorial_new_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(tutorial_new_canvas, new_x, 0)
+            end
+
+            -- Dim the new page
+            love.graphics.setColor(0, 0, 0, 0.5 * (1 - p))
+            love.graphics.rectangle("fill", new_x, 0, w, h)
+
+            -- 2. Draw shadow to the left of the old page (sliding on top)
+            if tutorial_old_canvas then
+                for i = 0, shadow_w - 1 do
+                    local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                    love.graphics.setColor(0, 0, 0, alpha)
+                    love.graphics.rectangle("fill", old_x - shadow_w + i, 0, 1, h)
+                end
+
+                -- 3. Draw old page (on top)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(tutorial_old_canvas, old_x, 0)
+            end
+        end
+    else
+        _G.tutorial_slide_ready = false
+        -- Just draw the current page normally
+        drawSlide(page, 0, 1.0)
+    end
+
+    -- Page indicator (dots) — NOT animated, stays fixed
+    local dots_x = (w - dots_w) / 2
     for i = 1, total_pages do
         local dx = dots_x + (i - 1) * (dot_r * 2 + dot_gap) + dot_r
         if i == page then
@@ -2786,73 +2982,6 @@ function renderer.drawTutorial(page, skip_transition)
             love.graphics.circle("fill", dx, dots_y, dot_r)
         end
     end
-
-    -- Apply slide animation transform to the rest of the content
-    love.graphics.push()
-    love.graphics.translate(-slide_offset, 0)
-
-    -- Message box area
-    local msg_y = dots_y + dot_r * 2 + math.floor(12 * scale)
-    local max_content_w = math.min(w - padding * 2, math.floor(480 * scale))
-    local msg_pad = math.floor(15 * scale)
-
-    love.graphics.setFont(font_help_label)
-    local max_line_w = 0
-    for _, line in ipairs(slide_data.lines) do
-        local lw = font_help_label:getWidth(line)
-        if lw > max_line_w then max_line_w = lw end
-    end
-    local msg_box_w = math.min(max_content_w, max_line_w + msg_pad * 2)
-    local msg_box_x = math.floor((w - msg_box_w) / 2)
-
-    -- Calculate message box height from lines
-    local line_h = font_help_label:getHeight()
-    local num_lines = #slide_data.lines
-    local msg_box_h = msg_pad * 2 + num_lines * (line_h + math.floor(3 * scale))
-
-    -- Message box background
-    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.85 * slide_alpha)
-    roundedRect("fill", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
-
-    -- Message box border
-    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.5 * slide_alpha)
-    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
-    roundedRect("line", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
-
-    -- Message text
-    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], slide_alpha)
-    local text_y = msg_y + msg_pad
-    for _, line in ipairs(slide_data.lines) do
-        love.graphics.print(line, msg_box_x + msg_pad, text_y)
-        text_y = text_y + line_h + math.floor(3 * scale)
-    end
-
-    -- Mini board
-    local board_top = msg_y + msg_box_h + math.floor(12 * scale)
-    local footer_h = math.floor(55 * scale)
-    local available_h = h - board_top - footer_h - math.floor(10 * scale)
-    local available_w = max_content_w
-    local board_size = math.min(available_w, available_h)
-
-    -- Limit the mini-board size to keep it perfectly symmetrical and consistent
-    local max_board_size = math.floor(204 * scale)
-    if board_size > max_board_size then
-        board_size = max_board_size
-    end
-
-    -- Snap board_size so cells fit perfectly with no floating point gaps
-    local cell_gap = math.floor(board_size * 0.022)
-    local cell_size = math.floor((board_size - cell_gap * 5) / 4)
-    board_size = cell_size * 4 + cell_gap * 5
-
-    -- Center the board vertically in the remaining space
-    local extra_y = (available_h - board_size) / 2
-    local board_y = board_top + math.floor(extra_y)
-    local board_x = math.floor((w - board_size) / 2)
-
-    drawMiniBoard(board_x, board_y, board_size, slide_data.tiles, slide_data.highlight)
-
-    love.graphics.pop()
 
     -- Footer: navigation hints — NOT animated, stays fixed
     local badge_h = math.floor(28 * scale)
