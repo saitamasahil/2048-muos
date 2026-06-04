@@ -430,6 +430,16 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_untouchable_2048")
                     end
 
+                    if self.mode == "huge" and merged.value >= 2048 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_huge_2048")
+                    end
+                    if self.mode == "nomercy" and merged.value >= 1024 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_nomercy_1024")
+                    end
+                    if self.mode == "goose" and merged.value >= 2048 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_goose_2048")
+                    end
+
                     -- Time Attack: add bonus time for merges (challenging balance)
                     if self.mode == "timeattack" and self.timeLeft then
                         local bonus = 0

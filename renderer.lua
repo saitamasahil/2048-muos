@@ -745,6 +745,100 @@ local themes = {
         help_bg_color    = {hex("#050d14")},
         help_key_color   = {hex("#0aabb5")},   -- electric teal highlight
         help_key_text    = {hex("#ffffff")},
+    },
+    nebula = {
+        -- Deep Space Nebula: dark indigo cosmic dust void, tiles shift from
+        -- deep blue -> pink -> neon cyan -> white.
+        tile_colors = {
+            [0]    = {hex("#0b031a")},   -- near-black dark purple
+            [2]    = {hex("#1d0e3a")},   -- deep violet
+            [4]    = {hex("#2e114f")},   -- purple
+            [8]    = {hex("#4d1b7d")},   -- rich magenta-purple
+            [16]   = {hex("#7e1ba8")},   -- purple-pink
+            [32]   = {hex("#b817b2")},   -- bright magenta
+            [64]   = {hex("#d61596")},   -- neon pink
+            [128]  = {hex("#00c5cd")},   -- cosmic cyan
+            [256]  = {hex("#00e5ee")},   -- electric blue-cyan
+            [512]  = {hex("#22ebc2")},   -- neon teal
+            [1024] = {hex("#5efcee")},   -- neon cyan
+            [2048] = {hex("#ffffff")},   -- white star
+        },
+        super_tile_color = {hex("#ffffff")},
+        dark_text        = {hex("#090212")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#cc66ff")},   -- glowing pink-purple
+        bg_color         = {hex("#05010d")},   -- pitch space black
+        board_color      = {hex("#0b031a")},   -- board frame
+        score_bg_color   = {hex("#0b031a")},
+        score_label      = {hex("#a366ff")},
+        score_value      = {hex("#cc66ff")},
+        overlay_win      = {hex("#00e5ee")},
+        overlay_lose     = {hex("#0b031a")},
+        help_bg_color    = {hex("#0b031a")},
+        help_key_color   = {hex("#7e1ba8")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    inferno = {
+        -- Fire & Brimstone: ash black floor, fiery orange and glowing embers.
+        tile_colors = {
+            [0]    = {hex("#0e0404")},   -- deep ember ash
+            [2]    = {hex("#2d0a0a")},   -- dark red ember
+            [4]    = {hex("#4a1010")},   -- blood red
+            [8]    = {hex("#7c1616")},   -- solid crimson
+            [16]   = {hex("#b21f1f")},   -- glowing red
+            [32]   = {hex("#d63e15")},   -- hot orange-red
+            [64]   = {hex("#e65c00")},   -- fire orange
+            [128]  = {hex("#ff7700")},   -- safety orange
+            [256]  = {hex("#ff9900")},   -- gold-yellow flame
+            [512]  = {hex("#ffcc00")},   -- bright yellow
+            [1024] = {hex("#ffff66")},   -- sulfur yellow
+            [2048] = {hex("#ffffff")},   -- white fire
+        },
+        super_tile_color = {hex("#ffffff")},
+        dark_text        = {hex("#0d0303")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#ff4500")},   -- neon orangered
+        bg_color         = {hex("#050101")},   -- pitch black coal
+        board_color      = {hex("#0e0404")},   -- ash frame
+        score_bg_color   = {hex("#0e0404")},
+        score_label      = {hex("#cc3300")},
+        score_value      = {hex("#ff4500")},
+        overlay_win      = {hex("#ff7700")},
+        overlay_lose     = {hex("#0e0404")},
+        help_bg_color    = {hex("#0e0404")},
+        help_key_color   = {hex("#b21f1f")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    honk = {
+        -- Wetland Pond: soft swamp green and pond blue accents.
+        tile_colors = {
+            [0]    = {hex("#e2ece9")},   -- light green-gray water
+            [2]    = {hex("#ffffff")},   -- clean white (goose color)
+            [4]    = {hex("#f7f0e1")},   -- eggshell white
+            [8]    = {hex("#fbdca4")},   -- orange beak yellow
+            [16]   = {hex("#f9c264")},   -- dark orange
+            [32]   = {hex("#dbecf5")},   -- sky blue
+            [64]   = {hex("#b4d4e7")},   -- baby blue
+            [128]  = {hex("#8ebbd9")},   -- soft blue
+            [256]  = {hex("#5293c1")},   -- deep water blue
+            [512]  = {hex("#2d71a1")},   -- lake blue
+            [1024] = {hex("#164e75")},   -- deep navy
+            [2048] = {hex("#ff8000")},   -- neon orange honk!
+        },
+        super_tile_color = {hex("#ff8000")},
+        dark_text        = {hex("#1a3c34")},
+        light_text       = {hex("#164e75")},
+        ui_text          = {hex("#1a6c5a")},   -- wetlands forest green
+        bg_color         = {hex("#eef7f4")},   -- wetland water backdrop
+        board_color      = {hex("#d2e4df")},   -- soft frame
+        score_bg_color   = {hex("#d2e4df")},
+        score_label      = {hex("#1a6c5a")},
+        score_value      = {hex("#1a3c34")},
+        overlay_win      = {hex("#5293c1")},
+        overlay_lose     = {hex("#d2e4df")},
+        help_bg_color    = {hex("#d2e4df")},
+        help_key_color   = {hex("#1a6c5a")},
+        help_key_text    = {hex("#ffffff")},
     }
 }
 
@@ -788,6 +882,319 @@ end
 
 -- Initialize theme immediately
 renderer.applyTheme()
+
+function renderer.drawDynamicBackground(themeName)
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    if themeName == "aurora" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Layer 1: Deep undulating aurora curtains (3 ribbons across the top half)
+        for ribbon = 1, 3 do
+            local ribbon_y_base = h * (0.15 + ribbon * 0.12)
+            local hue_shift = ribbon * 0.33
+            local r_c = 0.0 + math.sin(hue_shift * math.pi * 2) * 0.3
+            local g_c = 0.6 + math.cos(hue_shift * math.pi * 2) * 0.2
+            local b_c = 0.7 + math.sin(hue_shift * math.pi * 2 + 1.0) * 0.3
+            local seg_count = 24
+            for seg = 0, seg_count do
+                local frac = seg / seg_count
+                local x_pos = w * frac
+                local wave1 = math.sin(frac * math.pi * 3 + t * 0.6 + ribbon * 1.1) * 35 * scale
+                local wave2 = math.sin(frac * math.pi * 5 + t * 0.4 - ribbon * 0.7) * 18 * scale
+                local wave3 = math.cos(frac * math.pi * 2 + t * 0.25 + ribbon * 2.0) * 25 * scale
+                local y_pos = ribbon_y_base + wave1 + wave2 + wave3
+                local brightness = 0.5 + 0.5 * math.sin(frac * math.pi * 4 + t * 0.8 + ribbon)
+                local alpha = 0.04 + brightness * 0.06
+                love.graphics.setColor(r_c, g_c, b_c, alpha)
+                love.graphics.circle("fill", x_pos, y_pos, (28 + brightness * 20) * scale)
+            end
+        end
+
+        -- Layer 2: Flowing light columns (vertical streaks that shimmer)
+        for i = 1, 8 do
+            local col_x = w * (i / 9) + math.sin(t * 0.3 + i * 1.7) * 30 * scale
+            local col_h = h * (0.3 + 0.15 * math.sin(t * 0.5 + i * 2.1))
+            local col_y = h * 0.05 + math.cos(t * 0.2 + i) * 20 * scale
+            local pulse = 0.5 + 0.5 * math.sin(t * 1.2 + i * 0.9)
+            local colors = {
+                {0.0, 0.85, 0.75}, {0.55, 0.20, 0.95}, {0.90, 0.10, 0.60},
+                {0.20, 0.60, 0.95}, {0.0, 0.95, 0.55}, {0.70, 0.10, 0.85},
+                {0.10, 0.75, 0.90}, {0.85, 0.30, 0.70}
+            }
+            local c = colors[i]
+            local alpha = 0.025 + pulse * 0.035
+            love.graphics.setColor(c[1], c[2], c[3], alpha)
+            local rect_w = (12 + pulse * 10) * scale
+            love.graphics.rectangle("fill", col_x - rect_w / 2, col_y, rect_w, col_h, rect_w / 2, rect_w / 2)
+        end
+
+        -- Layer 3: Shimmer particles drifting upward
+        for i = 1, 30 do
+            local px = w * ((i * 7 + 3) % 31) / 31
+            local drift_cycle = 12.0 + (i % 5) * 2
+            local py_frac = ((t * (8 + i % 6) + i * 47.3) % (h * 1.2)) / (h * 1.2)
+            local py = h * (1.1 - py_frac)
+            local px_drift = px + math.sin(t * 0.7 + i * 1.3) * 15 * scale
+            local twinkle = math.sin(t * 3.0 + i * 2.7) * 0.5 + 0.5
+            local alpha = twinkle * 0.35 * (1.0 - py_frac * 0.6)
+            if i % 3 == 0 then
+                love.graphics.setColor(0.7, 1.0, 0.9, alpha)
+            elseif i % 3 == 1 then
+                love.graphics.setColor(0.8, 0.6, 1.0, alpha)
+            else
+                love.graphics.setColor(1.0, 0.7, 0.9, alpha)
+            end
+            love.graphics.circle("fill", px_drift, py, (1.0 + twinkle * 1.5) * scale)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "nebula" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Layer 1: Swirling dust clouds (large, slow, layered)
+        local clouds = {
+            {0.35, 0.25, 0.50, 0.12, 0.55, 280, 0.07},  -- deep purple
+            {0.65, 0.55, 0.08, 0.15, 0.50, 300, 0.06},  -- deep blue
+            {0.50, 0.70, 0.55, 0.05, 0.45, 240, 0.05},  -- teal accent
+            {0.25, 0.65, 0.35, 0.25, 0.70, 200, 0.05},  -- pink nebula
+        }
+        for idx, cloud in ipairs(clouds) do
+            local cx = w * cloud[1] + math.sin(t * 0.15 + idx * 1.5) * 90 * scale
+            local cy = h * cloud[2] + math.cos(t * 0.12 + idx * 2.1) * 70 * scale
+            -- Outer glow
+            love.graphics.setColor(cloud[3], cloud[4], cloud[5], cloud[7] * 0.5)
+            love.graphics.circle("fill", cx, cy, cloud[6] * 1.5 * scale)
+            -- Inner core
+            love.graphics.setColor(cloud[3] + 0.1, cloud[4] + 0.05, cloud[5] + 0.1, cloud[7])
+            love.graphics.circle("fill", cx, cy, cloud[6] * scale)
+        end
+
+        -- Layer 2: Dense star field (50 stars with varied twinkle speeds)
+        for i = 1, 50 do
+            -- Use golden-ratio-based distribution for even spread
+            local golden = 0.6180339887
+            local sx_pos = ((i * golden * 1.0) % 1.0) * w
+            local sy_pos = ((i * golden * 1.618) % 1.0) * h
+            local speed = 1.0 + (i % 7) * 0.4
+            local twinkle = math.sin(t * speed + i * 3.14159) * 0.5 + 0.5
+            local size_base = 0.6 + (i % 3) * 0.4
+            -- Color variety: white, blue-white, pale yellow
+            if i % 5 == 0 then
+                love.graphics.setColor(0.8, 0.85, 1.0, twinkle * 0.55)
+            elseif i % 5 == 1 then
+                love.graphics.setColor(1.0, 1.0, 0.85, twinkle * 0.4)
+            else
+                love.graphics.setColor(1.0, 1.0, 1.0, twinkle * 0.45)
+            end
+            love.graphics.circle("fill", sx_pos, sy_pos, size_base * scale)
+            -- Add small glow to brightest stars
+            if twinkle > 0.8 and i % 4 == 0 then
+                love.graphics.setColor(0.7, 0.8, 1.0, (twinkle - 0.8) * 0.3)
+                love.graphics.circle("fill", sx_pos, sy_pos, size_base * 3.5 * scale)
+            end
+        end
+
+        -- Layer 3: Shooting stars (2 at different phases)
+        for s = 1, 2 do
+            local cycle = 6.0 + s * 2.0
+            local phase = (t + s * 3.7) % cycle
+            local progress = phase / cycle
+            if progress < 0.15 then  -- only visible during streak
+                local streak_prog = progress / 0.15
+                local sx_start = w * (0.1 + s * 0.35)
+                local sy_start = h * (0.05 + s * 0.1)
+                local sx_end = sx_start + w * 0.4
+                local sy_end = sy_start + h * 0.25
+                local cx = sx_start + (sx_end - sx_start) * streak_prog
+                local cy = sy_start + (sy_end - sy_start) * streak_prog
+                local tail_len = 35 * scale
+                local dx = (sx_end - sx_start)
+                local dy = (sy_end - sy_start)
+                local mag = math.sqrt(dx * dx + dy * dy)
+                dx, dy = dx / mag, dy / mag
+                local alpha_head = 0.7 * (1.0 - streak_prog * 0.5)
+                love.graphics.setColor(1.0, 1.0, 1.0, alpha_head)
+                love.graphics.circle("fill", cx, cy, 1.5 * scale)
+                -- Trail
+                for trail = 1, 8 do
+                    local tf = trail / 8
+                    local tx = cx - dx * tail_len * tf
+                    local ty = cy - dy * tail_len * tf
+                    love.graphics.setColor(0.8, 0.85, 1.0, alpha_head * (1.0 - tf) * 0.6)
+                    love.graphics.circle("fill", tx, ty, (1.5 - tf * 1.0) * scale)
+                end
+            end
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "inferno" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Layer 1: Deep lava glow pools at bottom
+        local pools = {
+            {0.2, 0.9, 1.0, 0.15, 0.0},
+            {0.5, 0.85, 1.0, 0.25, 0.0},
+            {0.8, 0.92, 0.95, 0.10, 0.0},
+        }
+        for idx, p in ipairs(pools) do
+            local px = w * p[1] + math.sin(t * 0.25 + idx * 2.0) * 40 * scale
+            local py = h * p[2] + math.cos(t * 0.3 + idx) * 15 * scale
+            local pulse = 0.7 + 0.3 * math.sin(t * 0.8 + idx * 1.5)
+            -- Outer glow
+            love.graphics.setColor(p[3], p[4], p[5], 0.04 * pulse)
+            love.graphics.circle("fill", px, py, 200 * scale)
+            -- Inner hot core
+            love.graphics.setColor(1.0, 0.35, 0.0, 0.06 * pulse)
+            love.graphics.circle("fill", px, py, 120 * scale)
+            -- Brightest center
+            love.graphics.setColor(1.0, 0.6, 0.1, 0.05 * pulse)
+            love.graphics.circle("fill", px, py, 60 * scale)
+        end
+
+        -- Layer 2: Rising ember particles (40 particles)
+        for i = 1, 40 do
+            -- Distribute start positions evenly across width
+            local start_x = w * ((i * 0.618 + 0.1) % 1.0)
+            local rise_speed = 15 + (i % 7) * 8
+            local sway_amount = 20 + (i % 5) * 8
+            local sway_speed = 0.8 + (i % 4) * 0.3
+
+            -- Y position: rises from bottom to top, wraps around
+            local y_cycle = h + 40 * scale
+            local y = h + 20 * scale - ((t * rise_speed + i * 73.7) % y_cycle)
+
+            -- X position: sways side to side
+            local x = start_x + math.sin(t * sway_speed + i * 2.3) * sway_amount * scale
+
+            -- Life fraction (0 at bottom, 1 at top)
+            local life = 1.0 - (y / h)
+            life = math.max(0, math.min(1, life))
+
+            -- Size decreases as it rises
+            local size = (1.8 + (i % 3) * 0.6) * scale * (1.0 - life * 0.5)
+
+            -- Flicker
+            local flicker = 0.6 + 0.4 * math.sin(t * 5.0 + i * 4.1)
+
+            -- Color shifts from bright yellow at bottom to dark red at top
+            local r = 1.0
+            local g = math.max(0, 0.7 - life * 0.6)
+            local b = math.max(0, 0.1 - life * 0.1)
+            local a = flicker * (0.5 - life * 0.35)
+
+            if a > 0.01 then
+                -- Ember glow
+                love.graphics.setColor(r, g, b, a * 0.3)
+                love.graphics.circle("fill", x, y, size * 3)
+                -- Ember core
+                love.graphics.setColor(r, g + 0.1, b, a)
+                love.graphics.circle("fill", x, y, size)
+            end
+        end
+
+        -- Layer 3: Heat distortion waves (horizontal shimmer lines)
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        for i = 1, 6 do
+            local wave_y = h * (0.4 + i * 0.08) + math.sin(t * 0.4 + i) * 20 * scale
+            local segments = 20
+            local alpha = 0.03 + 0.02 * math.sin(t * 0.6 + i * 1.2)
+            love.graphics.setColor(1.0, 0.4, 0.0, alpha)
+            for seg = 0, segments - 1 do
+                local x1 = w * (seg / segments)
+                local x2 = w * ((seg + 1) / segments)
+                local y1 = wave_y + math.sin(t * 1.5 + seg * 0.5 + i * 2) * 4 * scale
+                local y2 = wave_y + math.sin(t * 1.5 + (seg + 1) * 0.5 + i * 2) * 4 * scale
+                love.graphics.line(x1, y1, x2, y2)
+            end
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "honk" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Layer 1: Gentle pond shimmer (subtle wave pattern across screen)
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        for i = 1, 5 do
+            local wave_y = h * (0.3 + i * 0.12)
+            local segments = 16
+            local alpha = 0.04 + 0.02 * math.sin(t * 0.3 + i * 0.8)
+            love.graphics.setColor(0.15, 0.50, 0.70, alpha)
+            for seg = 0, segments - 1 do
+                local x1 = w * (seg / segments)
+                local x2 = w * ((seg + 1) / segments)
+                local y1 = wave_y + math.sin(t * 0.5 + seg * 0.4 + i * 1.5) * 3 * scale
+                local y2 = wave_y + math.sin(t * 0.5 + (seg + 1) * 0.4 + i * 1.5) * 3 * scale
+                love.graphics.line(x1, y1, x2, y2)
+            end
+        end
+
+        -- Layer 2: Water ripples distributed EVENLY across the entire screen
+        love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+        -- Fixed positions using explicit grid-like placement to ensure full coverage
+        local ripple_positions = {
+            {0.15, 0.20}, {0.75, 0.15}, {0.45, 0.50},
+            {0.20, 0.75}, {0.80, 0.65}, {0.55, 0.85},
+            {0.35, 0.35}, {0.65, 0.40}, {0.10, 0.50},
+            {0.90, 0.30},
+        }
+        for i, pos in ipairs(ripple_positions) do
+            local rx = w * pos[1]
+            local ry = h * pos[2]
+
+            -- Each ripple has 2-3 concentric expanding rings at different phases
+            for ring = 0, 2 do
+                local cycle = 4.0 + ring * 1.2
+                local t_offset = (t + i * 1.73 + ring * 1.5) % cycle
+                local progress = t_offset / cycle
+
+                local radius = (5 + progress * 55) * scale
+                local alpha = (1.0 - progress) * 0.14
+
+                if alpha > 0.01 then
+                    love.graphics.setColor(0.15, 0.50, 0.70, alpha)
+                    love.graphics.circle("line", rx, ry, radius)
+                end
+            end
+        end
+
+        -- Layer 3: Floating tiny feather particles
+        for i = 1, 12 do
+            local golden = 0.6180339887
+            local fx = ((i * golden) % 1.0) * w
+            local drift_cycle = 10 + (i % 4) * 3
+            local fy_frac = ((t * (3 + i % 3) + i * 31.7) % (h * 1.3)) / (h * 1.3)
+            local fy = h * (1.15 - fy_frac)
+            local fx_drift = fx + math.sin(t * 0.4 + i * 1.8) * 25 * scale
+            local sway = math.sin(t * 0.8 + i * 2.1) * 5 * scale
+            local alpha = 0.15 * (1.0 - fy_frac * 0.7)
+            if alpha > 0.01 then
+                love.graphics.setColor(0.85, 0.85, 0.80, alpha)
+                -- Small feather shape (tiny elongated ellipse)
+                local sz = (1.0 + (i % 2) * 0.5) * scale
+                love.graphics.circle("fill", fx_drift + sway, fy, sz)
+                love.graphics.setColor(0.90, 0.90, 0.85, alpha * 0.5)
+                love.graphics.circle("fill", fx_drift + sway + sz * 0.8, fy - sz * 0.3, sz * 0.6)
+            end
+        end
+
+        love.graphics.pop()
+    end
+end
+
+function renderer.clearBackground()
+    love.graphics.setColor(bg_color)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.drawDynamicBackground(_G.theme)
+end
 
 function renderer.getThemeBgColor()
     return bg_color
@@ -2156,8 +2563,7 @@ local function drawMiniBoard(bx, by, board_size, tiles, highlight)
 end
 
 function renderer.drawTutorial(page, skip_transition)
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -2276,7 +2682,7 @@ function renderer.drawTutorial(page, skip_transition)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 20 themes total!"
+                "achievements. 24 themes total!"
             },
             tiles = {
                 {2, 0, 0, 0},
@@ -2463,8 +2869,7 @@ end
 -- Main Menu
 -- ============================================================================
 function renderer.drawMainMenu(selection, skip_transition)
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -3217,8 +3622,7 @@ end
 -- Cheats Menu
 -- ============================================================================
 function renderer.drawCheatsMenu(selection, skip_transition)
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -3338,8 +3742,7 @@ end
 -- Theme Selection / Preview Screen
 -- ============================================================================
 function renderer.drawThemeSelect(skip_transition)
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -3511,8 +3914,7 @@ function renderer.draw(game, skip_transition)
         renderer.updateLayout(game.size)
     end
     -- Fill background
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     renderer.drawHeader(game)
     renderer.drawScores(game)
@@ -3538,8 +3940,7 @@ end
 -- Achievements Screen
 -- ============================================================================
 function renderer.drawAchievements(scroll, skip_transition)
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -3571,7 +3972,10 @@ function renderer.drawAchievements(scroll, skip_transition)
         { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme" },
         { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme" },
         { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme" },
-        { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme" }
+        { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme" },
+        { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme" },
+        { id = "ach_nomercy_1024", name = "No Escape", desc = "Create a 1024 tile in No Mercy Mode", reward = "Inferno Theme" },
+        { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme" }
     }
 
     local list_y = padding + font_title:getHeight() + math.floor(20 * scale)
@@ -3798,8 +4202,7 @@ end
 -- ============================================================================
 local qr_image
 function renderer.drawAbout(skip_transition)
-    love.graphics.setColor(bg_color)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
+    renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale

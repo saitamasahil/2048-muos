@@ -127,6 +127,9 @@ function love.load(args)
     if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
     if _G.achievements.ach_secret_ascii then table.insert(_G.unlocked_themes, "ascii") end
     if _G.achievements.ach_timeattack_2048 then table.insert(_G.unlocked_themes, "aurora") end
+    if _G.achievements.ach_huge_2048 then table.insert(_G.unlocked_themes, "nebula") end
+    if _G.achievements.ach_nomercy_1024 then table.insert(_G.unlocked_themes, "inferno") end
+    if _G.achievements.ach_goose_2048 then table.insert(_G.unlocked_themes, "honk") end
 
     function _G.unlockAchievement(id)
         if not _G.achievements[id] then
@@ -152,7 +155,10 @@ function love.load(args)
                 ach_score_50k = "dracula",
                 ach_score_100k = "gold",
                 ach_untouchable_2048 = "matcha",
-                ach_timeattack_2048 = "aurora"
+                ach_timeattack_2048 = "aurora",
+                ach_huge_2048 = "nebula",
+                ach_nomercy_1024 = "inferno",
+                ach_goose_2048 = "honk"
             }
             if theme_map[id] then
                 table.insert(_G.unlocked_themes, theme_map[id])
@@ -177,7 +183,10 @@ function love.load(args)
                 ach_score_50k = "Vampire Lord",
                 ach_score_100k = "Midas Touch",
                 ach_untouchable_2048 = "Zen Master",
-                ach_timeattack_2048 = "Aurora"
+                ach_timeattack_2048 = "Aurora",
+                ach_huge_2048 = "Spacious Giant",
+                ach_nomercy_1024 = "No Escape",
+                ach_goose_2048 = "Honk Honk!"
             }
             renderer.showToast("Unlocked: " .. (names[id] or id) .. "!")
         end

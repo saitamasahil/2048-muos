@@ -81,6 +81,9 @@ _G.achievements = {
 
     -- Arcade Mode achievements
     ach_timeattack_2048 = false, -- Aurora -- Reach 2048 in Time Attack -> unlocks 'aurora'
+    ach_huge_2048 = false,       -- Spacious Giant -- Reach 2048 in Huge Mode -> unlocks 'nebula'
+    ach_nomercy_1024 = false,     -- No Escape -- Reach 1024 in No Mercy Mode -> unlocks 'inferno'
+    ach_goose_2048 = false,      -- Honk Honk! -- Reach 2048 in Goose Mode -> unlocks 'honk'
     
     -- Hidden tracking stats
     bombs_used = 0,
