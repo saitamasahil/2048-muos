@@ -3092,14 +3092,14 @@ function renderer.drawMainMenu(selection, skip_transition)
     local badge_y = h - badge_h - math.floor(15 * scale)
     
     -- Dynamically space a beautiful theme-colored 2048 tile logo header
-    local header_h = math.floor((_G.text_size == "large" and 80 or 95) * scale)
+    local header_h = math.floor((_G.text_size == "large" and 120 or 145) * scale)
     
-    local total_h = header_h + math.floor(15 * scale) + menu_h
+    local total_h = header_h + math.floor(12 * scale) + menu_h
     local available_h = badge_y - math.floor(10 * scale)
     local start_y = math.max(math.floor(10 * scale), math.floor(math.floor(10 * scale) + (available_h - total_h) / 2))
     
     -- Draw beautifully stylized header
-    local tile_size = header_h - math.floor((_G.text_size == "large" and 15 or 20) * scale)
+    local tile_size = header_h - math.floor(10 * scale)
     if tile_size > 0 then
         local tile_x = (w - tile_size) / 2
         local tile_y = start_y + (header_h - tile_size) / 2
@@ -3110,17 +3110,14 @@ function renderer.drawMainMenu(selection, skip_transition)
         
         -- Draw "2048" text
         love.graphics.setColor(getTileTextColor(2048))
-        local f_logo = font_tile_small
-        if tile_size < math.floor(50 * scale) then
-            f_logo = font_tile_tiny
-        end
+        local f_logo = font_main_menu_title or font_tile_large
         love.graphics.setFont(f_logo)
         local tw = f_logo:getWidth("2048")
         local th = f_logo:getHeight()
         
         -- Safe dynamic scaling for logo text inside the tile
         local logo_s = 1.0
-        local max_w = tile_size - math.floor(8 * scale)
+        local max_w = tile_size - math.floor(12 * scale)
         if tw > max_w then
             logo_s = max_w / tw
         end
@@ -3128,7 +3125,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     end
     
     -- Menu options start position
-    local menu_start_y = start_y + header_h + math.floor(15 * scale)
+    local menu_start_y = start_y + header_h + math.floor(12 * scale)
 
     local max_ow = 0
     for _, opt in ipairs(options) do
