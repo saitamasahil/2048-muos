@@ -34,11 +34,19 @@ local arcade_panel_target = 9999    -- target offset
 local arcade_menu_bg_alpha = 0      -- dim overlay alpha (0..0.75)
 
 function renderer.setArcadeMenuOpen(open)
+    local scale = _G.scale or 1
+    local card_h = math.floor((_G.text_size == "large" and 124 or 120) * scale)
+    local card_gap = math.floor(12 * scale)
+    local panel_pad_y = math.floor(16 * scale)
+    local header_h = math.floor(74 * scale)
+    local footer_h = math.floor(44 * scale)
+    local num_rows = 2
+    local panel_h = header_h + panel_pad_y + num_rows * card_h + (num_rows - 1) * card_gap + panel_pad_y + footer_h
+
     if open then
         arcade_panel_target = 0
     else
-        -- Will be set to panel height by drawArcadeMenu; use a big number for now
-        arcade_panel_target = 9999
+        arcade_panel_target = panel_h
     end
 end
 
@@ -810,6 +818,7 @@ local font_message
 local font_help_key
 local font_help_label
 local font_path = "assets/ClearSans-Bold.ttf"
+local font_cache = {}
 
 -- ============================================================================
 -- Layout
@@ -826,14 +835,13 @@ local layout = {
 }
 
 -- ============================================================================
--- Initialization
+-- Layout Update
 -- ============================================================================
-function renderer.init()
+function renderer.updateLayout(size)
+    size = size or 4
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
 
-    -- Layout strategy: the board is a square that fills most of the screen.
-    -- We need space for: top header (title + scores) + board + bottom help bar.
     local header_h = math.floor(65 * scale)   -- title + score boxes
     local help_h   = math.floor(55 * scale)   -- controls help section
     local padding  = math.floor(10 * scale)
@@ -845,8 +853,8 @@ function renderer.init()
     -- Board is a square — fit to the smaller dimension
     local board_size = math.min(avail_w, avail_h)
     local cell_gap = math.floor(board_size * 0.022)
-    local cell_size = math.floor((board_size - cell_gap * 5) / 4)
-    board_size = cell_size * 4 + cell_gap * 5
+    local cell_size = math.floor((board_size - cell_gap * (size + 1)) / size)
+    board_size = cell_size * size + cell_gap * (size + 1)
 
     layout.board_size = board_size
     layout.cell_size = cell_size
@@ -857,7 +865,7 @@ function renderer.init()
     layout.help_y = layout.board_y + board_size + padding
     layout.help_h = help_h
 
-    -- Load fonts — sizes relative to cell size for proper scaling
+    -- Re-load fonts relative to the new cell size — using cache to avoid recreation lag
     local text_scale = 1.0
     local tile_scale = 1.0
     if _G.text_size == "large" then
@@ -865,12 +873,37 @@ function renderer.init()
         tile_scale = 1.05
     end
 
-    local tile_font_size = math.floor(cell_size * 0.45 * tile_scale)
-    local tile_small_size = math.floor(cell_size * 0.35 * tile_scale)
-    local tile_tiny_size = math.floor(cell_size * 0.28 * tile_scale)
-    font_tile_large = love.graphics.newFont(font_path, tile_font_size)
-    font_tile_small = love.graphics.newFont(font_path, tile_small_size)
-    font_tile_tiny  = love.graphics.newFont(font_path, tile_tiny_size)
+    local cache_key = tostring(size) .. "_" .. _G.text_size
+    if not font_cache[cache_key] then
+        local tile_font_size = math.floor(cell_size * 0.45 * tile_scale)
+        local tile_small_size = math.floor(cell_size * 0.35 * tile_scale)
+        local tile_tiny_size = math.floor(cell_size * 0.28 * tile_scale)
+        font_cache[cache_key] = {
+            large = love.graphics.newFont(font_path, tile_font_size),
+            small = love.graphics.newFont(font_path, tile_small_size),
+            tiny  = love.graphics.newFont(font_path, tile_tiny_size),
+        }
+    end
+
+    font_tile_large = font_cache[cache_key].large
+    font_tile_small = font_cache[cache_key].small
+    font_tile_tiny  = font_cache[cache_key].tiny
+end
+
+-- ============================================================================
+-- Initialization
+-- ============================================================================
+function renderer.init()
+    local scale = _G.scale
+
+    renderer.updateLayout(4)
+
+    -- Load fonts — sizes relative to cell size for proper scaling
+    local text_scale = 1.0
+    if _G.text_size == "large" then
+        text_scale = 1.15
+    end
+
     font_score      = love.graphics.newFont(font_path, math.floor(20 * scale * text_scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale * text_scale))
     font_main_menu_title = love.graphics.newFont(font_path, math.floor(72 * scale))
@@ -880,6 +913,17 @@ function renderer.init()
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
     font_help_label = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
     logo_2048 = love.graphics.newImage("assets/logo_2048.png")
+
+    -- Set arcade panel to start fully closed
+    local card_h = math.floor((_G.text_size == "large" and 124 or 120) * scale)
+    local card_gap = math.floor(12 * scale)
+    local panel_pad_y = math.floor(16 * scale)
+    local header_h = math.floor(74 * scale)
+    local footer_h = math.floor(44 * scale)
+    local num_rows = 2
+    local panel_h = header_h + panel_pad_y + num_rows * card_h + (num_rows - 1) * card_gap + panel_pad_y + footer_h
+    arcade_panel_y_offset = panel_h
+    arcade_panel_target = panel_h
 end
 
 -- ============================================================================
@@ -968,12 +1012,13 @@ end
 -- ============================================================================
 -- Draw the board background (grid of empty cells)
 -- ============================================================================
-function renderer.drawBoard()
+function renderer.drawBoard(game)
     local bx, by = layout.board_x, layout.board_y
     local bs = layout.board_size
     local cs = layout.cell_size
     local cg = layout.cell_gap
     local cr = layout.corner_radius
+    local size = game and game.size or 4
 
     love.graphics.setColor(board_color)
     roundedRect("fill", bx, by, bs, bs, cr * 2)
@@ -983,8 +1028,8 @@ function renderer.drawBoard()
     else
         love.graphics.setColor(tile_colors[0])
     end
-    for col = 1, 4 do
-        for row = 1, 4 do
+    for col = 1, size do
+        for row = 1, size do
             local cx = bx + cg + (col - 1) * (cs + cg)
             local cy = by + cg + (row - 1) * (cs + cg)
             roundedRect("fill", cx, cy, cs, cs, cr)
@@ -1764,7 +1809,7 @@ function renderer.startThemeTransition(drawTarget)
         transition_canvas = love.graphics.newCanvas(w, h)
     end
     -- Capture current screen to canvas
-    love.graphics.setCanvas(transition_canvas)
+    love.graphics.setCanvas({transition_canvas, stencil = true})
     love.graphics.clear()
     if type(drawTarget) == "function" then
         drawTarget()
@@ -2446,7 +2491,7 @@ end
 -- Arcade Menu
 -- ============================================================================
 -- Vector helper to draw an animated stopwatch
-local function drawStopwatch(cx, cy, scale, is_selected)
+local function drawStopwatch(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     local t = love.timer.getTime()
     local r = 18 * scale
     
@@ -2454,7 +2499,7 @@ local function drawStopwatch(cx, cy, scale, is_selected)
     love.graphics.setLineWidth(math.floor(2 * scale))
     
     if is_selected then
-        love.graphics.setColor(0.0, 0.85, 0.8, 1.0)
+        love.graphics.setColor(r_acc or 0.0, g_acc or 0.85, b_acc or 0.8, 1.0)
     else
         love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
     end
@@ -2479,12 +2524,19 @@ local function drawStopwatch(cx, cy, scale, is_selected)
     love.graphics.setLineWidth(math.floor(1.5 * scale))
     love.graphics.line(cx, cy, cx, cy - r + math.floor(6 * scale))
     
-    -- Second hand (rotates full circle every 8 seconds, modulo prevents overflow precision issues)
-    local angle = -math.pi / 2 + (t % 8) * (2 * math.pi / 8)
+    -- Second hand (rotates full circle every 8 seconds when selected)
+    local angle = -math.pi / 2
+    if is_selected then
+        angle = -math.pi / 2 + (t % 8) * (2 * math.pi / 8)
+    end
     local hand_len = r - math.floor(4 * scale)
     love.graphics.setLineWidth(math.floor(1 * scale))
     if is_selected then
-        love.graphics.setColor(0.95, 0.15, 0.45, 0.95) -- Active pink-red ticking hand
+        if r_acc and r_acc > 0.8 and g_acc and g_acc < 0.3 then
+            love.graphics.setColor(0.0, 0.85, 0.8, 0.95) -- Active cyan ticking hand on pink stopwatch
+        else
+            love.graphics.setColor(0.95, 0.15, 0.45, 0.95) -- Active pink-red ticking hand
+        end
     else
         love.graphics.setColor(0.45, 0.5, 0.58, 0.6)
     end
@@ -2519,6 +2571,152 @@ local function drawLock(cx, cy, scale)
     love.graphics.pop()
 end
 
+local function drawIconTile(cx, cy, r, step, grid_x, grid_y, val, scale, is_selected, r_acc, g_acc, b_acc, tile_scale)
+    local tw = step - math.floor(2 * scale)
+    local th = step - math.floor(2 * scale)
+    if step > 8 * scale then
+        tw = step - math.floor(4 * scale)
+        th = step - math.floor(4 * scale)
+    end
+    
+    local tx = cx - r + (grid_x - 1) * step + (step - tw) / 2
+    local ty = cy - r + (grid_y - 1) * step + (step - th) / 2
+    
+    local alpha = 0.3
+    local bright = 1.0
+    if val == 2 then
+        alpha = is_selected and 0.5 or 0.25
+    elseif val == 4 then
+        alpha = is_selected and 0.7 or 0.35
+        bright = 1.2
+    elseif val == 8 then
+        alpha = is_selected and 0.85 or 0.45
+        bright = 1.4
+    end
+    
+    love.graphics.push()
+    love.graphics.translate(tx + tw/2, ty + th/2)
+    love.graphics.scale(tile_scale or 1, tile_scale or 1)
+    
+    love.graphics.setColor(
+        math.min(1.0, (r_acc or 0.5) * bright),
+        math.min(1.0, (g_acc or 0.5) * bright),
+        math.min(1.0, (b_acc or 0.5) * bright),
+        alpha
+    )
+    roundedRect("fill", -tw/2, -th/2, tw, th, math.floor((step > 8 * scale and 2 or 1) * scale))
+    love.graphics.pop()
+end
+
+
+local function drawHugeGrid(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+    local r = 14 * scale
+    love.graphics.push("all")
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+    
+    if is_selected then
+        love.graphics.setColor(r_acc or 0.58, g_acc or 0.25, b_acc or 0.95, 1.0)
+    else
+        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
+    end
+    
+    -- Outer box
+    love.graphics.rectangle("line", cx - r, cy - r, r * 2, r * 2, math.floor(3 * scale))
+    
+    -- Grid lines (5x5)
+    local step = (r * 2) / 5
+    for i = 1, 4 do
+        love.graphics.line(cx - r + step * i, cy - r, cx - r + step * i, cy + r)
+        love.graphics.line(cx - r, cy - r + step * i, cx + r, cy - r + step * i)
+    end
+    
+    if is_selected then
+        local t = love.timer.getTime()
+        local time = (t + 0.5) % 6
+        local move_idx = math.floor(time / 2) + 1
+        local move_t = time % 2
+        
+        local p = math.min(1.0, move_t / 0.4)
+        local ease = p * p * (3 - 2 * p)  -- smoothstep
+        
+        if move_idx == 1 then
+            -- Move 1: Slide Right & Merge
+            local ax, ay = 2 + ease * 3, 2
+            local bx, by = 3 + ease * 2, 2
+            local cx_tile, cy_tile = 4 + ease * 1, 4
+            
+            if move_t < 0.4 then
+                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 4, scale, is_selected, r_acc, g_acc, b_acc)
+            else
+                local pulse = 1.0
+                if move_t < 0.8 then
+                    pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
+                end
+                drawIconTile(cx, cy, r, step, 5, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 5, 4, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                
+                if move_t >= 0.6 then
+                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
+                    drawIconTile(cx, cy, r, step, 2, 3, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                end
+            end
+            
+        elseif move_idx == 2 then
+            -- Move 2: Slide Down & Merge
+            local abx, aby = 5, 2 + ease * 3
+            local cx_tile, cy_tile = 5, 4 + ease * 1
+            local dx, dy = 2, 3 + ease * 2
+            
+            if move_t < 0.4 then
+                drawIconTile(cx, cy, r, step, abx, aby, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, dx, dy, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            else
+                local pulse = 1.0
+                if move_t < 0.8 then
+                    pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
+                end
+                drawIconTile(cx, cy, r, step, 5, 5, 8, scale, is_selected, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 2, 5, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                
+                if move_t >= 0.6 then
+                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
+                    drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                end
+            end
+            
+        elseif move_idx == 3 then
+            -- Move 3: Slide Left
+            local dx, dy = 2 - ease * 1, 5
+            local abcx, abcy = 5 - ease * 3, 5
+            local ex, ey = 4 - ease * 3, 2
+            
+            if move_t < 0.4 then
+                drawIconTile(cx, cy, r, step, abcx, abcy, 8, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 2, 5, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ex, ey, 4, scale, is_selected, r_acc, g_acc, b_acc)
+            else
+                drawIconTile(cx, cy, r, step, 1, 5, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 2, 5, 8, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                
+                if move_t >= 0.6 then
+                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
+                    drawIconTile(cx, cy, r, step, 3, 3, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                end
+            end
+        end
+    else
+        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 3, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 4, 4, 4, scale, is_selected, r_acc, g_acc, b_acc)
+    end
+    
+    love.graphics.pop()
+end
+
 function renderer.drawArcadeMenu(selection, skip_transition, current_menu_selection)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -2536,11 +2734,11 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
     local panel_pad_x = math.floor(24 * scale)
     local panel_pad_y = math.floor(16 * scale)
     local card_gap    = math.floor(12 * scale)
-    local card_h      = math.floor(96 * scale)
-    local num_cards   = 2   -- Time Attack + Coming Soon
+    local card_h      = math.floor((_G.text_size == "large" and 124 or 120) * scale)
+    local num_rows    = 2
     local header_h    = math.floor(74 * scale)
     local footer_h    = math.floor(44 * scale)
-    local panel_h     = header_h + panel_pad_y + num_cards * card_h + (num_cards - 1) * card_gap + panel_pad_y + footer_h
+    local panel_h     = header_h + panel_pad_y + num_rows * card_h + (num_rows - 1) * card_gap + panel_pad_y + footer_h
 
     local panel_x = math.floor(panel_pad_x)
     local panel_w = w - panel_pad_x * 2
@@ -2623,9 +2821,8 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
 
     -- ── Mode cards ──────────────────────────────────────────────────────────
     local cards_top = header_y + header_h
-    local card_x    = panel_x + math.floor(16 * scale)
-    local card_w    = panel_w - math.floor(32 * scale)
     local card_cr   = math.floor(12 * scale)
+    local card_w    = math.floor((panel_w - math.floor(32 * scale) - card_gap) / 2)
 
     local modes = {
         {
@@ -2634,7 +2831,15 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
             icon        = "stopwatch",
             bestScore   = save.loadHighScore("timeattack"),
             available   = true,
-            accentR = 0.0, accentG = 0.85, accentB = 0.8,
+            accentR = 0.95, accentG = 0.15, accentB = 0.45,
+        },
+        {
+            name        = "Huge Mode (5x5)",
+            desc        = "Spacious board. Relaxed play, chase massive tiles.",
+            icon        = "huge",
+            bestScore   = save.loadHighScore("huge"),
+            available   = true,
+            accentR = 0.58, accentG = 0.25, accentB = 0.95,
         },
         {
             name        = "Coming Soon...",
@@ -2646,65 +2851,71 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
     }
 
     for i, mode in ipairs(modes) do
-        local cy = cards_top + (i - 1) * (card_h + card_gap)
-        local is_sel = (i == selection) and mode.available
+        local col = (i - 1) % 2 + 1
+        local row = math.floor((i - 1) / 2) + 1
+        
+        local cx_pos = panel_x + math.floor(16 * scale) + (col - 1) * (card_w + card_gap)
+        local cy = cards_top + (row - 1) * (card_h + card_gap)
+        local is_sel = (i == selection)
 
         -- Stagger pop-in
         local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (i - 1) * 0.05)
         local card_scale = 0.92 + slide_t * 0.08
 
         love.graphics.push()
-        love.graphics.translate(card_x + card_w / 2, cy + card_h / 2)
+        love.graphics.translate(cx_pos + card_w / 2, cy + card_h / 2)
         love.graphics.scale(card_scale, card_scale)
-        love.graphics.translate(-(card_x + card_w / 2), -(cy + card_h / 2))
+        love.graphics.translate(-(cx_pos + card_w / 2), -(cy + card_h / 2))
 
-        if is_sel then
+        if is_sel and mode.available then
             -- Rich dark glassy teal backdrop for selected
             love.graphics.setColor(0.04, 0.12, 0.16, 0.85)
-            roundedRect("fill", card_x, cy, card_w, card_h, card_cr)
+            roundedRect("fill", cx_pos, cy, card_w, card_h, card_cr)
             
             -- Glowing pulsing border
             local pulse = 0.65 + 0.25 * math.sin(t * 5)
             love.graphics.setLineWidth(math.floor(2 * scale))
             love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, pulse)
-            roundedRect("line", card_x, cy, card_w, card_h, card_cr)
+            roundedRect("line", cx_pos, cy, card_w, card_h, card_cr)
             
             -- Accent side bar
             love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.9)
             local bar_h = math.floor(36 * scale)
             local bar_w = math.floor(4 * scale)
             local bar_y = cy + (card_h - bar_h) / 2
-            roundedRect("fill", card_x + math.floor(6 * scale), bar_y, bar_w, bar_h, math.floor(2 * scale))
+            roundedRect("fill", cx_pos + math.floor(6 * scale), bar_y, bar_w, bar_h, math.floor(2 * scale))
         elseif mode.available then
             -- Elegant dark grey glassy unselected
             love.graphics.setColor(0.08, 0.08, 0.12, 0.6)
-            roundedRect("fill", card_x, cy, card_w, card_h, card_cr)
+            roundedRect("fill", cx_pos, cy, card_w, card_h, card_cr)
             love.graphics.setColor(0.2, 0.22, 0.28, 0.35)
             love.graphics.setLineWidth(math.floor(1 * scale))
-            roundedRect("line", card_x, cy, card_w, card_h, card_cr)
+            roundedRect("line", cx_pos, cy, card_w, card_h, card_cr)
         else
             -- Locked card styling
             love.graphics.setColor(0.05, 0.05, 0.08, 0.5)
-            roundedRect("fill", card_x, cy, card_w, card_h, card_cr)
+            roundedRect("fill", cx_pos, cy, card_w, card_h, card_cr)
             love.graphics.setColor(0.15, 0.16, 0.20, 0.2)
             love.graphics.setLineWidth(math.floor(1 * scale))
-            roundedRect("line", card_x, cy, card_w, card_h, card_cr)
+            roundedRect("line", cx_pos, cy, card_w, card_h, card_cr)
         end
 
         -- Draw vector icon on the left
-        local icon_cx = card_x + math.floor(36 * scale)
+        local icon_cx = cx_pos + math.floor(28 * scale)
         local icon_cy = cy + card_h / 2
         if mode.icon == "stopwatch" then
-            drawStopwatch(icon_cx, icon_cy, scale, is_sel)
+            drawStopwatch(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
+        elseif mode.icon == "huge" then
+            drawHugeGrid(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "lock" then
             drawLock(icon_cx, icon_cy, scale)
         end
 
         -- Mode name
-        local text_x = card_x + math.floor(68 * scale)
-        local name_y = cy + math.floor(14 * scale)
-        love.graphics.setFont(font_message)
-        if is_sel then
+        local text_x = cx_pos + math.floor(52 * scale)
+        local name_y = cy + math.floor(8 * scale)
+        love.graphics.setFont(font_score)
+        if is_sel and mode.available then
             love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 1.0)
         elseif mode.available then
             love.graphics.setColor(0.9, 0.92, 0.95, 1.0)
@@ -2713,69 +2924,58 @@ function renderer.drawArcadeMenu(selection, skip_transition, current_menu_select
         end
         love.graphics.print(mode.name, text_x, name_y)
 
+        -- Best score (drawn as a beautiful capsule badge vertically under the name)
+        local has_best = mode.available and mode.bestScore and mode.bestScore > 0
+        local badge_y = name_y + font_score:getHeight() + math.floor(1 * scale)
+        local badge_h = 0
+        if has_best then
+            love.graphics.setFont(font_help_label)
+            local best_text = "BEST: " .. tostring(mode.bestScore)
+            local btw = font_help_label:getWidth(best_text)
+            local bth = font_help_label:getHeight()
+            
+            local badge_w = btw + math.floor(8 * scale)
+            badge_h = bth + math.floor(3 * scale)
+            local bx = text_x
+            local by = badge_y
+            
+            -- Glassy badge back
+            if is_sel and mode.available then
+                love.graphics.setColor(mode.accentR * 0.15, mode.accentG * 0.15, mode.accentB * 0.15, 0.4)
+                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.45)
+                roundedRect("line", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.95)
+            else
+                love.graphics.setColor(0.12, 0.12, 0.18, 0.4)
+                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(0.3, 0.32, 0.38, 0.4)
+                roundedRect("line", bx, by, badge_w, badge_h, math.floor(6 * scale))
+                love.graphics.setColor(0.7, 0.72, 0.78, 0.9)
+            end
+            love.graphics.print(best_text, bx + math.floor(4 * scale), by + math.floor(1.5 * scale))
+        end
+
         -- Description
-        local desc_y = name_y + font_message:getHeight() + math.floor(4 * scale)
+        local desc_y
+        if has_best then
+            desc_y = badge_y + badge_h + math.floor(3 * scale)
+        else
+            desc_y = name_y + font_score:getHeight() + math.floor(3 * scale)
+        end
         love.graphics.setFont(font_help_label)
         if mode.available then
             love.graphics.setColor(0.65, 0.68, 0.75, 1.0)
         else
             love.graphics.setColor(0.3, 0.32, 0.38, 0.7)
         end
-        love.graphics.printf(mode.desc, text_x, desc_y, card_w - math.floor(68 * scale) - math.floor(110 * scale), "left")
-
-        -- Best score (drawn as a beautiful badge)
-        if mode.available and mode.bestScore and mode.bestScore > 0 then
-            love.graphics.setFont(font_help_label)
-            local best_label = "BEST"
-            local best_val   = tostring(mode.bestScore)
-            local blw = font_help_label:getWidth(best_label)
-            local bvw = font_help_label:getWidth(best_val)
-            
-            local badge_w = math.max(math.floor(70 * scale), math.max(blw, bvw) + math.floor(18 * scale))
-            local badge_h = math.floor(52 * scale) -- Larger/taller badge box
-            local br_x = card_x + card_w - math.floor(18 * scale)
-            local bx = br_x - badge_w
-            local by = cy + (card_h - badge_h) / 2
-            
-            -- Glassy badge back
-            if is_sel then
-                love.graphics.setColor(mode.accentR * 0.15, mode.accentG * 0.15, mode.accentB * 0.15, 0.4)
-                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(8 * scale))
-                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.45)
-                roundedRect("line", bx, by, badge_w, badge_h, math.floor(8 * scale))
-            else
-                love.graphics.setColor(0.12, 0.12, 0.18, 0.4)
-                roundedRect("fill", bx, by, badge_w, badge_h, math.floor(8 * scale))
-                love.graphics.setColor(0.3, 0.32, 0.38, 0.4)
-                roundedRect("line", bx, by, badge_w, badge_h, math.floor(8 * scale))
-            end
-            
-            -- Dynamic vertical centering of text inside the badge
-            local lbl_h = font_help_label:getHeight()
-            local val_h = font_help_label:getHeight()
-            local badge_spacing = math.floor(2 * scale)
-            local badge_text_h = lbl_h + val_h + badge_spacing
-            local badge_top_pad = math.floor((badge_h - badge_text_h) / 2)
-            
-            local bl_y = by + badge_top_pad
-            local bv_y = by + badge_top_pad + lbl_h + badge_spacing
-            
-            -- Badge text
-            love.graphics.setColor(0.55, 0.58, 0.65, 0.8)
-            love.graphics.print(best_label, bx + (badge_w - blw) / 2, bl_y)
-            if is_sel then
-                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 1.0)
-            else
-                love.graphics.setColor(0.85, 0.85, 0.9, 1.0)
-            end
-            love.graphics.print(best_val, bx + (badge_w - bvw) / 2, bv_y)
-        end
+        love.graphics.printf(mode.desc, text_x, desc_y, card_w - math.floor(52 * scale) - math.floor(6 * scale), "left")
 
         love.graphics.pop()
     end
 
     -- ── Footer ──────────────────────────────────────────────────────────────
-    local footer_y = cards_top + num_cards * card_h + (num_cards - 1) * card_gap + math.floor(8 * scale)
+    local footer_y = cards_top + num_rows * card_h + (num_rows - 1) * card_gap + math.floor(8 * scale)
     local badge_h   = math.floor(28 * scale)
     local badge_y   = footer_y + (footer_h - badge_h) / 2
     local item_gap  = math.floor(10 * scale)
@@ -3105,13 +3305,16 @@ end
 -- Main draw function
 -- ============================================================================
 function renderer.draw(game, skip_transition)
+    if game then
+        renderer.updateLayout(game.size)
+    end
     -- Fill background
     love.graphics.setColor(bg_color)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getDimensions())
 
     renderer.drawHeader(game)
     renderer.drawScores(game)
-    renderer.drawBoard()
+    renderer.drawBoard(game)
     renderer.drawTiles(game)
     renderer.drawTargetingCursor(game)
     renderer.drawOverlay(game)
@@ -3493,6 +3696,19 @@ function renderer.drawAbout(skip_transition)
     end
 
     drawToast()
+end
+
+function renderer.isArcadeMenuClosed()
+    local scale = _G.scale or 1
+    local card_h = math.floor((_G.text_size == "large" and 124 or 120) * scale)
+    local card_gap = math.floor(12 * scale)
+    local panel_pad_y = math.floor(16 * scale)
+    local header_h = math.floor(74 * scale)
+    local footer_h = math.floor(44 * scale)
+    local num_rows = 2
+    local panel_h = header_h + panel_pad_y + num_rows * card_h + (num_rows - 1) * card_gap + panel_pad_y + footer_h
+
+    return (arcade_panel_target == panel_h) and (arcade_panel_y_offset >= panel_h - 1)
 end
 
 return renderer

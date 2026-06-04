@@ -22,6 +22,8 @@ function save.getPath(mode)
         file = "highscore_plus.dat"
     elseif mode == "timeattack" then
         file = "highscore_timeattack.dat"
+    elseif mode == "huge" then
+        file = "highscore_huge.dat"
     else
         file = SAVE_FILE  -- classic
     end
@@ -37,6 +39,8 @@ function save.getStatePath(mode)
         file = "gamestate_plus.dat"
     elseif mode == "timeattack" then
         file = "gamestate_timeattack.dat"
+    elseif mode == "huge" then
+        file = "gamestate_huge.dat"
     else
         file = STATE_FILE  -- classic
     end

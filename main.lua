@@ -32,6 +32,7 @@ local transition_delay_action = nil
 local transition_delay_key = nil
 -- Direction hint set before queueing a transition: +1 forward, -1 backward
 local transition_next_direction = 1
+local arcade_menu_closing_action = nil
 
 -- Hierarchy order for determining forward/backward direction
 local STATE_DEPTH = {
@@ -53,7 +54,7 @@ local function captureOldScreen()
     if not old_screen_canvas then
         old_screen_canvas = love.graphics.newCanvas(w, h)
     end
-    love.graphics.setCanvas(old_screen_canvas)
+    love.graphics.setCanvas({old_screen_canvas, stencil = true})
     love.graphics.clear()
     drawCurrentScreen()
     love.graphics.setCanvas()
@@ -198,7 +199,8 @@ function love.load(args)
 
     -- Initialize renderer (compute layout, load fonts)
     renderer.init()
-    screen_canvas = love.graphics.newCanvas(love.graphics.getDimensions())
+    local w, h = love.graphics.getDimensions()
+    screen_canvas = love.graphics.newCanvas(w, h)
 
     -- Load splash screen
     splash.load()
@@ -301,6 +303,13 @@ function love.update(dt)
         game:update(dt)
     end
     renderer.updateTransition(dt)
+
+    -- If arcade menu is closing, wait until it is fully closed, then trigger the action
+    if arcade_menu_closing_action and renderer.isArcadeMenuClosed() then
+        local action = arcade_menu_closing_action
+        arcade_menu_closing_action = nil
+        action()
+    end
 
     -- Update input (hold-to-repeat)
     input.update(dt)
@@ -445,25 +454,44 @@ function love.update(dt)
             end
             return
         elseif _G.appState == "ARCADE_MENU" then
+            if arcade_menu_closing_action then return end
+            local row = math.floor((_G.arcade_selection - 1) / 2) + 1
+            local col = ((_G.arcade_selection - 1) % 2) + 1
             if event == input.events.UP then
-                _G.arcade_selection = _G.arcade_selection > 1 and (_G.arcade_selection - 1) or 1
+                row = math.max(1, row - 1)
             elseif event == input.events.DOWN then
-                -- Only 1 real mode for now (Time Attack); slot 2 is "Coming Soon"
-                _G.arcade_selection = math.min(1, _G.arcade_selection + 1)
+                if col == 1 then
+                    row = math.min(2, row + 1)
+                end
+            elseif event == input.events.LEFT then
+                col = math.max(1, col - 1)
+            elseif event == input.events.RIGHT then
+                if row == 1 then
+                    col = math.min(2, col + 1)
+                end
             elseif event == input.events.CONFIRM then
-                if _G.arcade_selection == 1 then
+                if _G.arcade_selection ~= 3 then
                     queueTransitionAction(event, 0.08, function()
                         renderer.setArcadeMenuOpen(false)
-                        _G.appState = "GAME"
-                        game = Game.new("timeattack")
+                        arcade_menu_closing_action = function()
+                            _G.appState = "GAME"
+                            local mode = "timeattack"
+                            if _G.arcade_selection == 2 then
+                                mode = "huge"
+                            end
+                            game = Game.new(mode)
+                        end
                     end)
                 end
             elseif event == input.events.BACK or event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
                     renderer.setArcadeMenuOpen(false)
-                    _G.appState = "MENU"
+                    arcade_menu_closing_action = function()
+                        _G.appState = "MENU"
+                    end
                 end)
             end
+            _G.arcade_selection = (row - 1) * 2 + col
             return
         elseif _G.appState == "TUTORIAL" then
             if event == input.events.BACK then
@@ -680,11 +708,15 @@ function love.update(dt)
                 end)
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    local was_timeattack = game and (game.mode == "timeattack")
-                    if game then game:saveGameState() end
-                    if was_timeattack then
+                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge")
+                    local arcade_idx = 1
+                    if game then
+                        if game.mode == "huge" then arcade_idx = 2 end
+                        game:saveGameState()
+                    end
+                    if is_arcade then
                         _G.appState = "ARCADE_MENU"
-                        _G.arcade_selection = 1
+                        _G.arcade_selection = arcade_idx
                         renderer.setArcadeMenuOpen(true)
                     else
                         _G.appState = "MENU"
@@ -711,11 +743,15 @@ function love.update(dt)
                 end)
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    local was_timeattack = game and (game.mode == "timeattack")
-                    if game then game:saveGameState() end
-                    if was_timeattack then
+                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge")
+                    local arcade_idx = 1
+                    if game then
+                        if game.mode == "huge" then arcade_idx = 2 end
+                        game:saveGameState()
+                    end
+                    if is_arcade then
                         _G.appState = "ARCADE_MENU"
-                        _G.arcade_selection = 1
+                        _G.arcade_selection = arcade_idx
                         renderer.setArcadeMenuOpen(true)
                     else
                         _G.appState = "MENU"
@@ -738,11 +774,15 @@ function love.update(dt)
                 end
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
-                    local was_timeattack = game and (game.mode == "timeattack")
-                    if game then game:saveGameState() end
-                    if was_timeattack then
+                    local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge")
+                    local arcade_idx = 1
+                    if game then
+                        if game.mode == "huge" then arcade_idx = 2 end
+                        game:saveGameState()
+                    end
+                    if is_arcade then
                         _G.appState = "ARCADE_MENU"
-                        _G.arcade_selection = 1
+                        _G.arcade_selection = arcade_idx
                         renderer.setArcadeMenuOpen(true)
                     else
                         _G.appState = "MENU"
@@ -787,7 +827,7 @@ function love.draw()
         end
 
         -- Draw the NEW (incoming) screen to screen_canvas
-        love.graphics.setCanvas(screen_canvas)
+        love.graphics.setCanvas({screen_canvas, stencil = true})
         love.graphics.clear()
         drawCurrentScreen()
         love.graphics.setCanvas()

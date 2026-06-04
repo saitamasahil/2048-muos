@@ -34,9 +34,14 @@ local vectors = {
 
 function Game.new(mode)
     local self = setmetatable({}, Game)
-    self.size = 4
-    self.grid = Grid.new(self.size, self.size)
     self.mode = mode or "classic"
+    self.size = 4
+    self.targetValue = 2048
+    if self.mode == "huge" then
+        self.size = 5
+        self.targetValue = 2048
+    end
+    self.grid = Grid.new(self.size, self.size)
     self.score = 0
     self.highScore = save.loadHighScore(self.mode)
     self.state = Game.STATE_PLAYING
@@ -217,6 +222,7 @@ end
 function Game:addRandomTile()
     if self.grid:cellsAvailable() then
         local value = love.math.random() < 0.9 and 2 or 4
+
         local cell = self.grid:randomAvailableCell()
         if cell then
             local tile = Tile.new(cell.x, cell.y, value)
@@ -380,8 +386,8 @@ function Game:move(direction)
                         end
                     end
 
-                    -- Check for win (2048 tile!)
-                    if merged.value == 2048 and self.state == Game.STATE_PLAYING and self.mode ~= "timeattack" then
+                    -- Check for win (target tile!)
+                    if merged.value == self.targetValue and self.state == Game.STATE_PLAYING and self.mode ~= "timeattack" then
                         self.won = true
                         self.state = Game.STATE_WON
                     end
