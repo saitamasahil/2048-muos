@@ -224,7 +224,10 @@ function love.update(dt)
     if _G.appState ~= last_app_state then
         if splash.finished and last_app_state ~= nil then
             -- ARCADE_MENU & PLAY_SELECT have their own panel slide animation; skip global slide for them
-            local skip_slide = (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU" or _G.appState == "PLAY_SELECT" or last_app_state == "PLAY_SELECT")
+            -- Exception: PLAY_SELECT → GAME uses the normal circle-wipe so the game doesn't flash
+            local going_to_game_from_play = (last_app_state == "PLAY_SELECT" and _G.appState == "GAME")
+            local skip_slide = not going_to_game_from_play and
+                (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU" or _G.appState == "PLAY_SELECT" or last_app_state == "PLAY_SELECT")
             if not skip_slide then
                 -- Determine direction from hierarchy depth
                 local old_depth = STATE_DEPTH[last_app_state] or 0
@@ -319,6 +322,7 @@ function love.update(dt)
     if arcade_menu_closing_action and renderer.isArcadeMenuClosed() then
         local action = arcade_menu_closing_action
         arcade_menu_closing_action = nil
+        captureOldScreen()
         action()
     end
 
@@ -463,17 +467,11 @@ function love.update(dt)
             elseif event == input.events.CONFIRM then
                 queueTransitionAction(event, 0.08, function()
                     if _G.play_select_selection == 1 then
-                        renderer.setArcadeMenuOpen(false)
-                        arcade_menu_closing_action = function()
-                            _G.appState = "GAME"
-                            game = Game.new("classic")
-                        end
+                        _G.appState = "GAME"
+                        game = Game.new("classic")
                     elseif _G.play_select_selection == 2 then
-                        renderer.setArcadeMenuOpen(false)
-                        arcade_menu_closing_action = function()
-                            _G.appState = "GAME"
-                            game = Game.new("plus")
-                        end
+                        _G.appState = "GAME"
+                        game = Game.new("plus")
                     elseif _G.play_select_selection == 3 then
                         _G.appState = "ARCADE_MENU"
                         _G.arcade_selection = 1
