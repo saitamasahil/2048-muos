@@ -225,7 +225,7 @@ function love.update(dt)
         if splash.finished and last_app_state ~= nil then
             -- ARCADE_MENU & PLAY_SELECT have their own panel slide animation; skip global slide for them
             -- Exception: PLAY_SELECT → GAME uses the normal circle-wipe so the game doesn't flash
-            local going_to_game_from_play = (last_app_state == "PLAY_SELECT" and _G.appState == "GAME")
+            local going_to_game_from_play = (last_app_state == "PLAY_SELECT" or last_app_state == "ARCADE_MENU") and _G.appState == "GAME"
             local skip_slide = not going_to_game_from_play and
                 (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU" or _G.appState == "PLAY_SELECT" or last_app_state == "PLAY_SELECT")
             if not skip_slide then
@@ -500,19 +500,16 @@ function love.update(dt)
                 col = math.min(2, col + 1)
             elseif event == input.events.CONFIRM then
                 queueTransitionAction(event, 0.08, function()
-                    renderer.setArcadeMenuOpen(false)
-                    arcade_menu_closing_action = function()
-                        _G.appState = "GAME"
-                        local mode = "timeattack"
-                        if _G.arcade_selection == 2 then
-                            mode = "huge"
-                        elseif _G.arcade_selection == 3 then
-                            mode = "nomercy"
-                        elseif _G.arcade_selection == 4 then
-                            mode = "goose"
-                        end
-                        game = Game.new(mode)
+                    _G.appState = "GAME"
+                    local mode = "timeattack"
+                    if _G.arcade_selection == 2 then
+                        mode = "huge"
+                    elseif _G.arcade_selection == 3 then
+                        mode = "nomercy"
+                    elseif _G.arcade_selection == 4 then
+                        mode = "goose"
                     end
+                    game = Game.new(mode)
                 end)
             elseif event == input.events.BACK then
                 queueTransitionAction(event, 0.08, function()
