@@ -53,6 +53,7 @@ cp "$PROJECT_ROOT/renderer.lua" "$WORKDIR/2048/.game/"
 cp "$PROJECT_ROOT/save.lua" "$WORKDIR/2048/.game/"
 cp "$PROJECT_ROOT/splash.lua" "$WORKDIR/2048/.game/"
 cp "$PROJECT_ROOT/timer.lua" "$WORKDIR/2048/.game/"
+cp "$PROJECT_ROOT/server.lua" "$WORKDIR/2048/.game/"
 
 # Copy assets (excluding glyph subfolder — handled separately)
 echo "Copying assets..."
@@ -72,8 +73,12 @@ fi
 echo "Copying LÖVE runtime..."
 cp -r "$PROJECT_ROOT/bin" "$WORKDIR/2048/.game/"
 
-# Create static directory for saves
+# Create static directory for saves and copy webgame assets
 mkdir -p "$WORKDIR/2048/.game/static"
+if [ -d "$PROJECT_ROOT/static/webgame" ]; then
+    echo "Copying web game assets..."
+    cp -r "$PROJECT_ROOT/static/webgame" "$WORKDIR/2048/.game/static/"
+fi
 
 # --- Glyph handling (resolution-specific icons, same as Scrappy) ---
 mkdir -p "$WORKDIR/2048/glyph"
