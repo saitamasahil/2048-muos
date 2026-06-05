@@ -8,8 +8,9 @@ local input    = require("input")
 local renderer = require("renderer")
 local save     = require("save")
 local splash   = require("splash")
+local server   = require("server")
 
-_G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", etc.
+_G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", "SERVER_ACTIVE", etc.
 local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Theme Selection, 4: Achievements, 5: Tutorial, 6: Text, 7: About, 8: Quit
 _G.arcade_selection = 1
 
@@ -94,8 +95,12 @@ function love.load(args)
     update_ui_scale()
 
     -- Initialize save system (high scores stored in static/ dir)
-    _G.WORK_DIR = love.filesystem.getWorkingDirectory() or "."
-    save.init(_G.WORK_DIR .. "/static")
+    if love.system.getOS() == "Web" then
+        save.init("/tmp")
+    else
+        _G.WORK_DIR = love.filesystem.getWorkingDirectory() or "."
+        save.init(_G.WORK_DIR .. "/static")
+    end
 
     -- Load achievements
     local loadedAchievements = save.loadAchievements()
@@ -121,12 +126,12 @@ function love.load(args)
     if _G.achievements.ach_first_bomb then table.insert(_G.unlocked_themes, "eclipse") end
     
     if _G.achievements.ach_2048_plus then table.insert(_G.unlocked_themes, "cyberpunk") end
-    if _G.achievements.ach_4096 then table.insert(_G.unlocked_themes, "matrix") end
+    if _G.achievements.ach_4096 then table.insert(_G.unlocked_themes, "glitch") end
     if _G.achievements.ach_score_25k then table.insert(_G.unlocked_themes, "vaporwave") end
     if _G.achievements.ach_score_50k then table.insert(_G.unlocked_themes, "dracula") end
     if _G.achievements.ach_score_100k then table.insert(_G.unlocked_themes, "gold") end
     if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
-    if _G.achievements.ach_secret_ascii then table.insert(_G.unlocked_themes, "ascii") end
+    if _G.achievements.ach_secret_menu then table.insert(_G.unlocked_themes, "matrix") end
     if _G.achievements.ach_timeattack_2048 then table.insert(_G.unlocked_themes, "aurora") end
     if _G.achievements.ach_huge_2048 then table.insert(_G.unlocked_themes, "nebula") end
     if _G.achievements.ach_nomercy_1024 then table.insert(_G.unlocked_themes, "inferno") end
@@ -151,7 +156,8 @@ function love.load(args)
                 ach_score_7k = "abyss",
                 ach_first_bomb = "eclipse",
                 ach_2048_plus = "cyberpunk",
-                ach_4096 = "matrix",
+                ach_4096 = "glitch",
+                ach_secret_menu = "matrix",
                 ach_score_25k = "vaporwave",
                 ach_score_50k = "dracula",
                 ach_score_100k = "gold",
@@ -180,6 +186,7 @@ function love.load(args)
                 ach_first_bomb = "Boom!",
                 ach_2048_plus = "Plus Mode Master",
                 ach_4096 = "The One",
+                ach_secret_menu = "Secret Discovery",
                 ach_score_25k = "Aesthetic",
                 ach_score_50k = "Vampire Lord",
                 ach_score_100k = "Midas Touch",
@@ -217,6 +224,11 @@ function love.load(args)
 end
 
 function love.update(dt)
+    -- Update local HTTP server if active
+    if server and server.isActive() then
+        server.update()
+    end
+
     -- Cap dt to prevent animation glitches on frame drops
     dt = math.min(dt, 0.05)
 
@@ -344,7 +356,7 @@ function love.update(dt)
                 elseif _G.appState == "ABOUT" then
                     return function() renderer.drawAbout(true) end
                 elseif _G.appState == "CHEATS_MENU" then
-                    return function() renderer.drawCheatsMenu(_G.cheats_selection or 1, true) end
+                    return function() renderer.drawSecretMenu(_G.cheats_selection or 1, true) end
                 elseif _G.appState == "THEME_SELECT" then
                     return function() renderer.drawThemeSelect(true) end
                 elseif _G.appState == "PLAY_SELECT" then
@@ -377,7 +389,11 @@ function love.update(dt)
 
         if _G.appState == "MENU" then
             if not _G.cheats_unlocked then
-                if event == konami_sequence[konami_progress] then
+                local target = konami_sequence[konami_progress]
+                if love.system.getOS() == "Web" and target == "backspace" then
+                    target = "escape"
+                end
+                if event == target then
                     konami_progress = konami_progress + 1
                     if konami_progress == 7 then
                         renderer.showToast("What you think this is a Konami game?")
@@ -401,59 +417,41 @@ function love.update(dt)
                 end
             end
 
-            local max_menu = _G.cheats_unlocked and 8 or 7
+            local options = renderer.getMainMenuOptions()
+            local max_menu = #options
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
             elseif event == input.events.DOWN then
                 menuSelection = menuSelection < max_menu and (menuSelection + 1) or 1
             elseif event == input.events.CONFIRM then
                 queueTransitionAction(event, 0.08, function()
-                    if menuSelection == 1 then
+                    local sel = options[menuSelection]
+                    if sel == "Play Game" then
                         _G.appState = "PLAY_SELECT"
                         _G.play_select_selection = 1
                         renderer.setArcadeMenuOpen(true)
-                    elseif menuSelection == 2 then
+                    elseif sel:match("^Select Theme") then
                         _G.themeSelectPrevState = "MENU"
                         _G.themeSelectInitialTheme = _G.theme
                         _G.appState = "THEME_SELECT"
-                    elseif menuSelection == 3 then
+                    elseif sel == "Achievements" then
                         _G.appState = "ACHIEVEMENTS"
-                    elseif menuSelection == 4 then
+                    elseif sel == "Tutorial" then
                         _G.appState = "TUTORIAL"
                         _G.tutorial_page = 1
-                    else
-                        if _G.cheats_unlocked then
-                            if menuSelection == 5 then
-                                if not _G.achievements.ach_secret_ascii then
-                                    _G.achievements.ach_secret_ascii = true
-                                    table.insert(_G.unlocked_themes, "ascii")
-                                    save.saveAchievements(_G.achievements)
-                                    renderer.showToast("Beep Boop! Cheater detected! Enjoy your punishment: the super-retro ASCII Art Theme!", 4.0)
-                                end
-                                _G.appState = "CHEATS_MENU"
-                                _G.cheats_selection = 1
-                            elseif menuSelection == 6 then
-                                _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                                save.saveTextSize(_G.text_size)
-                                renderer.init()
-                                renderer.flashTextSize()
-                            elseif menuSelection == 7 then
-                                _G.appState = "ABOUT"
-                            elseif menuSelection == 8 then
-                                love.event.quit()
-                            end
-                        else
-                            if menuSelection == 5 then
-                                _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                                save.saveTextSize(_G.text_size)
-                                renderer.init()
-                                renderer.flashTextSize()
-                            elseif menuSelection == 6 then
-                                _G.appState = "ABOUT"
-                            elseif menuSelection == 7 then
-                                love.event.quit()
-                            end
-                        end
+                    elseif sel == "Secret Menu" then
+                        _G.unlockAchievement("ach_secret_menu")
+                        _G.appState = "CHEATS_MENU"
+                        _G.cheats_selection = 1
+                    elseif sel:match("^Text Size") then
+                        _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                        save.saveTextSize(_G.text_size)
+                        renderer.init()
+                        renderer.flashTextSize()
+                    elseif sel == "About" then
+                        _G.appState = "ABOUT"
+                    elseif sel == "Quit" then
+                        love.event.quit()
                     end
                 end)
             end
@@ -587,14 +585,19 @@ function love.update(dt)
             end
             return
         elseif _G.appState == "CHEATS_MENU" then
+            local max_sel = (love.system.getOS() ~= "Web") and 8 or 7
             if event == input.events.BACK then
-                queueTransitionAction(event, 0.08, function()
-                    _G.appState = "MENU"
-                end)
+                if server.isActive() then
+                    renderer.showToast("Please stop the web server before exiting.")
+                else
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "MENU"
+                    end)
+                end
             elseif event == input.events.UP then
-                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or 7
+                _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or max_sel
             elseif event == input.events.DOWN then
-                _G.cheats_selection = _G.cheats_selection < 7 and (_G.cheats_selection + 1) or 1
+                _G.cheats_selection = _G.cheats_selection < max_sel and (_G.cheats_selection + 1) or 1
             elseif event == input.events.CONFIRM then
                 if _G.cheats_selection == 1 then
                     for _, t in ipairs(renderer.getAllThemeNames()) do
@@ -631,17 +634,55 @@ function love.update(dt)
                         _G.cheat_debug_layout = "None"
                     end
                     renderer.showToast("Debug Layout: " .. _G.cheat_debug_layout .. ". Start new game to apply.")
-                elseif _G.cheats_selection == 6 then
-                    queueTransitionAction(event, 0.08, function()
-                        _G.cheats_unlocked = false
-                        save.saveCheats(false)
-                        _G.appState = "MENU"
-                        renderer.showToast("Cheats Locked. Enter the code to unlock again.", 4.0)
-                    end)
-                elseif _G.cheats_selection == 7 then
-                    queueTransitionAction(event, 0.08, function()
-                        _G.appState = "MENU"
-                    end)
+                else
+                    -- Dynamic actions based on OS
+                    if love.system.getOS() ~= "Web" then
+                        if _G.cheats_selection == 6 then
+                            if server.isActive() then
+                                server.stop()
+                                renderer.showToast("Play in Web server stopped.")
+                            else
+                                if server.start() then
+                                    local url = "http://" .. server.getLocalIP() .. ":" .. server.getPort()
+                                    renderer.showToast("Web server started! Play at " .. url, 5.0)
+                                else
+                                    renderer.showToast("Failed to start web server!")
+                                end
+                            end
+                        elseif _G.cheats_selection == 7 then
+                            if server.isActive() then
+                                renderer.showToast("Please stop the web server before exiting.")
+                            else
+                                queueTransitionAction(event, 0.08, function()
+                                    _G.cheats_unlocked = false
+                                    save.saveCheats(false)
+                                    _G.appState = "MENU"
+                                    renderer.showToast("Secret Menu Locked. Enter the code to unlock again.", 4.0)
+                                end)
+                            end
+                        elseif _G.cheats_selection == 8 then
+                            if server.isActive() then
+                                renderer.showToast("Please stop the web server before exiting.")
+                            else
+                                queueTransitionAction(event, 0.08, function()
+                                    _G.appState = "MENU"
+                                end)
+                            end
+                        end
+                    else
+                        if _G.cheats_selection == 6 then
+                            queueTransitionAction(event, 0.08, function()
+                                _G.cheats_unlocked = false
+                                save.saveCheats(false)
+                                _G.appState = "MENU"
+                                renderer.showToast("Secret Menu Locked. Enter the code to unlock again.", 4.0)
+                            end)
+                        elseif _G.cheats_selection == 7 then
+                            queueTransitionAction(event, 0.08, function()
+                                _G.appState = "MENU"
+                            end)
+                        end
+                    end
                 end
             end
             return
@@ -837,6 +878,17 @@ function love.update(dt)
             end
         end
     end)
+
+    if love.system.getOS() == "Web" then
+        local current_state_str = "WEB_STATE:" .. tostring(_G.appState)
+        if _G.appState == "GAME" and game then
+            current_state_str = current_state_str .. ":" .. tostring(game.state) .. ":" .. tostring(game.mode)
+        end
+        if current_state_str ~= _G.last_web_state_str then
+            _G.last_web_state_str = current_state_str
+            print(current_state_str)
+        end
+    end
 end
 
 drawCurrentScreen = function()
@@ -851,7 +903,7 @@ drawCurrentScreen = function()
     elseif _G.appState == "ABOUT" then
         renderer.drawAbout()
     elseif _G.appState == "CHEATS_MENU" then
-        renderer.drawCheatsMenu(_G.cheats_selection or 1)
+        renderer.drawSecretMenu(_G.cheats_selection or 1)
     elseif _G.appState == "ACHIEVEMENTS" then
         renderer.drawAchievements(_G.achievements_scroll or 0)
     elseif _G.appState == "THEME_SELECT" then

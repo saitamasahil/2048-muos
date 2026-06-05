@@ -19,6 +19,6 @@ function love.conf(t)
     t.modules.mouse = false
     t.modules.physics = false
     t.modules.sound = true
-    t.modules.touch = false
+    t.modules.touch = true
     t.modules.video = false
 end

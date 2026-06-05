@@ -8,10 +8,21 @@ local STATE_FILE = "gamestate.dat"
 local ACHIEVEMENTS_FILE = "achievements.dat"
 local THEME_FILE = "theme.dat"
 
+local function getFilePath(filename)
+    if SAVE_DIR == "" or SAVE_DIR == nil then
+        return filename
+    elseif SAVE_DIR == "/" then
+        return "/" .. filename
+    else
+        local clean_dir = SAVE_DIR:gsub("/+$", "")
+        return clean_dir .. "/" .. filename
+    end
+end
+
 function save.init(dir)
     SAVE_DIR = dir or ""
-    -- Ensure directory exists
-    if SAVE_DIR ~= "" then
+    -- Ensure directory exists (only on non-Web)
+    if SAVE_DIR ~= "" and SAVE_DIR ~= "/" and love.system.getOS() ~= "Web" then
         os.execute('mkdir -p "' .. SAVE_DIR .. '"')
     end
 end
@@ -31,10 +42,7 @@ function save.getPath(mode)
     else
         file = SAVE_FILE  -- classic
     end
-    if SAVE_DIR ~= "" then
-        return SAVE_DIR .. "/" .. file
-    end
-    return file
+    return getFilePath(file)
 end
 
 function save.getStatePath(mode)
@@ -52,21 +60,15 @@ function save.getStatePath(mode)
     else
         file = STATE_FILE  -- classic
     end
-    if SAVE_DIR ~= "" then
-        return SAVE_DIR .. "/" .. file
-    end
-    return file
+    return getFilePath(file)
 end
 
 function save.getAchievementsPath()
-    if SAVE_DIR ~= "" then
-        return SAVE_DIR .. "/" .. ACHIEVEMENTS_FILE
-    end
-    return ACHIEVEMENTS_FILE
+    return getFilePath(ACHIEVEMENTS_FILE)
 end
 
 function save.saveTheme(themeName)
-    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. THEME_FILE) or THEME_FILE
+    local path = getFilePath(THEME_FILE)
     local file = io.open(path, "w")
     if file then
         file:write(themeName)
@@ -75,7 +77,7 @@ function save.saveTheme(themeName)
 end
 
 function save.loadTheme()
-    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. THEME_FILE) or THEME_FILE
+    local path = getFilePath(THEME_FILE)
     local file = io.open(path, "r")
     if file then
         local content = file:read("*all")
@@ -90,7 +92,7 @@ end
 local TEXT_SIZE_FILE = "text_size.dat"
 
 function save.saveTextSize(size)
-    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. TEXT_SIZE_FILE) or TEXT_SIZE_FILE
+    local path = getFilePath(TEXT_SIZE_FILE)
     local file = io.open(path, "w")
     if file then
         file:write(size)
@@ -99,7 +101,7 @@ function save.saveTextSize(size)
 end
 
 function save.loadTextSize()
-    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. TEXT_SIZE_FILE) or TEXT_SIZE_FILE
+    local path = getFilePath(TEXT_SIZE_FILE)
     local file = io.open(path, "r")
     if file then
         local content = file:read("*all")
@@ -114,7 +116,7 @@ end
 local CHEATS_FILE = "cheats.dat"
 
 function save.saveCheats(unlocked)
-    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. CHEATS_FILE) or CHEATS_FILE
+    local path = getFilePath(CHEATS_FILE)
     local file = io.open(path, "w")
     if file then
         file:write(unlocked and "1" or "0")
@@ -123,7 +125,7 @@ function save.saveCheats(unlocked)
 end
 
 function save.loadCheats()
-    local path = SAVE_DIR ~= "" and (SAVE_DIR .. "/" .. CHEATS_FILE) or CHEATS_FILE
+    local path = getFilePath(CHEATS_FILE)
     local file = io.open(path, "r")
     if file then
         local content = file:read("*all")
@@ -163,7 +165,7 @@ function save.loadAchievements()
         local content = file:read("*all")
         file:close()
         -- Use basic load implementation to parse serialized table
-        local chunk = load(content)
+        local chunk = (loadstring or load)(content)
         if chunk then
             return chunk()
         end
@@ -233,7 +235,7 @@ function save.loadState(mode)
         file:close()
         -- Warning: load() evaluates the string. In a real environment, you'd use a safe JSON parser
         -- But for a local game save, this works as long as the file isn't tampered with maliciously.
-        local chunk = load(content)
+        local chunk = (loadstring or load)(content)
         if chunk then
             return chunk()
         end

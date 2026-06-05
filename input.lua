@@ -18,21 +18,22 @@ local holding = {
 -- Event queue
 local event_queue = {}
 
--- Button mappings
+local is_web = love.system.getOS() == "Web"
+
 input.events = {
     LEFT   = "left",
     RIGHT  = "right",
     UP     = "up",
     DOWN   = "down",
-    CONFIRM = "return",   -- A button
-    BACK   = "backspace", -- B button
-    SELECT = "rshift",    -- Select button
-    START  = "space",     -- Start button
-    MENU   = "escape",    -- Physical Menu/Function button
-    X      = "x",         -- X button
-    Y      = "y",         -- Y button
-    L1     = "l1",        -- Left shoulder
-    R1     = "r1",        -- Right shoulder
+    CONFIRM = "return",               -- A button
+    BACK   = is_web and "escape" or "backspace", -- B button
+    SELECT = is_web and "tab" or "rshift",    -- Select button
+    START  = is_web and "return" or "space",  -- Start button
+    MENU   = "escape",                -- Physical Menu/Function button
+    X      = is_web and "space" or "x", -- X button
+    Y      = is_web and "c" or "y",     -- Y button
+    L1     = is_web and "z" or "l1",    -- Left shoulder
+    R1     = is_web and "x" or "r1",    -- Right shoulder
 }
 
 input.state = {}
@@ -113,10 +114,10 @@ local function is_directional(event)
 end
 
 function love.keypressed(key)
-    for _, k in pairs(input.events) do
-        if key == k then
+    for event_name, k in pairs(input.events) do
+        if key == k or (is_web and key == "backspace" and k == "escape") then
             input.state[key] = true
-            emit(key, false)
+            emit(k, false)
         end
     end
 
@@ -163,6 +164,81 @@ function love.gamepadreleased(js, button)
         if event == holding.dir then
             holding.dir = nil
             holding.started = false
+        end
+    end
+end
+
+-- Touch tracking
+local active_touch_id = nil
+local touch_start_x = 0
+local touch_start_y = 0
+local touch_start_time = 0
+
+function love.touchpressed(id, x, y, dx, dy, pressure)
+    -- Only track the first finger to avoid multi-touch confusion
+    if not active_touch_id then
+        active_touch_id = id
+        touch_start_x = x
+        touch_start_y = y
+        touch_start_time = love.timer.getTime()
+    end
+end
+
+function love.touchreleased(id, x, y, dx, dy, pressure)
+    if active_touch_id ~= id then return end
+    active_touch_id = nil
+
+    -- Calculate distance and duration
+    local end_time = love.timer.getTime()
+    local duration = end_time - touch_start_time
+    local diff_x = x - touch_start_x
+    local diff_y = y - touch_start_y
+    local abs_x = math.abs(diff_x)
+    local abs_y = math.abs(diff_y)
+
+    local swipe_threshold = 30 -- pixels
+    local tap_threshold = 15
+    
+    if abs_x > swipe_threshold or abs_y > swipe_threshold then
+        -- It's a swipe (D-Pad)
+        if abs_x > abs_y then
+            if diff_x > 0 then emit(input.events.RIGHT, false)
+            else emit(input.events.LEFT, false) end
+        else
+            if diff_y > 0 then emit(input.events.DOWN, false)
+            else emit(input.events.UP, false) end
+        end
+    elseif abs_x < tap_threshold and abs_y < tap_threshold then
+        -- It's a tap
+        local w, h = love.graphics.getDimensions()
+        if y < h * 0.2 then
+            -- Top 20% of screen
+            if duration > 0.4 then
+                -- Long press top = Switch Theme (Y button)
+                emit(input.events.Y, false)
+            else
+                if x < w * 0.5 then
+                    -- Top Left tap = BACK / UNDO (B button)
+                    emit(input.events.BACK, false)
+                else
+                    -- Top Right tap = START / PAUSE (Start button)
+                    emit(input.events.START, false)
+                end
+            end
+        else
+            -- Bottom 80% of screen
+            if duration > 0.4 then
+                if x < w * 0.5 then
+                    -- Bottom Left Long press = Swap (L1/Z button)
+                    emit(input.events.L1, false)
+                else
+                    -- Bottom Right Long press = Bomb (X button)
+                    emit(input.events.X, false)
+                end
+            else
+                -- Short tap = CONFIRM (A button)
+                emit(input.events.CONFIRM, false)
+            end
         end
     end
 end

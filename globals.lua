@@ -77,7 +77,7 @@ _G.achievements = {
     ach_first_bomb = false,  -- Boom! -> unlocks 'eclipse'
     
     -- Secret tracking stats
-    ach_secret_ascii = false, -- Hacker Mode -> unlocks 'ascii'
+    ach_secret_menu = false, -- Secret Discovery -> unlocks 'matrix'
 
     -- Arcade Mode achievements
     ach_timeattack_2048 = false, -- Aurora -- Reach 2048 in Time Attack -> unlocks 'aurora'

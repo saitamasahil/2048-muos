@@ -1,2 +1,4 @@
 build/
-static/
+static/*
+!static/webgame/
+*.love
