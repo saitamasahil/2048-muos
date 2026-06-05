@@ -1251,6 +1251,7 @@ local font_tile_small
 local font_tile_tiny   -- for 5+ digit numbers
 local font_score
 local font_title
+local font_header_2048
 local font_main_menu_title
 local font_cheats_title
 local font_label
@@ -1346,6 +1347,9 @@ function renderer.init()
 
     font_score      = love.graphics.newFont(font_path, math.floor(20 * scale * text_scale))
     font_title      = love.graphics.newFont(font_path, math.floor(36 * scale * text_scale))
+    
+    local header_text_scale = (_G.text_size == "large") and 1.0 or 1.0
+    font_header_2048 = love.graphics.newFont(font_path, math.floor(36 * scale * header_text_scale))
     font_main_menu_title = love.graphics.newFont(font_path, math.floor(72 * scale))
     font_cheats_title = love.graphics.newFont(font_path, math.floor(56 * scale))
     font_label      = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
@@ -1872,11 +1876,11 @@ function renderer.drawHeader(game)
     local bx = layout.board_x
     local scale = _G.scale
 
-    love.graphics.setFont(font_title)
+    love.graphics.setFont(font_header_2048)
     love.graphics.setColor(ui_text)
     
     if game and game.won then
-        local total_h = font_title:getHeight() + font_label:getHeight() - math.floor(4 * scale)
+        local total_h = font_header_2048:getHeight() + font_label:getHeight() - math.floor(4 * scale)
         local title_y = math.floor((layout.board_y - total_h) / 2)
         love.graphics.print("2048", bx, title_y)
         
@@ -1896,10 +1900,10 @@ function renderer.drawHeader(game)
             text_s = avail_w / tw
         end
         
-        love.graphics.print(text, bx, title_y + font_title:getHeight() - offset, 0, text_s, text_s)
+        love.graphics.print(text, bx, title_y + font_header_2048:getHeight() - offset, 0, text_s, text_s)
     else
         -- Center title vertically in the header area
-        local title_y = math.floor((layout.board_y - font_title:getHeight()) / 2)
+        local title_y = math.floor((layout.board_y - font_header_2048:getHeight()) / 2)
         love.graphics.print("2048", bx, title_y)
     end
 end
