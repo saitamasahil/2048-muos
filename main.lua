@@ -753,7 +753,9 @@ function love.update(dt)
                         _G.arcade_selection = arcade_idx
                         renderer.setArcadeMenuOpen(true)
                     else
-                        _G.appState = "MENU"
+                        _G.appState = "PLAY_SELECT"
+                        _G.play_select_selection = (game and game.mode == "plus") and 2 or 1
+                        renderer.setArcadeMenuOpen(true)
                     end
                     game = nil
                 end)
@@ -793,7 +795,9 @@ function love.update(dt)
                         _G.arcade_selection = arcade_idx
                         renderer.setArcadeMenuOpen(true)
                     else
-                        _G.appState = "MENU"
+                        _G.appState = "PLAY_SELECT"
+                        _G.play_select_selection = (game and game.mode == "plus") and 2 or 1
+                        renderer.setArcadeMenuOpen(true)
                     end
                     game = nil
                 end)
@@ -829,7 +833,9 @@ function love.update(dt)
                         _G.arcade_selection = arcade_idx
                         renderer.setArcadeMenuOpen(true)
                     else
-                        _G.appState = "MENU"
+                        _G.appState = "PLAY_SELECT"
+                        _G.play_select_selection = (game and game.mode == "plus") and 2 or 1
+                        renderer.setArcadeMenuOpen(true)
                     end
                     game = nil
                 end)
