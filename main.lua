@@ -477,7 +477,7 @@ function love.update(dt)
                         _G.arcade_selection = 1
                     end
                 end)
-            elseif event == input.events.BACK or event == input.events.X then
+            elseif event == input.events.BACK then
                 queueTransitionAction(event, 0.08, function()
                     renderer.setArcadeMenuOpen(false)
                     arcade_menu_closing_action = function()
@@ -514,7 +514,7 @@ function love.update(dt)
                         game = Game.new(mode)
                     end
                 end)
-            elseif event == input.events.BACK or event == input.events.X then
+            elseif event == input.events.BACK then
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "PLAY_SELECT"
                 end)
