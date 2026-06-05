@@ -18,7 +18,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
   - **No Mercy**: Hardcore mode — no undos, no powerups, two tiles spawn every move.
   - **Goose Mode**: A chaotic mode where a silly Goose tile waddles around the board, blocking random cells.
 - **Achievements & Unlockable Themes**: Track your progress by unlocking 23 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 25 themes total!
-- **Dynamic Animated Backgrounds**: Premium themes (Aurora, Nebula, Inferno, Honk) feature layered, animated background effects like aurora curtains, twinkling starfields, rising embers, and water ripples.
+- **Dynamic Animated Backgrounds**: Premium themes (Aurora, Nebula, Inferno, Honk, Matrix, Glitch) feature layered, animated background effects like aurora curtains, twinkling starfields, rising embers, water ripples, falling green digital rain, and cyberpunk glitch effects.
 - **Themes**: Instantly toggle between unlocked themes with a beautifully animated reveal. Your theme preference is saved automatically!
 - **Smooth Screen Transitions**: Enjoy polished crossfade transitions when navigating between screens.
 - **Auto-Save & Resume**: Your progress, board state, and score are saved automatically after every move. Close the game anytime and pick up right where you left off.
