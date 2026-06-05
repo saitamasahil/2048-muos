@@ -17,7 +17,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
   - **Huge Mode (5x5)**: A spacious 5×5 grid for a more relaxed play style.
   - **No Mercy**: Hardcore mode — no undos, no powerups, two tiles spawn every move.
   - **Goose Mode**: A chaotic mode where a silly Goose tile waddles around the board, blocking random cells.
-- **Achievements & Unlockable Themes**: Track your progress by unlocking 22 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 24 themes total!
+- **Achievements & Unlockable Themes**: Track your progress by unlocking 23 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 25 themes total!
 - **Dynamic Animated Backgrounds**: Premium themes (Aurora, Nebula, Inferno, Honk) feature layered, animated background effects like aurora curtains, twinkling starfields, rising embers, and water ripples.
 - **Themes**: Instantly toggle between unlocked themes with a beautifully animated reveal. Your theme preference is saved automatically!
 - **Smooth Screen Transitions**: Enjoy polished crossfade transitions when navigating between screens.
