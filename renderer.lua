@@ -1708,7 +1708,8 @@ end
 -- ============================================================================
 -- Draw a single tile
 -- ============================================================================
-function renderer.drawTile(tile, animProgress)
+function renderer.drawTile(tile, slideProgress, popProgress)
+    popProgress = popProgress or slideProgress
     local bx, by = layout.board_x, layout.board_y
     local cs = layout.cell_size
     local cg = layout.cell_gap
@@ -1718,24 +1719,24 @@ function renderer.drawTile(tile, animProgress)
     local ty = by + cg + (tile.y - 1) * (cs + cg)
 
     -- Slide animation
-    if tile.previousPosition and animProgress < 1 then
+    if tile.previousPosition and slideProgress < 1 then
         local px = bx + cg + (tile.previousPosition.x - 1) * (cs + cg)
         local py = by + cg + (tile.previousPosition.y - 1) * (cs + cg)
-        tx = px + (tx - px) * animProgress
-        ty = py + (ty - py) * animProgress
+        tx = px + (tx - px) * slideProgress
+        ty = py + (ty - py) * slideProgress
     end
 
     -- Scale for spawn / merge / bomb animation
     local tileScale = 1
     if tile.isBombing then
-        tileScale = 1 - animProgress
-    elseif tile.isNew and animProgress < 1 then
-        tileScale = animProgress
-    elseif tile.isMerged and animProgress < 1 then
-        if animProgress < 0.5 then
-            tileScale = 1 + 0.25 * (animProgress / 0.5)
+        tileScale = 1 - popProgress
+    elseif tile.isNew and popProgress < 1 then
+        tileScale = popProgress
+    elseif tile.isMerged and popProgress < 1 then
+        if popProgress < 0.5 then
+            tileScale = 1 + 0.25 * (popProgress / 0.5)
         else
-            tileScale = 1.25 - 0.25 * ((animProgress - 0.5) / 0.5)
+            tileScale = 1.25 - 0.25 * ((popProgress - 0.5) / 0.5)
         end
     end
 
@@ -1781,23 +1782,49 @@ end
 -- Draw all tiles (layered: normal → merged → new)
 -- ============================================================================
 function renderer.drawTiles(game)
-    local animProgress = game:getAnimationProgress()
+    local t = game.animationTimer
+    local d = game.animationDuration
+    local slideProgress, gooseProgress, spawnProgress, mergePopProgress
+
+    if game.mode == "goose" then
+        if t > d then
+            slideProgress = (2 * d - t) / d
+            gooseProgress = 0
+            spawnProgress = 0
+            mergePopProgress = 0
+        else
+            slideProgress = 1
+            gooseProgress = 1 - (t / d)
+            spawnProgress = 1 - (t / d)
+            mergePopProgress = 1 - (t / d)
+        end
+    else
+        local p = game:getAnimationProgress()
+        slideProgress = p
+        gooseProgress = p
+        spawnProgress = p
+        mergePopProgress = p
+    end
 
     game.grid:eachCell(function(x, y, tile)
         if tile and not tile.isMerged and not tile.isNew and not tile.isSwapping then
-            renderer.drawTile(tile, animProgress)
+            if tile.value == "goose" then
+                renderer.drawTile(tile, gooseProgress, gooseProgress)
+            else
+                renderer.drawTile(tile, slideProgress, slideProgress)
+            end
         end
     end)
 
     game.grid:eachCell(function(x, y, tile)
         if tile and tile.isMerged and not tile.isSwapping then
-            renderer.drawTile(tile, animProgress)
+            renderer.drawTile(tile, slideProgress, mergePopProgress)
         end
     end)
 
     game.grid:eachCell(function(x, y, tile)
         if tile and tile.isNew and not tile.isSwapping then
-            renderer.drawTile(tile, animProgress)
+            renderer.drawTile(tile, spawnProgress, spawnProgress)
         end
     end)
 

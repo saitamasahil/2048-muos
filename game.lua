@@ -499,7 +499,11 @@ function Game:move(direction)
         if self.mode == "nomercy" then
             self:addRandomTile()
         end
-        self.animationTimer = self.animationDuration
+        if self.mode == "goose" then
+            self.animationTimer = self.animationDuration * 2
+        else
+            self.animationTimer = self.animationDuration
+        end
         if _G.achievements.powerups_used_this_run == nil then
             _G.achievements.powerups_used_this_run = 0
         end
@@ -932,7 +936,8 @@ end
 
 function Game:getAnimationProgress()
     if self.animationDuration <= 0 then return 1 end
-    return 1 - (self.animationTimer / self.animationDuration)
+    local progress = 1 - (self.animationTimer / self.animationDuration)
+    return math.max(0, math.min(1, progress))
 end
 
 function Game:isAnimating()
