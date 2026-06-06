@@ -3570,75 +3570,109 @@ local function drawClassicIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     
     if is_selected then
         local t = love.timer.getTime()
-        local time = t % 6
+        local time = t % 8
         local move_idx = math.floor(time / 2) + 1
         local move_t = time % 2
         
-        local p = math.min(1.0, move_t / 0.4)
-        local ease = p * p * (3 - 2 * p)  -- smoothstep
+        -- Animation timings
+        local slide_p = math.min(1.0, move_t / 0.3)
+        local ease = 1 - math.pow(1 - slide_p, 3) -- Snappy cubic ease-out
         
+        local pop_p = 0
+        if move_t >= 0.3 and move_t < 0.6 then
+            pop_p = math.sin((move_t - 0.3) / 0.3 * math.pi)
+        end
+        local pulse = 1.0 + 0.3 * pop_p
+        
+        local spawn_scale = 0
+        if move_t >= 0.3 then
+            spawn_scale = math.min(1.0, (move_t - 0.3) / 0.3)
+            if spawn_scale < 1.0 then
+                spawn_scale = spawn_scale + 0.2 * math.sin(spawn_scale * math.pi)
+            end
+        end
+
         if move_idx == 1 then
-            -- Move 1: Slide Right & Merge
+            -- Initial: 2 at (2,2), 2 at (3,2). Static 4 at (4,3).
+            -- Slide Right: (2,2)->(4,2), (3,2)->(4,2). Merge to 4.
+            -- Spawn: 2 at (1,1)
             local ax, ay = 2 + ease * 2, 2
             local bx, by = 3 + ease * 1, 2
-            if move_t < 0.4 then
+            
+            drawIconTile(cx, cy, r, step, 4, 3, 4, scale, is_selected, r_acc, g_acc, b_acc)
+            
+            if move_t < 0.3 then
                 drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
                 drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
             else
-                local pulse = 1.0
-                if move_t < 0.8 then
-                    pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
-                end
                 drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
-                if move_t >= 0.6 then
-                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
-                end
+            end
+            
+            if move_t >= 0.3 then
+                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
             end
             
         elseif move_idx == 2 then
-            -- Move 2: Slide Down & Merge (4 + 4 = 8)
+            -- Initial: 4 at (4,2), 4 at (4,3). Static 2 at (1,1).
+            -- Slide Down: (4,2)->(4,4), (4,3)->(4,4). Merge to 8.
+            -- Spawn: 2 at (2,1)
             local ax, ay = 4, 2 + ease * 2
             local bx, by = 4, 3 + ease * 1
-            local cx_tile, cy_tile = 1, 1 + ease * 3
-            if move_t < 0.4 then
+            
+            drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            
+            if move_t < 0.3 then
                 drawIconTile(cx, cy, r, step, ax, ay, 4, scale, is_selected, r_acc, g_acc, b_acc)
                 drawIconTile(cx, cy, r, step, bx, by, 4, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 2, scale, is_selected, r_acc, g_acc, b_acc)
             else
-                local pulse = 1.0
-                if move_t < 0.8 then
-                    pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
-                end
                 drawIconTile(cx, cy, r, step, 4, 4, 8, scale, is_selected, r_acc, g_acc, b_acc, pulse)
-                drawIconTile(cx, cy, r, step, 1, 4, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                if move_t >= 0.6 then
-                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 3, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
-                end
+            end
+            
+            if move_t >= 0.3 then
+                drawIconTile(cx, cy, r, step, 2, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
             end
             
         elseif move_idx == 3 then
-            -- Move 3: Slide Left & Merge (2 + 2 = 4)
-            local ax, ay = 1 - ease * 0, 4
-            local bx, by = 3 - ease * 2, 1
-            local cx_tile, cy_tile = 4, 4
-            if move_t < 0.4 then
-                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            -- Initial: 8 at (4,4), 2 at (1,1), 2 at (2,1).
+            -- Slide Left: 8 at (4,4)->(1,4). 2 at (1,1)->(1,1). 2 at (2,1)->(1,1).
+            local ax, ay = 4 - ease * 3, 4
+            local bx, by = 1, 1
+            local cx_tile, cy_tile = 2 - ease * 1, 1
+            
+            if move_t < 0.3 then
+                drawIconTile(cx, cy, r, step, ax, ay, 8, scale, is_selected, r_acc, g_acc, b_acc)
                 drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 8, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 2, scale, is_selected, r_acc, g_acc, b_acc)
             else
-                local pulse = 1.0
-                if move_t < 0.8 then
-                    pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
-                end
-                drawIconTile(cx, cy, r, step, 1, 4, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 4, 8, scale, is_selected, r_acc, g_acc, b_acc)
                 drawIconTile(cx, cy, r, step, 1, 1, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
-                drawIconTile(cx, cy, r, step, 4, 4, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                if move_t >= 0.6 then
-                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+            end
+            
+            if move_t >= 0.3 then
+                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+            end
+            
+        elseif move_idx == 4 then
+            -- Initial: 8 at (1,4), 4 at (1,1), 2 at (4,1).
+            -- Slide Up: 8 at (1,4)->(1,2). 4 at (1,1) stays. 2 at (4,1) stays.
+            local ax, ay = 1, 4 - ease * 2
+            
+            if move_t < 0.3 then
+                drawIconTile(cx, cy, r, step, 1, 1, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 8, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            else
+                local bump = 0
+                if move_t < 0.5 then
+                    bump = math.sin((move_t - 0.3) / 0.2 * math.pi) * 0.1
                 end
+                drawIconTile(cx, cy, r, step, 1, 1 - bump, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 2 - bump, 8, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            end
+            
+            if move_t >= 0.3 then
+                drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
             end
         end
     else
@@ -3673,77 +3707,113 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     
     if is_selected then
         local t = love.timer.getTime()
-        local time = t % 6
+        local time = t % 8
         local move_idx = math.floor(time / 2) + 1
         local move_t = time % 2
         
-        local p = math.min(1.0, move_t / 0.4)
-        local ease = p * p * (3 - 2 * p)  -- smoothstep
+        local slide_p = math.min(1.0, move_t / 0.3)
+        local ease = 1 - math.pow(1 - slide_p, 3)
+        
+        local spawn_scale = 0
+        if move_t >= 0.3 then
+            spawn_scale = math.min(1.0, (move_t - 0.3) / 0.3)
+            if spawn_scale < 1.0 then
+                spawn_scale = spawn_scale + 0.2 * math.sin(spawn_scale * math.pi)
+            end
+        end
         
         if move_idx == 1 then
-            -- Move 1: Slide & Merge
-            local ax, ay = 2 + ease * 2, 2
+            -- Move 1: Bad Slide Right
+            -- Initial: 2 at (2,2), 4 at (3,2).
+            local ax, ay = 2 + ease * 1, 2
             local bx, by = 3 + ease * 1, 2
-            if move_t < 0.4 then
+            
+            if move_t < 0.3 then
                 drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 4, scale, is_selected, r_acc, g_acc, b_acc)
             else
-                local pulse = 1.0
-                if move_t < 0.8 then
-                    pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
-                end
-                drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
-                if move_t >= 0.6 then
-                    local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
-                end
+                drawIconTile(cx, cy, r, step, 3, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+            end
+            if move_t >= 0.3 then
+                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
             end
             
         elseif move_idx == 2 then
-            -- Move 2: Undo! (Rewind the previous move)
-            local ax, ay = 4 - ease * 2, 2
-            local bx, by = 4 - ease * 1, 2
-            local spawn_scale = 1.0 - math.min(1.0, move_t / 0.4)
+            -- Move 2: Undo! Rewind Move 1
+            local r_ease = 1 - ease
+            local ax, ay = 2 + r_ease * 1, 2
+            local bx, by = 3 + r_ease * 1, 2
+            local shrink_scale = 1.0 - math.min(1.0, move_t / 0.3)
             
-            if move_t < 0.4 then
+            if move_t < 0.3 then
                 drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                drawIconTile(cx, cy, r, step, bx, by, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                if shrink_scale > 0 then
+                    drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, shrink_scale)
+                end
             else
                 drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 3, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 3, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
             end
             
-            -- Draw a glowing curved undo arrow in the center
-            local arrow_alpha = math.max(0, 1 - move_t / 1.5)
+            local arrow_alpha = math.max(0, 1.0 - move_t / 1.5)
             love.graphics.setColor(1.0, 0.7, 0.2, arrow_alpha * 0.8)
             love.graphics.setLineWidth(math.floor(2 * scale))
             love.graphics.arc("line", "open", cx, cy, 6 * scale, -math.pi * 0.5, math.pi * 0.8)
             love.graphics.polygon("fill", cx - 6 * scale, cy - 3 * scale, cx - 9 * scale, cy + 2 * scale, cx - 3 * scale, cy + 1 * scale)
             
         elseif move_idx == 3 then
-            -- Move 3: Shuffle! Scramble positions
-            local angle = ease * math.pi
-            love.graphics.push()
-            love.graphics.translate(cx, cy)
-            love.graphics.rotate(angle)
-            local tx1 = -r + 1.5 * step
-            local ty1 = -r + 1.5 * step
-            local tx2 = -r + 2.5 * step
-            local ty2 = -r + 1.5 * step
+            -- Move 3: Bomb! Destroy the 4 at (3,2)
+            drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
             
-            love.graphics.setColor(r_acc or 0.95, g_acc or 0.60, b_acc or 0.10, 0.45)
-            roundedRect("fill", tx1 - step/2 + 2*scale, ty1 - step/2 + 2*scale, step - 4*scale, step - 4*scale, 2*scale)
-            roundedRect("fill", tx2 - step/2 + 2*scale, ty2 - step/2 + 2*scale, step - 4*scale, step - 4*scale, 2*scale)
-            love.graphics.pop()
+            if move_t < 0.4 then
+                drawIconTile(cx, cy, r, step, 3, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                
+                local cross_p = move_t / 0.4
+                local cross_size = (1.5 - 0.5 * cross_p) * step
+                local tx = cx - r + 2 * step + step / 2
+                local ty = cy - r + 1 * step + step / 2
+                
+                love.graphics.setColor(1.0, 0.2, 0.2, 0.8)
+                love.graphics.setLineWidth(math.floor(1.5 * scale))
+                love.graphics.circle("line", tx, ty, cross_size / 2)
+                love.graphics.line(tx - cross_size/2, ty, tx + cross_size/2, ty)
+                love.graphics.line(tx, ty - cross_size/2, tx, ty + cross_size/2)
+            elseif move_t < 0.7 then
+                local expl_p = (move_t - 0.4) / 0.3
+                local expl_scale = 1.0 + expl_p * 1.0
+                local expl_alpha = 1.0 - expl_p
+                love.graphics.push("all")
+                love.graphics.setColor(1.0, 0.5, 0.0, expl_alpha)
+                local tx = cx - r + 2 * step + step / 2
+                local ty = cy - r + 1 * step + step / 2
+                love.graphics.circle("fill", tx, ty, step * expl_scale * 0.6)
+                love.graphics.pop()
+            end
             
-            -- Flash plus sign in the center during Shuffle
-            local plus_alpha = 0.3 + 0.5 * math.sin(move_t * 8)
-            love.graphics.setColor(r_acc or 0.95, g_acc or 0.60, b_acc or 0.10, plus_alpha)
-            love.graphics.setLineWidth(math.floor(3 * scale))
-            local plen = 6 * scale
-            love.graphics.line(cx - plen, cy, cx + plen, cy)
-            love.graphics.line(cx, cy - plen, cx, cy + plen)
+            if move_t >= 0.8 then
+                local bomb_spawn_scale = math.min(1.0, (move_t - 0.8) / 0.3)
+                drawIconTile(cx, cy, r, step, 1, 4, 4, scale, is_selected, r_acc, g_acc, b_acc, bomb_spawn_scale)
+            end
+            
+        elseif move_idx == 4 then
+            -- Move 4: Shuffle!
+            local pos1_x, pos1_y = 2, 2
+            local pos2_x, pos2_y = 1, 4
+            
+            if move_t < 0.4 then
+                local shake_x = math.sin(move_t * 50) * 0.1
+                local shake_y = math.cos(move_t * 60) * 0.1
+                drawIconTile(cx, cy, r, step, pos1_x + shake_x, pos1_y + shake_y, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, pos2_x - shake_y, pos2_y + shake_x, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                
+                love.graphics.setColor(1.0, 0.8, 0.2, 0.6)
+                love.graphics.circle("fill", cx, cy, 6 * scale * math.sin(move_t * math.pi / 0.4))
+            else
+                drawIconTile(cx, cy, r, step, pos2_x, pos2_y, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, pos1_x, pos1_y, 4, scale, is_selected, r_acc, g_acc, b_acc)
+            end
         end
     else
         -- Draw static grid tiles when unselected
