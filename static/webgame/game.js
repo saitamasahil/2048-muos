@@ -35,7 +35,7 @@ Module.expectedDataFileDownloads++;
 
     function fetchRemotePackage(packageName, packageSize, callback, errback) {
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', packageName, true);
+      xhr.open('GET', packageName + '?' + PACKAGE_UUID, true);
       xhr.responseType = 'arraybuffer';
       xhr.onprogress = function(event) {
         var url = packageName;
@@ -284,6 +284,6 @@ Module.expectedDataFileDownloads++;
     }
 
   }
-  loadPackage({"package_uuid":"181a21d3-3e5e-44e0-9f8e-5622b48e908f","remote_package_size":248468,"files":[{"filename":"/game.love","crunched":0,"start":0,"end":248468,"audio":false}]});
+  loadPackage({"package_uuid":"c16827f8-8ea6-42d9-95eb-92c2cb98459a","remote_package_size":248839,"files":[{"filename":"/game.love","crunched":0,"start":0,"end":248839,"audio":false}]});
 
 })();

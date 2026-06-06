@@ -268,7 +268,7 @@
 
         /* State management display rules */
         /* By default, hide panels. Shows depend on .main-layout classes */
-        .panel-menu, .panel-classic, .panel-plus, .panel-paused {
+        .panel-menu, .panel-classic, .panel-plus, .panel-paused, .panel-arcade {
             display: none !important;
         }
 
@@ -281,6 +281,10 @@
         }
 
         .main-layout.state-plus-playing .panel-plus {
+            display: flex !important;
+        }
+
+        .main-layout.state-arcade-playing .panel-arcade {
             display: flex !important;
         }
 
@@ -301,6 +305,7 @@
             .main-layout.state-menu .panel-menu,
             .main-layout.state-classic-playing .panel-classic,
             .main-layout.state-plus-playing .panel-plus,
+            .main-layout.state-arcade-playing .panel-arcade,
             .main-layout.state-paused .panel-paused {
                 display: flex !important;
             }
@@ -310,15 +315,26 @@
             }
         }
 
+        /* Show touch controls instead of keyboard controls on mobile/touch screens */
+        @media (max-width: 1250px) and (pointer: coarse), (max-width: 680px) {
+            .main-layout .sidebar-left {
+                display: none !important;
+            }
+            .main-layout .sidebar-right {
+                display: block !important;
+            }
+        }
+
         @media (max-width: 680px) {
             .main-layout {
                 padding: 12px;
                 gap: 16px;
             }
             .game-card {
-                width: 100vw;
+                width: 100%;
                 max-width: 480px;
-                height: 75vw;
+                aspect-ratio: 4 / 3;
+                height: auto;
                 max-height: 360px;
                 border-radius: 16px;
             }
@@ -357,37 +373,51 @@
             <div class="control-panel panel-menu">
                 <h3><span class="material-icons">keyboard</span> Keyboard Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">keyboard_arrow_up</span> Use <b>Arrow Keys</b> to Navigate</li>
-                    <li><span class="material-icons">keyboard_return</span> Press <b>Enter</b> to Select</li>
-                    <li><span class="material-icons">backspace</span> Press <b>Backspace / Esc</b> to Go Back</li>
+                    <li><span class="material-icons">keyboard_arrow_up</span> <b>Arrow Keys</b> Navigate</li>
+                    <li><span class="material-icons">keyboard_return</span> <b>Enter</b> Select</li>
+                    <li><span class="material-icons">backspace</span> <b>Backspace / Esc</b> Go Back</li>
+                    <li><span class="material-icons">palette</span> <b>C</b> Cycle Theme</li>
                 </ul>
             </div>
             <!-- Classic Game playing controls -->
             <div class="control-panel panel-classic">
                 <h3><span class="material-icons">keyboard</span> Keyboard Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">grid_3x3</span> Use <b>Arrow Keys</b> to Slide Tiles</li>
-                    <li><span class="material-icons">replay</span> Press <b>Backspace / Esc</b> to Undo Move</li>
-                    <li><span class="material-icons">pause_circle</span> Press <b>Enter</b> to Pause Game</li>
+                    <li><span class="material-icons">grid_3x3</span> <b>Arrow Keys</b> Slide Tiles</li>
+                    <li><span class="material-icons">replay</span> <b>Backspace / Esc</b> Undo Move</li>
+                    <li><span class="material-icons">pause_circle</span> <b>Enter</b> Pause Game</li>
+                    <li><span class="material-icons">palette</span> <b>C</b> Cycle Theme</li>
                 </ul>
             </div>
             <!-- Plus / Arcade Game playing controls -->
             <div class="control-panel panel-plus">
                 <h3><span class="material-icons">keyboard</span> Keyboard Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">grid_3x3</span> Use <b>Arrow Keys</b> to Slide Tiles</li>
-                    <li><span class="material-icons">replay</span> Press <b>Backspace / Esc</b> to Undo Move</li>
-                    <li><span class="material-icons">pause_circle</span> Press <b>Enter</b> to Pause Game</li>
-                    <li><span class="material-icons">change_circle</span> Press <b>Z</b> for Swap Powerup</li>
-                    <li><span class="material-icons">stars</span> Press <b>Space</b> for Bomb Powerup</li>
+                    <li><span class="material-icons">grid_3x3</span> <b>Arrow Keys</b> Slide Tiles</li>
+                    <li><span class="material-icons">replay</span> <b>Backspace / Esc</b> <span id="kbd-undo-count">Undo Move</span></li>
+                    <li><span class="material-icons">pause_circle</span> <b>Enter</b> Pause Game</li>
+                    <li><span class="material-icons">change_circle</span> <b>Z</b> <span id="kbd-swap-count">Swap Powerup</span></li>
+                    <li><span class="material-icons">stars</span> <b>Space</b> <span id="kbd-bomb-count">Bomb Powerup</span></li>
+                    <li><span class="material-icons">palette</span> <b>C</b> Cycle Theme</li>
+                </ul>
+            </div>
+            <!-- Arcade Game playing controls (No Undo, No Powerups) -->
+            <div class="control-panel panel-arcade">
+                <h3><span class="material-icons">keyboard</span> Keyboard Controls</h3>
+                <ul class="control-list">
+                    <li><span class="material-icons">grid_3x3</span> <b>Arrow Keys</b> Slide Tiles</li>
+                    <li><span class="material-icons">pause_circle</span> <b>Enter</b> Pause Game</li>
+                    <li><span class="material-icons">palette</span> <b>C</b> Cycle Theme</li>
                 </ul>
             </div>
             <!-- Paused controls -->
             <div class="control-panel panel-paused">
                 <h3><span class="material-icons">keyboard</span> Keyboard Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">play_arrow</span> Press <b>Backspace / Esc</b> to Resume</li>
-                    <li><span class="material-icons">restart_alt</span> Press <b>Enter</b> to Restart Game</li>
+                    <li><span class="material-icons">play_arrow</span> <b>Backspace / Esc</b> Resume</li>
+                    <li><span class="material-icons">restart_alt</span> <b>Enter</b> Restart Game</li>
+                    <li><span class="material-icons">exit_to_app</span> <b>Space</b> Quit to Menu</li>
+                    <li><span class="material-icons">palette</span> <b>C</b> Cycle Theme</li>
                 </ul>
             </div>
         </div>
@@ -411,37 +441,51 @@
             <div class="control-panel panel-menu">
                 <h3><span class="material-icons">touch_app</span> Touch Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">swipe</span> <b>Swipe</b> to Navigate items</li>
-                    <li><span class="material-icons">ads_click</span> <b>Tap Center</b> to Select / Select</li>
-                    <li><span class="material-icons">gesture</span> <b>Tap Top Left</b> to Go Back</li>
+                    <li><span class="material-icons">swipe</span> <b>Swipe</b> Navigate items</li>
+                    <li><span class="material-icons">ads_click</span> <b>Tap Center</b> Select</li>
+                    <li><span class="material-icons">gesture</span> <b>Tap Top Left</b> Go Back</li>
+                    <li><span class="material-icons">palette</span> <b>Long Press Top</b> Cycle Theme</li>
                 </ul>
             </div>
             <!-- Classic Game playing controls -->
             <div class="control-panel panel-classic">
                 <h3><span class="material-icons">touch_app</span> Touch Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">swipe</span> <b>Swipe</b> to Slide tiles</li>
-                    <li><span class="material-icons">ads_click</span> <b>Tap Top Left</b> to Undo move</li>
-                    <li><span class="material-icons">ads_click</span> <b>Tap Top Right</b> to Pause / Resume</li>
+                    <li><span class="material-icons">swipe</span> <b>Swipe</b> Slide tiles</li>
+                    <li><span class="material-icons">ads_click</span> <b>Tap Top Left</b> Undo move</li>
+                    <li><span class="material-icons">ads_click</span> <b>Tap Top Right</b> Pause / Resume</li>
+                    <li><span class="material-icons">palette</span> <b>Long Press Top</b> Cycle Theme</li>
                 </ul>
             </div>
             <!-- Plus / Arcade Game playing controls -->
             <div class="control-panel panel-plus">
                 <h3><span class="material-icons">touch_app</span> Touch Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">swipe</span> <b>Swipe</b> to Slide tiles</li>
-                    <li><span class="material-icons">ads_click</span> <b>Tap Top Left</b> to Undo move</li>
-                    <li><span class="material-icons">ads_click</span> <b>Tap Top Right</b> to Pause / Resume</li>
-                    <li><span class="material-icons">touch_app</span> <b>Long Press Bottom Left</b> to Swap</li>
-                    <li><span class="material-icons">touch_app</span> <b>Long Press Bottom Right</b> to Bomb</li>
+                    <li><span class="material-icons">swipe</span> <b>Swipe</b> Slide tiles</li>
+                    <li><span class="material-icons">ads_click</span> <b>Tap Top Left</b> <span id="touch-undo-count">Undo move</span></li>
+                    <li><span class="material-icons">ads_click</span> <b>Tap Top Right</b> Pause / Resume</li>
+                    <li><span class="material-icons">touch_app</span> <b>Long Press Bottom Left</b> <span id="touch-swap-count">Swap</span></li>
+                    <li><span class="material-icons">touch_app</span> <b>Long Press Bottom Right</b> <span id="touch-bomb-count">Bomb</span></li>
+                    <li><span class="material-icons">palette</span> <b>Long Press Top</b> Cycle Theme</li>
+                </ul>
+            </div>
+            <!-- Arcade Game playing controls (No Undo, No Powerups) -->
+            <div class="control-panel panel-arcade">
+                <h3><span class="material-icons">touch_app</span> Touch Controls</h3>
+                <ul class="control-list">
+                    <li><span class="material-icons">swipe</span> <b>Swipe</b> Slide tiles</li>
+                    <li><span class="material-icons">ads_click</span> <b>Tap Top Right</b> Pause / Resume</li>
+                    <li><span class="material-icons">palette</span> <b>Long Press Top</b> Cycle Theme</li>
                 </ul>
             </div>
             <!-- Paused controls -->
             <div class="control-panel panel-paused">
                 <h3><span class="material-icons">touch_app</span> Touch Controls</h3>
                 <ul class="control-list">
-                    <li><span class="material-icons">play_arrow</span> <b>Tap Top Right</b> to Resume</li>
-                    <li><span class="material-icons">restart_alt</span> <b>Tap Menu Items</b> to Restart or Quit</li>
+                    <li><span class="material-icons">play_arrow</span> <b>Tap Top Right</b> Resume</li>
+                    <li><span class="material-icons">restart_alt</span> <b>Tap Bottom Area</b> Restart Game</li>
+                    <li><span class="material-icons">exit_to_app</span> <b>Long Press Bottom Right</b> Quit to Menu</li>
+                    <li><span class="material-icons">palette</span> <b>Long Press Top</b> Cycle Theme</li>
                 </ul>
             </div>
         </div>
@@ -464,24 +508,31 @@
                 document.getElementById('status-text').innerText = 'Warning: Could not fetch save data. Starting fresh.';
             }
 
-            // Load LÖVE scripts
+            // Load LÖVE scripts with cache busting
+            const buster = '?' + Date.now();
             const scriptGame = document.createElement('script');
-            scriptGame.src = 'game.js';
+            scriptGame.src = 'game.js' + buster;
             document.body.appendChild(scriptGame);
 
             const scriptLove = document.createElement('script');
-            scriptLove.src = 'love.js';
+            scriptLove.src = 'love.js' + buster;
             scriptLove.async = true;
             scriptLove.onload = function() {
                 const res = Love(Module);
                 if (res && typeof res.then === 'function') {
                     res.then(function(instance) {
                         console.log("Love resolved! instance.FS is:", typeof instance.FS);
+                        setTimeout(() => {
+                            window.dispatchEvent(new Event('resize'));
+                        }, 200);
                     });
                 }
                 if (Module.ready && typeof Module.ready.then === 'function') {
                     Module.ready.then(function() {
                         console.log("Module.ready resolved! Module.FS is:", typeof Module.FS);
+                        setTimeout(() => {
+                            window.dispatchEvent(new Event('resize'));
+                        }, 200);
                     });
                 }
             };
@@ -569,19 +620,42 @@
             const parts = stateStr.split(':');
             const appState = parts[0];
             
-            if (appState === 'MENU' || appState === 'THEME_SELECT' || appState === 'ACHIEVEMENTS' || appState === 'ABOUT' || appState === 'TUTORIAL' || appState === 'PLAY_SELECT' || appState === 'ARCADE_MENU' || appState === 'CHEATS_MENU') {
+            if (appState === 'MENU' || appState === 'THEME_SELECT' || appState === 'ACHIEVEMENTS' || appState === 'ABOUT' || appState === 'TUTORIAL' || appState === 'PLAY_SELECT' || appState === 'ARCADE_MENU' || appState === 'SECRET_MENU' || appState === 'CHEATS_MENU') {
                 layout.classList.add('state-menu');
             } else if (appState === 'GAME') {
                 const gameState = parts[1]; // playing, paused, gameover
                 const gameMode = parts[2]; // classic, plus, timeattack, etc.
                 
-                if (gameState === 'paused') {
+                if (gameState === '4' || gameState === 'paused') {
                     layout.classList.add('state-paused');
                 } else {
-                    if (gameMode === 'classic') {
+                    if (gameMode === 'classic' || gameMode === 'huge') {
                         layout.classList.add('state-classic-playing');
-                    } else {
+                    } else if (gameMode === 'plus') {
                         layout.classList.add('state-plus-playing');
+                        if (parts.length >= 6) {
+                            const undo = parts[3];
+                            const swap = parts[4];
+                            const bomb = parts[5];
+                            
+                            const undoElK = document.getElementById('kbd-undo-count');
+                            const swapElK = document.getElementById('kbd-swap-count');
+                            const bombElK = document.getElementById('kbd-bomb-count');
+                            
+                            const undoElT = document.getElementById('touch-undo-count');
+                            const swapElT = document.getElementById('touch-swap-count');
+                            const bombElT = document.getElementById('touch-bomb-count');
+                            
+                            if (undoElK) undoElK.innerHTML = `Undo Move (<b>${undo}</b> left)`;
+                            if (swapElK) swapElK.innerHTML = `Swap Powerup (<b>${swap}</b> left)`;
+                            if (bombElK) bombElK.innerHTML = `Bomb Powerup (<b>${bomb}</b> left)`;
+                            
+                            if (undoElT) undoElT.innerHTML = `Undo move (<b>${undo}</b> left)`;
+                            if (swapElT) swapElT.innerHTML = `Swap (<b>${swap}</b> left)`;
+                            if (bombElT) bombElT.innerHTML = `Bomb (<b>${bomb}</b> left)`;
+                        }
+                    } else if (gameMode === 'timeattack' || gameMode === 'nomercy' || gameMode === 'goose') {
+                        layout.classList.add('state-arcade-playing');
                     }
                 }
             }
@@ -598,6 +672,15 @@
                     if (text && text.startsWith("WEB_STATE:")) {
                         const stateStr = text.substring(10).trim();
                         updateControlsUI(stateStr);
+                    } else if (text === "STOP_SERVER") {
+                        fetch('/api/stop', { method: 'POST' })
+                            .then(() => {
+                                alert("Game exited successfully. You can close this tab now.");
+                            })
+                            .catch(err => {
+                                console.error("Failed to stop server:", err);
+                                alert("Failed to contact the server. It might already be stopped.");
+                            });
                     }
                 };
             })(),
@@ -608,7 +691,10 @@
                 } else if (Module.remainingDependencies === 0) {
                     const overlay = document.getElementById('loading-overlay');
                     overlay.style.opacity = '0';
-                    setTimeout(() => overlay.style.display = 'none', 500);
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        window.dispatchEvent(new Event('resize'));
+                    }, 500);
                     document.getElementById('canvas').focus();
                 }
             },

@@ -450,8 +450,12 @@ function love.update(dt)
                         renderer.flashTextSize()
                     elseif sel == "About" then
                         _G.appState = "ABOUT"
-                    elseif sel == "Quit" then
-                        love.event.quit()
+                    elseif sel == "Quit" or sel == "Exit the Game" then
+                        if love.system.getOS() == "Web" then
+                            print("STOP_SERVER")
+                        else
+                            love.event.quit()
+                        end
                     end
                 end)
             end
@@ -737,7 +741,7 @@ function love.update(dt)
                         game:startSwapTargeting()
                     end)
                 end
-            elseif event == input.events.R1 then
+            elseif event == input.events.R1 or event == input.events.X then
                 if game.mode == "plus" and game.powerups.bomb <= 0 then
                     renderer.showToast("No Bomb Powerup!")
                 else
@@ -883,6 +887,9 @@ function love.update(dt)
         local current_state_str = "WEB_STATE:" .. tostring(_G.appState)
         if _G.appState == "GAME" and game then
             current_state_str = current_state_str .. ":" .. tostring(game.state) .. ":" .. tostring(game.mode)
+            if game.mode == "plus" and game.powerups then
+                current_state_str = current_state_str .. ":" .. tostring(game.powerups.undo) .. ":" .. tostring(game.powerups.swap) .. ":" .. tostring(game.powerups.bomb)
+            end
         end
         if current_state_str ~= _G.last_web_state_str then
             _G.last_web_state_str = current_state_str

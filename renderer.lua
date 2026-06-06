@@ -3265,7 +3265,11 @@ function renderer.getMainMenuOptions()
     end
     table.insert(options, text_size_lbl)
     table.insert(options, "About")
-    table.insert(options, "Quit")
+    if love.system.getOS() == "Web" then
+        table.insert(options, "Exit the Game")
+    else
+        table.insert(options, "Quit")
+    end
     return options
 end
 

@@ -158,6 +158,9 @@ function server.update()
                     else
                         sendResponse(client, 400, "Bad Request", "application/json", '{"error":"No content length"}')
                     end
+                elseif method == "POST" and path == "/api/stop" then
+                    sendResponse(client, 200, "OK", "application/json", '{"status":"stopped"}')
+                    love.event.quit()
                 else
                     sendResponse(client, 405, "Method Not Allowed", "text/plain", "Method not allowed")
                 end
