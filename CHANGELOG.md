@@ -17,6 +17,9 @@
 - Plus Mode Balancing: Reduced the rate at which power-ups are awarded to make the gameplay significantly more strategic and challenging.
 - Demolition Expert Achievement: Reduced the required bomb usage count from 10 to 4 in Plus Mode.
 
+### Fixed
+- UI & Stability: Implemented minor user interface enhancements and general bug fixes for a smoother, more polished experience.
+
 ## [2.0.2]
 
 ### Added
