@@ -3,13 +3,14 @@
 ## [3.0.0]
 
 ### Added
+- Game Selection Mode: A newly designed, beautifully animated carousel menu screen for seamlessly selecting between Classic, Plus, and Arcade modes.
 - Arcade Modes: Introduced a brand-new arcade mode with different game modes to play.
-  - Time Attack Mode: A fast-paced new mode where you race against a 60-second countdown clock. Merge larger tiles (32+) to earn crucial time extensions and unlock the exclusive animated Aurora theme.
+  - Time Attack Mode: A fast-paced new mode where you race against a 60-second countdown clock. Merge larger tiles (32+) to earn crucial time extensions.
   - Huge Mode (5x5): A spacious new board layout featuring a 5x5 grid for a more relaxed play style.
   - No Mercy Mode: A high-tension hardcore challenge where undos and power-ups are disabled, and two new tiles spawn after every single move.
   - Goose Mode: A chaotic fun mode where a silly animated Goose tile waddles around the grid, blocking a random empty cell and walking after every turn. Undos and power-ups are disabled.
-- Arcade Achievements & Themes: Each arcade mode now has a dedicated achievement that unlocks an exclusive premium theme with dynamic animated backgrounds — Aurora (Time Attack Mode), Nebula (Huge Mode), Inferno (No Mercy Mode), and Honk (Goose Mode).
-- Dynamic Backgrounds: All premium themes (Aurora, Nebula, Inferno, Honk) now feature layered, animated background effects.
+- Arcade Achievements & Themes: Each arcade mode now has a dedicated achievement that unlocks an exclusive premium theme with dynamic animated backgrounds.
+- Dynamic Backgrounds: Premium themes (Aurora, Nebula, Inferno, Honk, Matrix, Glitch) feature layered, animated background effects like aurora curtains, twinkling starfields, rising embers, water ripples, falling green digital rain, and cyberpunk glitch effects.
 - Smooth Screen Transitions: Added crossfade transitions when navigating between screens.
 
 ### Changed
