@@ -61,7 +61,7 @@ _G.achievements = {
     -- Premium achievements (full custom tile themes)
     ach_2048 = false,        -- 2048 Master -> unlocks 'oled'
     ach_score_10k = false,   -- High Roller -> unlocks 'neon'
-    ach_demolition = false,  -- Demolition Expert (10 bombs used) -> unlocks 'retro'
+    ach_demolition = false,  -- Demolition Expert (4 bombs used) -> unlocks 'retro'
     ach_untouchable = false, -- Untouchable (1024 without powerups) -> unlocks 'peach'
     ach_2048_plus = false,   -- Plus Mode Master -> unlocks 'cyberpunk'
     ach_4096 = false,        -- The One -> unlocks 'matrix'
