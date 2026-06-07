@@ -422,8 +422,8 @@ function Game:move(direction)
                     if self.mode == "huge" and merged.value >= 2048 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_huge_2048")
                     end
-                    if self.mode == "nomercy" and merged.value >= 1024 and _G.unlockAchievement then
-                        _G.unlockAchievement("ach_nomercy_1024")
+                    if self.mode == "nomercy" and merged.value >= 512 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_nomercy_512")
                     end
                     if self.mode == "goose" and merged.value >= 2048 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_goose_2048")

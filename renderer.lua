@@ -4892,7 +4892,7 @@ local achievementsList = {
     { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme" },
     { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme" },
     { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme" },
-    { id = "ach_nomercy_1024", name = "No Escape", desc = "Create a 1024 tile in No Mercy Mode", reward = "Inferno Theme" },
+    { id = "ach_nomercy_512", name = "No Escape", desc = "Create a 512 tile in No Mercy Mode", reward = "Inferno Theme" },
     { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme" }
 }
 
