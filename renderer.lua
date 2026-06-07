@@ -2378,7 +2378,6 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "A", label = "Continue"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "SELECT", label = "Restart"})
-        table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
@@ -2389,7 +2388,6 @@ function renderer.drawHelp(game)
     elseif game.state == Game.STATE_LOST then
         table.insert(actions, 1, {key = "A", label = "New Game"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
-        table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
         if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
             if game.mode == "plus" and game.powerups.undo > 0 then
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
@@ -2401,7 +2399,6 @@ function renderer.drawHelp(game)
         table.insert(actions, 1, {key = "A", label = "Restart"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
         table.insert(actions, 1, {key = "START", label = "Resume"})
-        table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
     elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
         table.insert(actions, 1, {key = "A", label = "Confirm"})
         table.insert(actions, 1, {key = "B", label = "Cancel"})
