@@ -170,7 +170,7 @@ function Game:addStartTiles()
         local tile1 = Tile.new(1, 1, 1024)
         tile1.isNew = true
         self.grid:insertTile(tile1)
-        
+
         local tile2 = Tile.new(2, 1, 1024)
         tile2.isNew = true
         self.grid:insertTile(tile2)
@@ -188,7 +188,7 @@ function Game:addStartTiles()
         end
         starting_tiles = 1
     end
-    
+
     if self.mode == "classic" and _G.cheat_start_1024_classic then
         _G.cheat_start_1024_classic = false
         if self.grid:cellsAvailable() then
@@ -339,7 +339,7 @@ function Game:move(direction)
                         local m_str = tostring(merged.value)
                         if not self.milestonesReached[m_str] then
                             self.milestonesReached[m_str] = true
-                            
+
                             local function grantRandomPowerup(g)
                                 local p = love.math.random(1, 3)
                                 if p == 1 then
@@ -390,11 +390,11 @@ function Game:move(direction)
                         self.won = true
                         self.state = Game.STATE_WON
                     end
-                    
+
                     if self.mode == "classic" and merged.value >= 2048 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_2048")
                     end
-                    
+
                     if merged.value >= 512 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_merge_512")
                     end
@@ -402,19 +402,19 @@ function Game:move(direction)
                     if merged.value >= 1024 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_merge_1024")
                     end
-                    
+
                     if merged.value >= 4096 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_4096")
                     end
-                    
+
                     if merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_untouchable")
                     end
-                    
+
                     if self.mode == "plus" and merged.value >= 2048 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_2048_plus")
                     end
-                    
+
                     if merged.value >= 2048 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
                         _G.unlockAchievement("ach_untouchable_2048")
                     end
@@ -476,7 +476,7 @@ function Game:move(direction)
             local merged_2048 = self.timeAttackBonus >= 50
             local bonus = merged_2048 and self.timeAttackBonus or math.min(self.timeAttackBonus, cap)
             self.timeLeft = math.min(self.totalTime, self.timeLeft + bonus)
-            
+
             -- Trigger visual feedback (floating text + flash timer)
             self.timePopups = self.timePopups or {}
             table.insert(self.timePopups, {
@@ -485,7 +485,7 @@ function Game:move(direction)
                 alpha = 1.0
             })
             self.timerFlashTimer = 0.3
-            
+
             self.timeAttackBonus = 0
         end
         self.undoState = pendingUndoState
@@ -554,7 +554,7 @@ function Game:walkGoose()
         end
     end
 
-    local target = nil
+    local target
     if #adjacentEmpties > 0 then
         target = adjacentEmpties[love.math.random(1, #adjacentEmpties)]
     else
@@ -615,7 +615,7 @@ function Game:undo()
         self.grid:restoreState(self.undoState)
         self.score = self.undoScore
         self.canUndo = false
-        
+
         if self.undoRNG then
             love.math.setRandomState(self.undoRNG)
         end
@@ -776,7 +776,7 @@ function Game:confirmTarget()
 
             self.grid.cells[cx][cy] = nil
             self.powerups.bomb = self.powerups.bomb - 1
-            
+
             if _G.achievements.bombs_used then
                 _G.achievements.bombs_used = _G.achievements.bombs_used + 1
                 if _G.unlockAchievement then
@@ -809,11 +809,11 @@ function Game:confirmTarget()
 
             local t1 = self.grid.cells[self.swapTarget.x][self.swapTarget.y]
             local t2 = self.grid.cells[cx][cy]
-            
+
             -- Swap them in grid
             self.grid.cells[self.swapTarget.x][self.swapTarget.y] = t2
             self.grid.cells[cx][cy] = t1
-            
+
             -- Start animation
             self.swapAnimation = {
                 t1 = t1 and {val = t1.value, startX = self.swapTarget.x, startY = self.swapTarget.y, endX = cx, endY = cy} or nil,
@@ -832,7 +832,7 @@ function Game:confirmTarget()
 
             self.powerups.swap = self.powerups.swap - 1
             self.swapTarget = nil
-            
+
             if _G.achievements.powerups_used_this_run then
                 _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
             end
@@ -945,7 +945,7 @@ function Game:isAnimating()
 end
 
 function Game:isPlaying()
-    return self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS or 
+    return self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS or
            self.state == Game.STATE_TARGETING_BOMB or self.state == Game.STATE_TARGETING_SWAP_1 or self.state == Game.STATE_TARGETING_SWAP_2
 end
 

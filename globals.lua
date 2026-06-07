@@ -57,7 +57,7 @@ _G.achievements = {
     ach_score_1k = false,    -- Getting Started -> unlocks 'forest'
     ach_score_5k = false,    -- Rising Star -> unlocks 'sunset'
     ach_merge_512 = false,   -- Half Way There -> unlocks 'candy'
-    
+
     -- Premium achievements (full custom tile themes)
     ach_2048 = false,        -- 2048 Master -> unlocks 'oled'
     ach_score_10k = false,   -- High Roller -> unlocks 'neon'
@@ -69,13 +69,13 @@ _G.achievements = {
     ach_score_50k = false,   -- Vampire Lord -> unlocks 'dracula'
     ach_score_100k = false,  -- Midas Touch -> unlocks 'gold'
     ach_untouchable_2048 = false, -- Zen Master (2048 without powerups) -> unlocks 'matcha'
-    
+
     -- Dark simple achievements (color-only dark themes)
     ach_merge_1024 = false,  -- Almost There -> unlocks 'midnight'
     ach_score_2k = false,    -- Gaining Momentum -> unlocks 'volcano'
     ach_score_7k = false,    -- High Scorer -> unlocks 'abyss'
     ach_first_bomb = false,  -- Boom! -> unlocks 'eclipse'
-    
+
     -- Secret tracking stats
     ach_secret_menu = false, -- Secret Discovery -> unlocks 'matrix'
 
@@ -84,7 +84,7 @@ _G.achievements = {
     ach_huge_2048 = false,       -- Spacious Giant -- Reach 2048 in Huge Mode -> unlocks 'nebula'
     ach_nomercy_512 = false,      -- No Escape -- Reach 512 in No Mercy Mode -> unlocks 'inferno'
     ach_goose_2048 = false,      -- Honk Honk! -- Reach 2048 in Goose Mode -> unlocks 'honk'
-    
+
     -- Hidden tracking stats
     bombs_used = 0,
     powerups_used_this_run = 0

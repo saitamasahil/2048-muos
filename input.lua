@@ -198,7 +198,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
 
     local swipe_threshold = 30 -- pixels
     local tap_threshold = 15
-    
+
     if abs_x > swipe_threshold or abs_y > swipe_threshold then
         -- It's a swipe (D-Pad)
         if abs_x > abs_y then

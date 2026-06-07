@@ -124,7 +124,7 @@ function love.load(args)
     if _G.achievements.ach_score_2k then table.insert(_G.unlocked_themes, "volcano") end
     if _G.achievements.ach_score_7k then table.insert(_G.unlocked_themes, "abyss") end
     if _G.achievements.ach_first_bomb then table.insert(_G.unlocked_themes, "eclipse") end
-    
+
     if _G.achievements.ach_2048_plus then table.insert(_G.unlocked_themes, "cyberpunk") end
     if _G.achievements.ach_4096 then table.insert(_G.unlocked_themes, "glitch") end
     if _G.achievements.ach_score_25k then table.insert(_G.unlocked_themes, "vaporwave") end
@@ -141,7 +141,7 @@ function love.load(args)
         if not _G.achievements[id] then
             _G.achievements[id] = true
             save.saveAchievements(_G.achievements)
-            
+
             local theme_map = {
                 ach_first_game = "ocean",
                 ach_score_1k = "forest",
@@ -170,7 +170,7 @@ function love.load(args)
             if theme_map[id] then
                 table.insert(_G.unlocked_themes, theme_map[id])
             end
-            
+
             local names = {
                 ach_first_game = "First Steps",
                 ach_score_1k = "Getting Started",
@@ -205,7 +205,7 @@ function love.load(args)
     if savedTheme then
         _G.theme = savedTheme
     end
-    
+
     _G.cheats_unlocked = save.loadCheats()
     _G.text_size = save.loadTextSize() or "normal"
     -- Crucially apply the loaded theme to the renderer NOW
@@ -961,7 +961,7 @@ function love.draw()
             if old_screen_canvas then
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.draw(old_screen_canvas, old_x, 0)
-                
+
                 -- Dim the old screen (dimming fades in from 0% to 50% opacity)
                 love.graphics.setColor(0, 0, 0, 0.5 * p)
                 love.graphics.rectangle("fill", old_x, 0, w, h)

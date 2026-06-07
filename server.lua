@@ -1,5 +1,5 @@
 local socket = require("socket")
-local save = require("save")
+
 
 local server = {}
 
@@ -73,11 +73,11 @@ function server.update()
         local client = tcp_server:accept()
         if client then
             client:settimeout(1) -- Short timeout for request parsing
-            
+
             local request, err = client:receive("*l")
             if not err and request then
                 local method, path = request:match("^(%u+)%s+(%S+)%s+HTTP")
-                
+
                 local content_length = 0
                 while true do
                     local header, herr = client:receive("*l")
@@ -98,7 +98,7 @@ function server.update()
                             "gamestate.dat", "gamestate_plus.dat", "gamestate_timeattack.dat",
                             "gamestate_huge.dat", "gamestate_nomercy.dat", "gamestate_goose.dat", "gamestate_tiny.dat"
                         }
-                        
+
                         local response_map = {}
                         for _, file in ipairs(files) do
                             local content = readFile((_G.WORK_DIR and _G.WORK_DIR .. "/static/" or "static/") .. file)
@@ -106,7 +106,7 @@ function server.update()
                                 response_map[file] = content
                             end
                         end
-                        
+
                         local json = "{"
                         local first = true
                         for k, v in pairs(response_map) do
@@ -116,20 +116,20 @@ function server.update()
                             first = false
                         end
                         json = json .. "}"
-                        
+
                         sendResponse(client, 200, "OK", "application/json", json)
 
                     else
                         if path == "/" then path = "/index.html" end
                         path = path:gsub("%?.*", "")
-                        
+
                         -- Prevent directory traversal
                         local safe_path = path:gsub("%.%.", "")
                         local full_path = (_G.WORK_DIR and _G.WORK_DIR .. "/static/webgame" or "static/webgame") .. safe_path
-                        
+
                         local ext = safe_path:match("%.([^%.]+)$")
                         local mime = MIME_TYPES[ext] or "application/octet-stream"
-                        
+
                         local content = readFile(full_path)
                         if content then
                             sendResponse(client, 200, "OK", mime, content)

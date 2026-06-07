@@ -41,7 +41,6 @@ local colors = {
 -- Animation state
 -- ============================================================================
 local logo
-local font_path = "assets/ClearSans-Bold.ttf"
 
 local anim = {
     -- Phase 1: Background tiles cascade in
@@ -77,7 +76,6 @@ local cascade_tile_colors = {
 -- ============================================================================
 function splash.load()
     local w, h = love.graphics.getDimensions()
-    local scale = _G.scale
 
     local renderer = require("renderer")
     local tile_colors_t, super_color = renderer.getThemeTileColors()
@@ -124,7 +122,7 @@ function splash.load()
     local gap = math.floor(cell_size * 0.08)
     local cols = math.ceil(w / (cell_size + gap)) + 1
     local rows = math.ceil(h / (cell_size + gap)) + 1
-    
+
     local grid_w = cols * cell_size + (cols - 1) * gap
     local grid_h = rows * cell_size + (rows - 1) * gap
     local start_x = (w - grid_w) / 2
@@ -225,12 +223,12 @@ function splash.load()
             for i = 1, 120 do
                 local angle = (i / 120) * math.pi * 2 + math.random() * 0.1
                 local speed = math.random(100, 1100)
-                
+
                 -- Mix of colored tile chunks and pure gold sparks
                 local is_gold = math.random() > 0.5
                 local color = is_gold and colors.gold or cascade_tile_colors[math.random(#cascade_tile_colors)]
                 local p_type = is_gold and "spark" or "chunk"
-                
+
                 -- Add a slight organic starting offset
                 local offset_x = (math.random() - 0.5) * 16
                 local offset_y = (math.random() - 0.5) * 16
@@ -330,7 +328,7 @@ function splash.draw()
     local dt = love.timer.getDelta()
     for i = #anim.exit_particles, 1, -1 do
         local p = anim.exit_particles[i]
-        
+
         -- Physics update
         p.vx = p.vx * p.drag
         p.vy = p.vy * p.drag
@@ -346,11 +344,11 @@ function splash.draw()
             love.graphics.push()
             love.graphics.translate(p.x, p.y)
             love.graphics.rotate(p.rotation)
-            
+
             -- Smooth fade out
             local alpha = math.min(1, p.life * 2)
             love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha)
-            
+
             if p.type == "chunk" then
                 -- Spinning tile chunks shrink as they die
                 local s = p.size * math.min(1, p.life)
@@ -363,7 +361,7 @@ function splash.draw()
                 love.graphics.rotate(math.atan2(p.vy, p.vx)) -- perfectly align with velocity
                 love.graphics.rectangle("fill", -p.size * stretch / 2, -p.size / 2, p.size * stretch, p.size, p.size / 2, p.size / 2)
             end
-            
+
             love.graphics.pop()
         end
     end
@@ -388,7 +386,7 @@ function splash.draw()
         love.graphics.setColor(colors.gold[1], colors.gold[2], colors.gold[3], anim.exit_flash * 0.4)
         love.graphics.rectangle("fill", -10, -10, w + 20, h + 20)
     end
-    
+
     love.graphics.pop()
 end
 
