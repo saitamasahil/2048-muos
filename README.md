@@ -46,7 +46,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
 <br>
 
 <p align="center">
-  <img src="splash.webp" alt="Splash Animation" width="480" />
+  <img src="splash.webp" alt="Splash Animation" width="280" />
 </p>
 
 </details>
