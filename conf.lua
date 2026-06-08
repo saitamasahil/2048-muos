@@ -2,7 +2,7 @@ function love.conf(t)
     t.version = "11.5"
     t.console = false
 
-    t.window.title = "2048"
+    t.window.title = "2048 Plus"
     t.window.icon = nil
     t.window.width = 640
     t.window.height = 480

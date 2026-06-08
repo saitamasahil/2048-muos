@@ -895,6 +895,8 @@ local font_score
 local font_title
 local font_header_2048
 local font_main_menu_title
+local font_main_menu_plus
+local font_header_plus
 local font_cheats_title
 local font_label
 local font_message
@@ -1486,6 +1488,8 @@ function renderer.init()
     local header_text_scale = (_G.text_size == "large") and 1.0 or 1.0
     font_header_2048 = love.graphics.newFont(font_path, math.floor(36 * scale * header_text_scale))
     font_main_menu_title = love.graphics.newFont(font_path, math.floor(72 * scale))
+    font_main_menu_plus = love.graphics.newFont(font_path, math.floor(30 * scale))
+    font_header_plus = love.graphics.newFont(font_path, math.floor(13 * scale))
     font_cheats_title = love.graphics.newFont(font_path, math.floor(56 * scale))
     font_label      = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale * text_scale))
@@ -2014,32 +2018,66 @@ function renderer.drawHeader(game)
     love.graphics.setFont(font_header_2048)
     love.graphics.setColor(ui_text)
 
+    local tw = font_header_2048:getWidth("2048")
+    local th = font_header_2048:getHeight()
+    
+    local f_plus = font_header_plus or font_tile_small
+    local pw = f_plus:getWidth("PLUS")
+    local ph = f_plus:getHeight()
+
+    -- Stacked title height: "2048" height + "PLUS" height - scaled vertical nesting offset
+    local title_h = th + ph - math.floor(11 * scale)
+
     if game and game.won then
-        local total_h = font_header_2048:getHeight() + font_label:getHeight() - math.floor(4 * scale)
+        local eh = font_header_plus:getHeight()
+        local total_h = title_h + eh - math.floor(2 * scale)
+        
         local title_y = math.floor((layout.board_y - total_h) / 2)
-        love.graphics.print("2048", bx, title_y)
+        local y_2048 = title_y
+        local y_plus = y_2048 + th - math.floor(11 * scale)
 
-        love.graphics.setFont(font_label)
-        local offset = math.floor((_G.text_size == "large" and 10 or 4) * scale)
+        -- Draw "2048"
+        love.graphics.setFont(font_header_2048)
+        love.graphics.print("2048", bx, y_2048)
 
+        -- Draw "PLUS" with "S" below "8" and "P" at half of "4"
+        local x_plus = bx + tw - pw - math.floor(2 * scale)
+        love.graphics.setFont(f_plus)
+        love.graphics.print("PLUS", x_plus, y_plus)
+
+        -- Draw "Endless Mode" subtitle below "PLUS" with smaller font, shifted right and vertically closer
         local text = "Endless Mode"
-        local tw = font_label:getWidth(text)
+        love.graphics.setFont(font_header_plus)
+        
         local box_w = math.floor((_G.text_size == "large" and 115 or 105) * scale)
         local box_gap = math.floor(8 * scale)
         local best_x = bx + layout.board_size - box_w
         local score_x = best_x - box_w - box_gap
-
         local avail_w = math.max(1, score_x - bx - math.floor(6 * scale))
+        
         local text_s = 1.0
-        if tw > avail_w then
-            text_s = avail_w / tw
+        local etw = font_header_plus:getWidth(text)
+        if etw > avail_w then
+            text_s = avail_w / etw
         end
-
-        love.graphics.print(text, bx, title_y + font_header_2048:getHeight() - offset, 0, text_s, text_s)
+        
+        local x_endless = bx + tw - etw * text_s - math.floor(2 * scale)
+        local y_endless = y_plus + ph - math.floor(2 * scale)
+        love.graphics.print(text, x_endless, y_endless, 0, text_s, text_s)
     else
-        -- Center title vertically in the header area
-        local title_y = math.floor((layout.board_y - font_header_2048:getHeight()) / 2)
-        love.graphics.print("2048", bx, title_y)
+        -- Normal gameplay: center the stacked title block vertically in the header area
+        local title_y = math.floor((layout.board_y - title_h) / 2)
+        local y_2048 = title_y
+        local y_plus = y_2048 + th - math.floor(11 * scale)
+
+        -- Draw "2048"
+        love.graphics.setFont(font_header_2048)
+        love.graphics.print("2048", bx, y_2048)
+
+        -- Draw "PLUS" with "S" below "8" and "P" at half of "4"
+        local x_plus = bx + tw - pw - math.floor(2 * scale)
+        love.graphics.setFont(f_plus)
+        love.graphics.print("PLUS", x_plus, y_plus)
     end
 end
 
@@ -3300,20 +3338,41 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.setColor(getTileColor(2048))
         roundedRect("fill", tile_x, tile_y, tile_size, tile_size, tile_size * 0.12)
 
-        -- Draw "2048" text
+        -- Draw "2048" and "PLUS" text matching the new logo
         love.graphics.setColor(getTileTextColor(2048))
         local f_logo = font_main_menu_title or font_tile_large
-        love.graphics.setFont(f_logo)
+        local f_plus = font_main_menu_plus or font_tile_small
+        
         local tw = f_logo:getWidth("2048")
         local th = f_logo:getHeight()
+        local pw = f_plus:getWidth("PLUS")
+        local ph = f_plus:getHeight()
 
-        -- Safe dynamic scaling for logo text inside the tile
+        local max_w = tile_size - math.floor(16 * scale)
+
         local logo_s = 1.0
-        local max_w = tile_size - math.floor(12 * scale)
         if tw > max_w then
             logo_s = max_w / tw
         end
-        love.graphics.print("2048", tile_x + (tile_size - tw * logo_s) / 2, tile_y + (tile_size - th * logo_s) / 2, 0, logo_s, logo_s)
+
+        local tw_scaled = tw * logo_s
+        local th_scaled = th * logo_s
+        local pw_scaled = pw * logo_s
+        local ph_scaled = ph * logo_s
+
+        -- Center "2048" exactly in the box
+        local x_2048 = tile_x + (tile_size - tw_scaled) / 2
+        local y_2048 = tile_y + (tile_size - th_scaled) / 2
+
+        love.graphics.setFont(f_logo)
+        love.graphics.print("2048", x_2048, y_2048, 0, logo_s, logo_s)
+
+        -- Position "PLUS" below "2048", with "P" horizontally aligned under the middle of "4"
+        local x_plus = x_2048 + tw_scaled * 0.58
+        local y_plus = y_2048 + th_scaled - math.floor(26 * scale * logo_s)
+
+        love.graphics.setFont(f_plus)
+        love.graphics.print("PLUS", x_plus, y_plus, 0, logo_s, logo_s)
     end
 
     -- Menu options start position
@@ -5133,7 +5192,7 @@ function renderer.drawAbout(skip_transition)
 
     love.graphics.setFont(font_title)
     love.graphics.setColor(ui_text)
-    local title = "About 2048"
+    local title = "About 2048 Plus"
     local tw = font_title:getWidth(title)
     love.graphics.print(title, (w - tw) / 2, padding)
 

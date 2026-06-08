@@ -1,7 +1,7 @@
 #!/bin/sh
-# HELP: 2048
+# HELP: 2048 Plus
 # ICON: logo_2048
-# GRID: 2048
+# GRID: 2048 Plus
 
 STAGE_OVERLAY=0 . /opt/muos/script/var/func.sh
 
@@ -11,7 +11,7 @@ if command -v SETUP_APP >/dev/null 2>&1; then
     APP_BIN="bin/love"
     SETUP_APP "love" ""
 
-    APP_DIR="/run/muos/storage/application/2048"
+    APP_DIR="/run/muos/storage/application/2048 Plus"
     cd "$APP_DIR/.game" || exit
 
     export SDL_GAMECONTROLLERCONFIG_FILE="/usr/lib/gamecontrollerdb.txt"
@@ -38,7 +38,7 @@ if command -v SETUP_APP >/dev/null 2>&1; then
 
     command -v CAFFEINE >/dev/null 2>&1 && CAFFEINE on
     $GPTOKEYB "love" &
-    ./bin/love . "${SCREEN_RESOLUTION}" > "$APP_DIR/.game/2048.log" 2>&1
+    ./bin/love . "${SCREEN_RESOLUTION}" > "$APP_DIR/.game/2048 Plus.log" 2>&1
     kill -9 "$(pidof gptokeyb2.armhf)" 2>/dev/null || true
     command -v CAFFEINE >/dev/null 2>&1 && CAFFEINE off
 
@@ -55,7 +55,7 @@ else
 
     echo app >/tmp/act_go
 
-    LOVEDIR="$MUOS_STORE_DIR/application/2048/.game"
+    LOVEDIR="$MUOS_STORE_DIR/application/2048 Plus/.game"
     GPTOKEYB="$(GET_VAR "device" "storage/rom/mount")/MUOS/emulator/gptokeyb/gptokeyb2.armhf"
     STATICDIR="$LOVEDIR/static/"
     BINDIR="$LOVEDIR/bin"
@@ -70,7 +70,7 @@ else
     PRIMARY_APP_DIR="$(GET_VAR "device" "storage/rom/mount")/MUOS/application"
     APP_DIR="$(dirname "$LOVEDIR")"
     SRC_GLYPH_DIR="$APP_DIR/glyph"
-    DEST_APP_DIR="$PRIMARY_APP_DIR/2048"
+    DEST_APP_DIR="$PRIMARY_APP_DIR/2048 Plus"
     DEST_GLYPH_DIR="$DEST_APP_DIR/glyph"
 
     case "$APP_DIR/" in
@@ -96,7 +96,7 @@ else
 
     command -v CAFFEINE >/dev/null 2>&1 && CAFFEINE on
     $GPTOKEYB "love" &
-    ./bin/love . "${SCREEN_RESOLUTION}" > "$LOVEDIR/2048.log" 2>&1
+    ./bin/love . "${SCREEN_RESOLUTION}" > "$LOVEDIR/2048 Plus.log" 2>&1
     kill -9 "$(pidof gptokeyb2.armhf)" 2>/dev/null || true
     command -v CAFFEINE >/dev/null 2>&1 && CAFFEINE off
 fi

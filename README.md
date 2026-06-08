@@ -1,4 +1,4 @@
-# 2048 for muOS
+# 2048 Plus for muOS
 
 <p align="center">
   <img src="screenshot.png" alt="2048 Gameplay Screenshot" width="250" />
@@ -36,7 +36,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
 1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048-muos/releases) page.
 2. Move the downloaded file to the `/mnt/mmc/MUOS/ARCHIVE` folder on your SD card.
 3. Open Archive Manager on your device and select the file to install.
-4. After installation, you'll find an entry called "2048" in the Applications section.
+4. After installation, you'll find an entry called "2048 Plus" in the Applications section.
 
 ## Controls
 
