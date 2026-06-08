@@ -117,7 +117,7 @@ function Game.new(mode)
         end
     end
     -- Trigger "First Steps" achievement
-    if _G.unlockAchievement then
+    if _G.unlockAchievement and self.mode ~= "huge" then
         _G.unlockAchievement("ach_first_game")
     end
 
@@ -395,19 +395,19 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_2048")
                     end
 
-                    if merged.value >= 512 and _G.unlockAchievement then
+                    if merged.value >= 512 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_merge_512")
                     end
 
-                    if merged.value >= 1024 and _G.unlockAchievement then
+                    if merged.value >= 1024 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_merge_1024")
                     end
 
-                    if merged.value >= 4096 and _G.unlockAchievement then
+                    if merged.value >= 4096 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_4096")
                     end
 
-                    if merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
+                    if merged.value >= 1024 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_untouchable")
                     end
 
@@ -415,7 +415,7 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_2048_plus")
                     end
 
-                    if merged.value >= 2048 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement then
+                    if merged.value >= 2048 and _G.achievements.powerups_used_this_run == 0 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_untouchable_2048")
                     end
 
@@ -507,7 +507,7 @@ function Game:move(direction)
         if _G.achievements.powerups_used_this_run == nil then
             _G.achievements.powerups_used_this_run = 0
         end
-        if _G.unlockAchievement then
+        if _G.unlockAchievement and self.mode ~= "huge" then
             if self.score >= 1000 then _G.unlockAchievement("ach_score_1k") end
             if self.score >= 2000 then _G.unlockAchievement("ach_score_2k") end
             if self.score >= 5000 then _G.unlockAchievement("ach_score_5k") end

@@ -4398,7 +4398,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         },
         {
             name        = "Huge Mode (5x5)",
-            desc        = "Spacious 5x5 board. Relaxed grid, larger tiles.",
+            desc        = "5×5 board. No achievements except Spacious Giant.",
             icon        = "huge",
             bestScore   = save.loadHighScore("huge"),
             available   = true,
