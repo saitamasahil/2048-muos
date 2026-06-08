@@ -14,6 +14,8 @@
 - Smooth Screen Transitions: Added crossfade transitions when navigating between screens.
 
 ### Changed
+- Rebranded and renamed the game to "2048 Plus" across configuration files, launcher scripts, package layouts, and system headings.
+- Redesigned and aligned the stacked "2048 PLUS" main menu and gameplay header logos.
 - Plus Mode Balancing: Reduced the rate at which power-ups are awarded to make the gameplay significantly more strategic and challenging.
 - Demolition Expert Achievement: Reduced the required bomb usage count from 10 to 4 in Plus Mode.
 
