@@ -49,6 +49,10 @@ This project is a direct port of the popular open-source [2048 Android](https://
   <img src="splash.webp" alt="Splash Animation" width="280" />
 </p>
 
+<p align="center">
+  Splash animation dynamically changes colors based on the selected theme.
+</p>
+
 </details>
 
 <br>
