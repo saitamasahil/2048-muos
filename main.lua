@@ -1,5 +1,5 @@
--- 2048 for muOS — Main entry point
--- A faithful port of the classic 2048 game for aarch64 handhelds
+-- 2048 Plus — Main entry point
+-- A feature-packed port of the classic 2048 game
 
 require("globals")
 
