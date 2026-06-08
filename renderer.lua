@@ -4398,7 +4398,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         },
         {
             name        = "Huge Mode (5x5)",
-            desc        = "5×5 board. No achievements except Spacious Giant.",
+            desc        = "5×5 board. Achievements are disabled.",
             icon        = "huge",
             bestScore   = save.loadHighScore("huge"),
             available   = true,
