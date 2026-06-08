@@ -1,7 +1,7 @@
 # 2048 Plus for muOS
 
 <p align="center">
-  <img src="screenshot.png" alt="2048 Gameplay Screenshot" width="250" />
+  <img src="demo.webp" alt="Gameplay Animation" width="250" />
 </p>
 
 A feature-packed port of the classic puzzle game 2048 for muOS, built using the LÖVE framework.
