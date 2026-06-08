@@ -1,7 +1,7 @@
 # 2048 Plus for muOS
 
 <p align="center">
-  <img src="demo.webp" alt="Gameplay Animation" width="250" />
+  <img src="demo.webp" alt="Gameplay Animation" width="280" />
 </p>
 
 A feature-packed port of the classic puzzle game 2048 for muOS, built using the LÖVE framework.
@@ -37,6 +37,46 @@ This project is a direct port of the popular open-source [2048 Android](https://
 2. Move the downloaded file to the `/mnt/mmc/MUOS/ARCHIVE` folder on your SD card.
 3. Open Archive Manager on your device and select the file to install.
 4. After installation, you'll find an entry called "2048 Plus" in the Applications section.
+
+## Visual Showcase
+
+<details>
+<summary><b>Splash Animation</b></summary>
+
+<br>
+
+<p align="center">
+  <img src="splash.webp" alt="Splash Animation" width="480" />
+</p>
+
+</details>
+
+<br>
+
+<details>
+<summary><b>Screenshots</b></summary>
+
+<br>
+
+<p align="center">
+  <img src="screenshots/screenshot1.png" width="30%" />
+  <img src="screenshots/screenshot2.png" width="30%" />
+  <img src="screenshots/screenshot3.png" width="30%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screenshot4.png" width="30%" />
+  <img src="screenshots/screenshot5.png" width="30%" />
+  <img src="screenshots/screenshot6.png" width="30%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screenshot7.png" width="30%" />
+  <img src="screenshots/screenshot8.png" width="30%" />
+  <img src="screenshots/screenshot9.png" width="30%" />
+</p>
+
+</details>
 
 ## Controls
 
