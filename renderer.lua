@@ -858,7 +858,7 @@ local themes = {
         },
         super_tile_color = {hex("#ff8000")},
         dark_text        = {hex("#1a3c34")},
-        light_text       = {hex("#164e75")},
+        light_text       = {hex("#bfe4f4")},
         ui_text          = {hex("#1a6c5a")},   -- wetlands forest green
         bg_color         = {hex("#eef7f4")},   -- wetland water backdrop
         board_color      = {hex("#d2e4df")},   -- soft frame
