@@ -4981,14 +4981,14 @@ function renderer.drawAchievements(scroll, skip_transition)
             local isUnlocked = _G.achievements[ach.id]
 
             -- Card background
-            love.graphics.setColor(board_color[1], board_color[2], board_color[3], isUnlocked and 0.9 or 0.4)
+            love.graphics.setColor(board_color[1], board_color[2], board_color[3], isUnlocked and 0.9 or 0.7)
             roundedRect("fill", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
 
             -- Card border
             if isUnlocked then
                 love.graphics.setColor(help_key_color)
             else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.2)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.4)
             end
             love.graphics.setLineWidth(math.floor(2 * scale))
             roundedRect("line", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
@@ -5099,7 +5099,7 @@ function renderer.drawAchievements(scroll, skip_transition)
             if isUnlocked then
                 love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 1)
             else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.5)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.75)
             end
             love.graphics.setFont(font_label)
             love.graphics.print(ach.name, text_x, current_y + math.floor(12 * scale))
@@ -5108,7 +5108,7 @@ function renderer.drawAchievements(scroll, skip_transition)
             if isUnlocked then
                 love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.8)
             else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.35)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.65)
             end
             love.graphics.print(ach.desc, text_x, current_y + math.floor(42 * scale))
 
@@ -5117,20 +5117,20 @@ function renderer.drawAchievements(scroll, skip_transition)
             local rew_text = "Unlocks: " .. ach.reward
             local rw = font_help_label:getWidth(rew_text)
             local tag_x = w - padding - rw - math.floor(25 * scale)
-            local tag_y = current_y + math.floor(22 * scale)
+            local tag_y = current_y + math.floor(13 * scale)
 
             -- Tag background
             if isUnlocked then
                 love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 0.2)
             else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.1)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.18)
             end
             roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_help_label:getHeight() + math.floor(8 * scale), math.floor(6 * scale))
 
             if isUnlocked then
                 love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 1)
             else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.4)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
             end
             love.graphics.print(rew_text, tag_x, tag_y)
 

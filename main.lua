@@ -168,7 +168,13 @@ function love.load(args)
                 ach_goose_2048 = "honk"
             }
             if theme_map[id] then
-                table.insert(_G.unlocked_themes, theme_map[id])
+                local already = false
+                for _, existing in ipairs(_G.unlocked_themes) do
+                    if existing == theme_map[id] then already = true; break end
+                end
+                if not already then
+                    table.insert(_G.unlocked_themes, theme_map[id])
+                end
             end
 
             local names = {
