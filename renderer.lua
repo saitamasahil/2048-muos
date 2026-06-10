@@ -4605,8 +4605,8 @@ function renderer.drawSecretMenu(selection, skip_transition)
     if love.system.getOS() ~= "Web" then
         local server = require("server")
         if server.isActive() then
-            local url = "http://" .. server.getLocalIP() .. ":" .. server.getPort()
-            table.insert(options, "Play in Web: ON (" .. url .. ")")
+            local url = server.getLocalIP() .. ":" .. server.getPort()
+            table.insert(options, "Web: ON (" .. url .. ")")
         else
             table.insert(options, "Play in Web: OFF")
         end
@@ -4623,6 +4623,7 @@ function renderer.drawSecretMenu(selection, skip_transition)
     local available_h = badge_y - subtitle_y - subtitle_h
     local start_y = math.floor(subtitle_y + subtitle_h + (available_h - menu_h) / 2)
 
+    local margin = math.floor(20 * scale)
     local max_ow = 0
     for _, opt in ipairs(options) do
         local ow = font_message:getWidth(opt)
@@ -4630,7 +4631,8 @@ function renderer.drawSecretMenu(selection, skip_transition)
             max_ow = ow
         end
     end
-    local block_x = (w - max_ow) / 2
+    -- Clamp block_x so menu never shifts past the left margin
+    local block_x = math.max(margin, (w - max_ow) / 2)
 
     local target_oy = start_y + (selection - 1) * gap
     local sel_opt = options[selection]
@@ -4650,6 +4652,7 @@ function renderer.drawSecretMenu(selection, skip_transition)
     love.graphics.setColor(help_key_color)
     roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
 
+    local max_text_w = w - block_x - margin
     for i, opt in ipairs(options) do
         local oy = start_y + (i - 1) * gap
         if i == selection then
@@ -4657,7 +4660,15 @@ function renderer.drawSecretMenu(selection, skip_transition)
         else
             love.graphics.setColor(ui_text)
         end
-        love.graphics.print(opt, block_x, oy)
+        -- Truncate text that would overflow the right edge
+        local display = opt
+        if font_message:getWidth(display) > max_text_w then
+            while #display > 1 and font_message:getWidth(display .. "...") > max_text_w do
+                display = display:sub(1, -2)
+            end
+            display = display .. "..."
+        end
+        love.graphics.print(display, block_x, oy)
     end
 
     -- Footer bar for Secret Menu
