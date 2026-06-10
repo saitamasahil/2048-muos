@@ -58,7 +58,12 @@ function server.getLocalIP()
     udp:setpeername("8.8.8.8", 80)
     local ip, _ = udp:getsockname()
     udp:close()
-    return ip or "127.0.0.1"
+    return ip or "0.0.0.0"
+end
+
+function server.hasNetwork()
+    local ip = server.getLocalIP()
+    return ip ~= nil and ip ~= "0.0.0.0" and ip ~= ""
 end
 
 function server.getPort()

@@ -202,6 +202,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            width: 100%;
         }
 
         .game-card {
@@ -209,8 +210,10 @@
             border: 2px solid rgba(255, 255, 255, 0.05);
             border-radius: 28px;
             overflow: hidden;
-            width: 640px;
-            height: 480px;
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 4 / 3;
+            height: auto;
             position: relative;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
@@ -296,7 +299,8 @@
                 justify-items: center;
             }
             .control-panel {
-                width: 640px;
+                width: 100%;
+                max-width: 640px;
             }
             /* Show keyboard controls panel by default and stack under canvas */
             .main-layout.state-menu .panel-menu,
@@ -324,20 +328,15 @@
 
         @media (max-width: 680px) {
             .main-layout {
-                padding: 12px;
-                gap: 16px;
+                padding: 8px;
+                gap: 12px;
             }
             .game-card {
-                width: 100%;
-                max-width: 480px;
-                aspect-ratio: 4 / 3;
-                height: auto;
-                max-height: 360px;
                 border-radius: 16px;
             }
             .control-panel {
                 width: 100%;
-                max-width: 480px;
+                max-width: 640px;
                 padding: 16px;
                 border-radius: 16px;
             }
@@ -739,26 +738,6 @@
                 e.preventDefault();
             }
         }, false);
-
-        // DPR-aware canvas sizing: resize internal canvas buffer to physical pixels
-        // This prevents CSS upscaling blur on HiDPI / Retina / high-res screens
-        function resizeCanvasToDisplaySize() {
-            const canvas = document.getElementById('canvas');
-            if (!canvas) return;
-            const card = canvas.parentElement;
-            if (!card) return;
-            const dpr = window.devicePixelRatio || 1;
-            const cssW = card.clientWidth;
-            const cssH = card.clientHeight;
-            const physW = Math.round(cssW * dpr);
-            const physH = Math.round(cssH * dpr);
-            if (canvas.width !== physW || canvas.height !== physH) {
-                canvas.width = physW;
-                canvas.height = physH;
-            }
-        }
-
-        window.addEventListener('resize', resizeCanvasToDisplaySize);
 
         // Start loading sequence
         fetchInitialData();

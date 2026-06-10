@@ -646,7 +646,9 @@ function love.update(dt)
                                 server.stop()
                                 renderer.showToast("Play in Web server stopped.")
                             else
-                                if server.start() then
+                                if not server.hasNetwork() then
+                                    renderer.showToast("No WiFi available. Connect to a network first.")
+                                elseif server.start() then
                                     local url = "http://" .. server.getLocalIP() .. ":" .. server.getPort()
                                     renderer.showToast("Web server started! Play at " .. url, 5.0)
                                 else
