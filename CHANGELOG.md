@@ -1,5 +1,8 @@
 # Changelog
 
+## [3.0.1]
+- Achivement section is now perfectly readable
+
 ## [3.0.0]
 
 ### Added
