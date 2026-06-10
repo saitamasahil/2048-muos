@@ -4608,7 +4608,7 @@ function renderer.drawSecretMenu(selection, skip_transition)
             local url = server.getLocalIP() .. ":" .. server.getPort()
             table.insert(options, "Web: ON (" .. url .. ")")
         else
-            table.insert(options, "Play in Web: OFF")
+            table.insert(options, "Play on Web: OFF")
         end
     end
     table.insert(options, "Lock Secret Menu")
@@ -5310,6 +5310,6 @@ function renderer.isArcadeMenuClosed()
 
     return (arcade_panel_target == panel_h) and (arcade_panel_y_offset >= panel_h - 1)
 end
--- Play in Web Server Screen removed (server is now toggled inline inside the Secret Menu)
+-- Play on Web Server Screen removed (server is now toggled inline inside the Secret Menu)
 
 return renderer

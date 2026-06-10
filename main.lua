@@ -644,7 +644,7 @@ function love.update(dt)
                         if _G.cheats_selection == 6 then
                             if server.isActive() then
                                 server.stop()
-                                renderer.showToast("Play in Web server stopped.")
+                                renderer.showToast("Play on Web server stopped.")
                             else
                                 if not server.hasNetwork() then
                                     renderer.showToast("No WiFi available. Connect to a network first.")
