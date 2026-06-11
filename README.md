@@ -125,4 +125,4 @@ To build the package yourself, you should be on a Linux or macOS environment wit
 
 - Original Web Game: [Gabriele Cirulli](https://github.com/gabrielecirulli/2048)
 - Android Port Reference: [tpcstld - 2048](https://github.com/tpcstld/2048)
-- Built using the [LÖVE Framework](https://love2d.org/).
+- Built using the [LÖVE Framework](https://love2d.org/)
