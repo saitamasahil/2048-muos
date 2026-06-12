@@ -4419,7 +4419,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
     local play_modes = {
         {
             name      = "Classic Mode",
-            desc      = "Standard rules with Undo. Strategic puzzle play.",
+            desc      = "Standard rules. Strategic puzzle play.",
             icon      = "classic",
             bestScore = save.loadHighScore("classic"),
             accentR = 0.10, accentG = 0.75, accentB = 0.45,
