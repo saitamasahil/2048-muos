@@ -13,9 +13,13 @@
   - Time Attack Max Limit: Set the Time Attack max limit to 30s, 60s or 90s.
   - Vibration: Toggle haptic rumble feedback on supported devices.
 - Full Undo History Stack: Refactored the gameplay engine to support unlimited undos up to 100 moves.
+- Added smooth sliding visual highlight transitions for card selection highlights on the game mode select menus, with bilinear color morphing and proximity-based icon/text blending.
 
 ### Changed
 - Relocated Toast Notifications: Toast messages now pop up at the top of the screen instead of the bottom to prevent covering footer controls.
+
+### Fixed
+- Fixed a bug where closing the selection menu while on Page 1 / Arcade modes and reopening it played transition animations from the previous closed state; selection states now initialize and snap instantly to defaults (Classic on Page 0, Time Attack on Page 1) without sliding or page transition animations.
 
 ## [3.0.2]
 - Canvas alpha blending overlapping fixed

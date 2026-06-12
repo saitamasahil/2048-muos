@@ -450,6 +450,7 @@ function love.update(dt)
                     if sel == "Play Game" then
                         _G.appState = "PLAY_SELECT"
                         _G.play_select_selection = 1
+                        _G.arcade_selection = 1
                         renderer.setArcadeMenuOpen(true)
                     elseif sel:match("^Select Theme") then
                         _G.themeSelectPrevState = "MENU"
@@ -542,6 +543,7 @@ function love.update(dt)
                 sound.playMenuBack()
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "PLAY_SELECT"
+                    _G.arcade_selection = 1
                 end)
             end
             _G.arcade_selection = (row - 1) * 2 + col
@@ -920,6 +922,7 @@ function love.update(dt)
                     else
                         _G.appState = "PLAY_SELECT"
                         _G.play_select_selection = (game and game.mode == "plus") and 2 or 1
+                        _G.arcade_selection = 1
                         renderer.setArcadeMenuOpen(true)
                     end
                     game = nil
@@ -962,6 +965,7 @@ function love.update(dt)
                     else
                         _G.appState = "PLAY_SELECT"
                         _G.play_select_selection = (game and game.mode == "plus") and 2 or 1
+                        _G.arcade_selection = 1
                         renderer.setArcadeMenuOpen(true)
                     end
                     game = nil
@@ -1000,6 +1004,7 @@ function love.update(dt)
                     else
                         _G.appState = "PLAY_SELECT"
                         _G.play_select_selection = (game and game.mode == "plus") and 2 or 1
+                        _G.arcade_selection = 1
                         renderer.setArcadeMenuOpen(true)
                     end
                     game = nil

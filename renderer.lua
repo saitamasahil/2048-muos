@@ -42,6 +42,10 @@ local arcade_menu_bg_alpha = 0      -- dim overlay alpha (0..0.75)
 local panel_page_target = 0         -- 0 for Play Selection, 1 for Arcade modes
 local panel_page_current = 0
 
+local play_select_sel_current = nil
+local arcade_sel_col_current = nil
+local arcade_sel_row_current = nil
+
 function renderer.setArcadeMenuOpen(open)
     local scale = _G.scale or 1
     local card_h = math.floor((_G.text_size == "large" and 124 or 120) * scale)
@@ -54,6 +58,14 @@ function renderer.setArcadeMenuOpen(open)
 
     if open then
         arcade_panel_target = 0
+        play_select_sel_current = nil
+        arcade_sel_col_current = nil
+        arcade_sel_row_current = nil
+        if _G.appState == "PLAY_SELECT" then
+            panel_page_current = 0
+        elseif _G.appState == "ARCADE_MENU" then
+            panel_page_current = 1
+        end
     else
         arcade_panel_target = panel_h
     end
@@ -1651,13 +1663,22 @@ local function drawGooseTile(cx, cy, size, scale, shouldWaddle)
     love.graphics.pop()
 end
 
-local function drawGooseCardIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+local function drawGooseCardIcon(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
+
     love.graphics.push("all")
 
-    local color_r = is_selected and (r_acc or 0.15) or 0.45
-    local color_g = is_selected and (g_acc or 0.55) or 0.5
-    local color_b = is_selected and (b_acc or 0.75) or 0.58
-    local alpha = is_selected and 1.0 or 0.7
+    local target_r = r_acc or 0.15
+    local target_g = g_acc or 0.55
+    local target_b = b_acc or 0.75
+    local color_r = 0.45 + (target_r - 0.45) * select_factor
+    local color_g = 0.5  + (target_g - 0.5)  * select_factor
+    local color_b = 0.58 + (target_b - 0.58) * select_factor
+    local alpha = 0.7 + 0.3 * select_factor
 
     love.graphics.setColor(color_r, color_g, color_b, alpha)
     love.graphics.setLineWidth(math.floor(2 * scale))
@@ -1665,14 +1686,14 @@ local function drawGooseCardIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc
     -- Ambient float animation for selection
     local float_y = 0
     if is_selected then
-        float_y = math.sin(love.timer.getTime() * 4) * 2 * scale
+        float_y = math.sin(love.timer.getTime() * 4) * 2 * scale * select_factor
     end
     cy = cy + float_y
 
     -- Waddling/wiggle rotation when selected
     local time = love.timer.getTime()
-    local waddleAngle = is_selected and (math.sin(time * 12) * 0.12) or 0
-    local waddleY = is_selected and (math.abs(math.cos(time * 12)) * 1.5 * scale) or 0
+    local waddleAngle = is_selected and (math.sin(time * 12) * 0.12 * select_factor) or 0
+    local waddleY = is_selected and (math.abs(math.cos(time * 12)) * 1.5 * scale * select_factor) or 0
 
     love.graphics.translate(cx, cy + waddleY)
     love.graphics.rotate(waddleAngle)
@@ -2704,11 +2725,31 @@ function renderer.updateTransition(dt)
     end
     if not _G.screen_transitions then
         panel_page_current = panel_page_target
+        play_select_sel_current = _G.play_select_selection or 1
+        arcade_sel_col_current = ((_G.arcade_selection or 1) - 1) % 2 + 1
+        arcade_sel_row_current = math.floor(((_G.arcade_selection or 1) - 1) / 2) + 1
     else
         local page_lerp = 1 - math.exp(-22 * dt)
         panel_page_current = panel_page_current + (panel_page_target - panel_page_current) * page_lerp
         if math.abs(panel_page_current - panel_page_target) < 0.001 then
             panel_page_current = panel_page_target
+        end
+
+        local sel_lerp = 1 - math.exp(-12 * dt)
+        if not play_select_sel_current then
+            play_select_sel_current = _G.play_select_selection or 1
+        else
+            play_select_sel_current = play_select_sel_current + ((_G.play_select_selection or 1) - play_select_sel_current) * sel_lerp
+        end
+
+        local target_col = ((_G.arcade_selection or 1) - 1) % 2 + 1
+        local target_row = math.floor(((_G.arcade_selection or 1) - 1) / 2) + 1
+        if not arcade_sel_col_current then
+            arcade_sel_col_current = target_col
+            arcade_sel_row_current = target_row
+        else
+            arcade_sel_col_current = arcade_sel_col_current + (target_col - arcade_sel_col_current) * sel_lerp
+            arcade_sel_row_current = arcade_sel_row_current + (target_row - arcade_sel_row_current) * sel_lerp
         end
     end
 
@@ -3699,18 +3740,28 @@ end
 -- Arcade Menu
 -- ============================================================================
 -- Vector helper to draw an animated stopwatch
-local function drawStopwatch(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+local function drawStopwatch(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
+
     local t = love.timer.getTime()
     local r = 18 * scale
 
     love.graphics.push("all")
     love.graphics.setLineWidth(math.floor(2 * scale))
 
-    if is_selected then
-        love.graphics.setColor(r_acc or 0.0, g_acc or 0.85, b_acc or 0.8, 1.0)
-    else
-        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
-    end
+    local target_r = r_acc or 0.0
+    local target_g = g_acc or 0.85
+    local target_b = b_acc or 0.8
+    local color_r = 0.45 + (target_r - 0.45) * select_factor
+    local color_g = 0.5  + (target_g - 0.5)  * select_factor
+    local color_b = 0.58 + (target_b - 0.58) * select_factor
+    local alpha = 0.7 + 0.3 * select_factor
+
+    love.graphics.setColor(color_r, color_g, color_b, alpha)
 
     -- Outer circle
     love.graphics.circle("line", cx, cy, r)
@@ -3733,21 +3784,21 @@ local function drawStopwatch(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     love.graphics.line(cx, cy, cx, cy - r + math.floor(6 * scale))
 
     -- Second hand (rotates full circle every 8 seconds when selected)
-    local angle = -math.pi / 2
-    if is_selected then
-        angle = -math.pi / 2 + (t % 8) * (2 * math.pi / 8)
-    end
+    local active_angle = -math.pi / 2 + (t % 8) * (2 * math.pi / 8)
+    local angle = -math.pi / 2 + (active_angle - (-math.pi / 2)) * select_factor
     local hand_len = r - math.floor(4 * scale)
     love.graphics.setLineWidth(math.floor(1 * scale))
-    if is_selected then
-        if r_acc and r_acc > 0.8 and g_acc and g_acc < 0.3 then
-            love.graphics.setColor(0.0, 0.85, 0.8, 0.95) -- Active cyan ticking hand on pink stopwatch
-        else
-            love.graphics.setColor(0.95, 0.15, 0.45, 0.95) -- Active pink-red ticking hand
-        end
-    else
-        love.graphics.setColor(0.45, 0.5, 0.58, 0.6)
+
+    local sh_target_r, sh_target_g, sh_target_b = 0.95, 0.15, 0.45
+    if r_acc and r_acc > 0.8 and g_acc and g_acc < 0.3 then
+        sh_target_r, sh_target_g, sh_target_b = 0.0, 0.85, 0.8
     end
+    local sh_color_r = 0.45 + (sh_target_r - 0.45) * select_factor
+    local sh_color_g = 0.5  + (sh_target_g - 0.5)  * select_factor
+    local sh_color_b = 0.58 + (sh_target_b - 0.58) * select_factor
+    local sh_alpha = 0.6 + 0.35 * select_factor
+    love.graphics.setColor(sh_color_r, sh_color_g, sh_color_b, sh_alpha)
+
     love.graphics.line(cx, cy, cx + hand_len * math.cos(angle), cy + hand_len * math.sin(angle))
 
     love.graphics.pop()
@@ -3779,7 +3830,12 @@ local function drawLock(cx, cy, scale)
     love.graphics.pop()
 end
 
-local function drawIconTile(cx, cy, r, step, grid_x, grid_y, val, scale, is_selected, r_acc, g_acc, b_acc, tile_scale)
+local function drawIconTile(cx, cy, r, step, grid_x, grid_y, val, scale, select_factor, r_acc, g_acc, b_acc, tile_scale)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+
     local tw = step - math.floor(2 * scale)
     local th = step - math.floor(2 * scale)
     if step > 8 * scale then
@@ -3793,13 +3849,13 @@ local function drawIconTile(cx, cy, r, step, grid_x, grid_y, val, scale, is_sele
     local alpha = 0.3
     local bright = 1.0
     if val == 2 then
-        alpha = is_selected and 0.5 or 0.25
+        alpha = 0.25 + 0.25 * select_factor
     elseif val == 4 then
-        alpha = is_selected and 0.7 or 0.35
-        bright = 1.2
+        alpha = 0.35 + 0.35 * select_factor
+        bright = 1.0 + 0.2 * select_factor
     elseif val == 8 then
-        alpha = is_selected and 0.85 or 0.45
-        bright = 1.4
+        alpha = 0.45 + 0.40 * select_factor
+        bright = 1.0 + 0.4 * select_factor
     end
 
     love.graphics.push()
@@ -3817,16 +3873,25 @@ local function drawIconTile(cx, cy, r, step, grid_x, grid_y, val, scale, is_sele
 end
 
 -- Classic Mode icon
-local function drawClassicIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+local function drawClassicIcon(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
+
     local r = 14 * scale
     love.graphics.push("all")
     love.graphics.setLineWidth(math.floor(1.5 * scale))
 
-    if is_selected then
-        love.graphics.setColor(r_acc or 0.1, g_acc or 0.75, b_acc or 0.45, 1.0)
-    else
-        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
-    end
+    local r_base, g_base, b_base, a_base = 0.45, 0.5, 0.58, 0.7
+    local r_target, g_target, b_target, a_target = r_acc or 0.1, g_acc or 0.75, b_acc or 0.45, 1.0
+    love.graphics.setColor(
+        r_base + (r_target - r_base) * select_factor,
+        g_base + (g_target - g_base) * select_factor,
+        b_base + (b_target - b_base) * select_factor,
+        a_base + (a_target - a_base) * select_factor
+    )
 
     -- Draw grid box
     love.graphics.rectangle("line", cx - r, cy - r, r * 2, r * 2, math.floor(3 * scale))
@@ -3868,17 +3933,17 @@ local function drawClassicIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local ax, ay = 2 + ease * 2, 2
             local bx, by = 3 + ease * 1, 2
 
-            drawIconTile(cx, cy, r, step, 4, 3, 4, scale, is_selected, r_acc, g_acc, b_acc)
+            drawIconTile(cx, cy, r, step, 4, 3, 4, scale, select_factor, r_acc, g_acc, b_acc)
 
             if move_t < 0.3 then
-                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 2, scale, select_factor, r_acc, g_acc, b_acc)
             else
-                drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 4, 2, 4, scale, select_factor, r_acc, g_acc, b_acc, pulse)
             end
 
             if move_t >= 0.3 then
-                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
             end
 
         elseif move_idx == 2 then
@@ -3887,17 +3952,17 @@ local function drawClassicIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local ax, ay = 4, 2 + ease * 2
             local bx, by = 4, 3 + ease * 1
 
-            drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            drawIconTile(cx, cy, r, step, 1, 1, 2, scale, select_factor, r_acc, g_acc, b_acc)
 
             if move_t < 0.3 then
-                drawIconTile(cx, cy, r, step, ax, ay, 4, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 4, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 4, scale, select_factor, r_acc, g_acc, b_acc)
             else
-                drawIconTile(cx, cy, r, step, 4, 4, 8, scale, is_selected, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 4, 4, 8, scale, select_factor, r_acc, g_acc, b_acc, pulse)
             end
 
             if move_t >= 0.3 then
-                drawIconTile(cx, cy, r, step, 2, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                drawIconTile(cx, cy, r, step, 2, 1, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
             end
 
         elseif move_idx == 3 then
@@ -3907,16 +3972,16 @@ local function drawClassicIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local cx_tile, cy_tile = 2 - ease * 1, 1
 
             if move_t < 0.3 then
-                drawIconTile(cx, cy, r, step, ax, ay, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 8, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 2, scale, select_factor, r_acc, g_acc, b_acc)
             else
-                drawIconTile(cx, cy, r, step, 1, 4, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 1, 1, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 1, 4, 8, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 1, 4, scale, select_factor, r_acc, g_acc, b_acc, pulse)
             end
 
             if move_t >= 0.3 then
-                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
             end
 
         elseif move_idx == 4 then
@@ -3924,42 +3989,51 @@ local function drawClassicIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local ax, ay = 1, 4 - ease * 2
 
             if move_t < 0.3 then
-                drawIconTile(cx, cy, r, step, 1, 1, 4, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, ax, ay, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 1, 4, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 8, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, select_factor, r_acc, g_acc, b_acc)
             else
                 local bump = 0
                 if move_t < 0.5 then
                     bump = math.sin((move_t - 0.3) / 0.2 * math.pi) * 0.1
                 end
-                drawIconTile(cx, cy, r, step, 1, 1 - bump, 4, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 1, 2 - bump, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 1 - bump, 4, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 2 - bump, 8, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 4, 1, 2, scale, select_factor, r_acc, g_acc, b_acc)
             end
 
             if move_t >= 0.3 then
-                drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                drawIconTile(cx, cy, r, step, 2, 2, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
             end
         end
     else
         -- Draw static grid tiles when unselected
-        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-        drawIconTile(cx, cy, r, step, 3, 3, 4, scale, is_selected, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 3, 3, 4, scale, select_factor, r_acc, g_acc, b_acc)
     end
 
     love.graphics.pop()
 end
 
-local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+local function drawPlusIcon(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
+
     local r = 14 * scale
     love.graphics.push("all")
     love.graphics.setLineWidth(math.floor(1.5 * scale))
 
-    if is_selected then
-        love.graphics.setColor(r_acc or 0.95, g_acc or 0.60, b_acc or 0.10, 1.0)
-    else
-        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
-    end
+    local r_base, g_base, b_base, a_base = 0.45, 0.5, 0.58, 0.7
+    local r_target, g_target, b_target, a_target = r_acc or 0.95, g_acc or 0.60, b_acc or 0.10, 1.0
+    love.graphics.setColor(
+        r_base + (r_target - r_base) * select_factor,
+        g_base + (g_target - g_base) * select_factor,
+        b_base + (b_target - b_base) * select_factor,
+        a_base + (a_target - a_base) * select_factor
+    )
 
     -- Draw grid box
     love.graphics.rectangle("line", cx - r, cy - r, r * 2, r * 2, math.floor(3 * scale))
@@ -3993,14 +4067,14 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local bx, by = 3 + ease * 1, 2
 
             if move_t < 0.3 then
-                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 4, scale, select_factor, r_acc, g_acc, b_acc)
             else
-                drawIconTile(cx, cy, r, step, 3, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 3, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 4, 2, 4, scale, select_factor, r_acc, g_acc, b_acc)
             end
             if move_t >= 0.3 then
-                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                drawIconTile(cx, cy, r, step, 1, 1, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
             end
 
         elseif move_idx == 2 then
@@ -4010,14 +4084,14 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local shrink_scale = 1.0 - math.min(1.0, move_t / 0.3)
 
             if move_t < 0.3 then
-                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 4, scale, select_factor, r_acc, g_acc, b_acc)
                 if shrink_scale > 0 then
-                    drawIconTile(cx, cy, r, step, 1, 1, 2, scale, is_selected, r_acc, g_acc, b_acc, shrink_scale)
+                    drawIconTile(cx, cy, r, step, 1, 1, 2, scale, select_factor, r_acc, g_acc, b_acc, shrink_scale)
                 end
             else
-                drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 3, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 2, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 3, 2, 4, scale, select_factor, r_acc, g_acc, b_acc)
             end
 
             local arrow_alpha = math.max(0, 1.0 - move_t / 1.5)
@@ -4027,10 +4101,10 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             love.graphics.polygon("fill", cx - 6 * scale, cy - 3 * scale, cx - 9 * scale, cy + 2 * scale, cx - 3 * scale, cy + 1 * scale)
 
         elseif move_idx == 3 then
-            drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
+            drawIconTile(cx, cy, r, step, 2, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
 
             if move_t < 0.4 then
-                drawIconTile(cx, cy, r, step, 3, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 3, 2, 4, scale, select_factor, r_acc, g_acc, b_acc)
 
                 local cross_p = move_t / 0.4
                 local cross_size = (1.5 - 0.5 * cross_p) * step
@@ -4056,7 +4130,7 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
 
             if move_t >= 0.8 then
                 local bomb_spawn_scale = math.min(1.0, (move_t - 0.8) / 0.3)
-                drawIconTile(cx, cy, r, step, 1, 4, 4, scale, is_selected, r_acc, g_acc, b_acc, bomb_spawn_scale)
+                drawIconTile(cx, cy, r, step, 1, 4, 4, scale, select_factor, r_acc, g_acc, b_acc, bomb_spawn_scale)
             end
 
         elseif move_idx == 4 then
@@ -4066,20 +4140,20 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             if move_t < 0.4 then
                 local shake_x = math.sin(move_t * 50) * 0.1
                 local shake_y = math.cos(move_t * 60) * 0.1
-                drawIconTile(cx, cy, r, step, pos1_x + shake_x, pos1_y + shake_y, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, pos2_x - shake_y, pos2_y + shake_x, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, pos1_x + shake_x, pos1_y + shake_y, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, pos2_x - shake_y, pos2_y + shake_x, 4, scale, select_factor, r_acc, g_acc, b_acc)
 
                 love.graphics.setColor(1.0, 0.8, 0.2, 0.6)
                 love.graphics.circle("fill", cx, cy, 6 * scale * math.sin(move_t * math.pi / 0.4))
             else
-                drawIconTile(cx, cy, r, step, pos2_x, pos2_y, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, pos1_x, pos1_y, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, pos2_x, pos2_y, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, pos1_x, pos1_y, 4, scale, select_factor, r_acc, g_acc, b_acc)
             end
         end
     else
         -- Draw static grid tiles when unselected
-        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-        drawIconTile(cx, cy, r, step, 3, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 3, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
 
         -- Simple central "+" sign
         love.graphics.setLineWidth(math.floor(2 * scale))
@@ -4093,22 +4167,31 @@ local function drawPlusIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
 end
 
 -- Arcade Mode icon
-local function drawArcadeIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+local function drawArcadeIcon(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
+
     love.graphics.push("all")
     local t = love.timer.getTime()
 
     -- Tilted stick animation when selected
     local tilt_angle = 0
     if is_selected then
-        tilt_angle = 0.25 * math.sin(t * 8)
+        tilt_angle = 0.25 * math.sin(t * 8) * select_factor
     end
 
     -- Joystick Base (drawn with rounded rectangle outline and filled body)
-    if is_selected then
-        love.graphics.setColor(0.4, 0.45, 0.55, 0.85)
-    else
-        love.graphics.setColor(0.3, 0.35, 0.4, 0.6)
-    end
+    local rb_base, gb_base, bb_base, ab_base = 0.3, 0.35, 0.4, 0.6
+    local rb_target, gb_target, bb_target, ab_target = 0.4, 0.45, 0.55, 0.85
+    love.graphics.setColor(
+        rb_base + (rb_target - rb_base) * select_factor,
+        gb_base + (gb_target - gb_base) * select_factor,
+        bb_base + (bb_target - bb_base) * select_factor,
+        ab_base + (ab_target - ab_base) * select_factor
+    )
     love.graphics.setLineWidth(math.floor(2 * scale))
     love.graphics.rectangle("line", cx - 18 * scale, cy + 6 * scale, 36 * scale, 10 * scale, 4 * scale)
     love.graphics.rectangle("fill", cx - 14 * scale, cy + 8 * scale, 28 * scale, 6 * scale, 2 * scale)
@@ -4118,26 +4201,32 @@ local function drawArcadeIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     love.graphics.translate(cx, cy + 6 * scale)
     love.graphics.rotate(tilt_angle)
 
-    if is_selected then
-        love.graphics.setColor(0.88, 0.92, 0.95, 1.0)
-    else
-        love.graphics.setColor(0.55, 0.58, 0.62, 0.7)
-    end
+    local rs_base, gs_base, bs_base, as_base = 0.55, 0.58, 0.62, 0.7
+    local rs_target, gs_target, bs_target, as_target = 0.88, 0.92, 0.95, 1.0
+    love.graphics.setColor(
+        rs_base + (rs_target - rs_base) * select_factor,
+        gs_base + (gs_target - gs_base) * select_factor,
+        bs_base + (bs_target - bs_base) * select_factor,
+        as_base + (as_target - as_base) * select_factor
+    )
     love.graphics.setLineWidth(math.floor(3.5 * scale))
     love.graphics.line(0, 0, 0, -18 * scale)
 
     -- Ball top knob
-    if is_selected then
-        love.graphics.setColor(r_acc or 0.90, g_acc or 0.15, b_acc or 0.55, 1.0)
-    else
-        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
-    end
+    local rk_base, gk_base, bk_base, ak_base = 0.45, 0.5, 0.58, 0.7
+    local rk_target, gk_target, bk_target, ak_target = r_acc or 0.90, g_acc or 0.15, b_acc or 0.55, 1.0
+    love.graphics.setColor(
+        rk_base + (rk_target - rk_base) * select_factor,
+        gk_base + (gk_target - gk_base) * select_factor,
+        bk_base + (bk_target - bk_base) * select_factor,
+        ak_base + (ak_target - ak_base) * select_factor
+    )
     love.graphics.circle("fill", 0, -18 * scale, 7 * scale)
 
     -- Pulsing highlight shine
     if is_selected then
         local pulse = 0.65 + 0.35 * math.sin(t * 10)
-        love.graphics.setColor(1, 1, 1, pulse)
+        love.graphics.setColor(1, 1, 1, pulse * select_factor)
         love.graphics.setLineWidth(math.floor(1 * scale))
         love.graphics.circle("line", 0, -18 * scale, 7 * scale)
     end
@@ -4146,18 +4235,25 @@ local function drawArcadeIcon(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     love.graphics.pop()
 end
 
+local function drawHugeGrid(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
 
-
-local function drawHugeGrid(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     local r = 14 * scale
     love.graphics.push("all")
     love.graphics.setLineWidth(math.floor(1.5 * scale))
 
-    if is_selected then
-        love.graphics.setColor(r_acc or 0.58, g_acc or 0.25, b_acc or 0.95, 1.0)
-    else
-        love.graphics.setColor(0.45, 0.5, 0.58, 0.7)
-    end
+    local r_base, g_base, b_base, a_base = 0.45, 0.5, 0.58, 0.7
+    local r_target, g_target, b_target, a_target = r_acc or 0.58, g_acc or 0.25, b_acc or 0.95, 1.0
+    love.graphics.setColor(
+        r_base + (r_target - r_base) * select_factor,
+        g_base + (g_target - g_base) * select_factor,
+        b_base + (b_target - b_base) * select_factor,
+        a_base + (a_target - a_base) * select_factor
+    )
 
     -- Outer box
     love.graphics.rectangle("line", cx - r, cy - r, r * 2, r * 2, math.floor(3 * scale))
@@ -4184,20 +4280,20 @@ local function drawHugeGrid(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local cx_tile, cy_tile = 4 + ease * 1, 4
 
             if move_t < 0.4 then
-                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, bx, by, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ax, ay, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, bx, by, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 4, scale, select_factor, r_acc, g_acc, b_acc)
             else
                 local pulse = 1.0
                 if move_t < 0.8 then
                     pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
                 end
-                drawIconTile(cx, cy, r, step, 5, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, pulse)
-                drawIconTile(cx, cy, r, step, 5, 4, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 5, 2, 4, scale, select_factor, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 5, 4, 4, scale, select_factor, r_acc, g_acc, b_acc)
 
                 if move_t >= 0.6 then
                     local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 2, 3, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                    drawIconTile(cx, cy, r, step, 2, 3, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
                 end
             end
 
@@ -4207,20 +4303,20 @@ local function drawHugeGrid(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local dx, dy = 2, 3 + ease * 2
 
             if move_t < 0.4 then
-                drawIconTile(cx, cy, r, step, abx, aby, 4, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 4, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, dx, dy, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, abx, aby, 4, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, cx_tile, cy_tile, 4, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, dx, dy, 2, scale, select_factor, r_acc, g_acc, b_acc)
             else
                 local pulse = 1.0
                 if move_t < 0.8 then
                     pulse = 1.0 + 0.25 * math.sin((move_t - 0.4) * math.pi / 0.4)
                 end
-                drawIconTile(cx, cy, r, step, 5, 5, 8, scale, is_selected, r_acc, g_acc, b_acc, pulse)
-                drawIconTile(cx, cy, r, step, 2, 5, 2, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 5, 5, 8, scale, select_factor, r_acc, g_acc, b_acc, pulse)
+                drawIconTile(cx, cy, r, step, 2, 5, 2, scale, select_factor, r_acc, g_acc, b_acc)
 
                 if move_t >= 0.6 then
                     local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 4, 2, 4, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                    drawIconTile(cx, cy, r, step, 4, 2, 4, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
                 end
             end
 
@@ -4230,36 +4326,44 @@ local function drawHugeGrid(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
             local ex, ey = 4 - ease * 3, 2
 
             if move_t < 0.4 then
-                drawIconTile(cx, cy, r, step, abcx, abcy, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 2, 5, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, ex, ey, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, abcx, abcy, 8, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 2, 5, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, ex, ey, 4, scale, select_factor, r_acc, g_acc, b_acc)
             else
-                drawIconTile(cx, cy, r, step, 1, 5, 2, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 2, 5, 8, scale, is_selected, r_acc, g_acc, b_acc)
-                drawIconTile(cx, cy, r, step, 1, 2, 4, scale, is_selected, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 5, 2, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 2, 5, 8, scale, select_factor, r_acc, g_acc, b_acc)
+                drawIconTile(cx, cy, r, step, 1, 2, 4, scale, select_factor, r_acc, g_acc, b_acc)
 
                 if move_t >= 0.6 then
                     local spawn_scale = math.min(1.0, (move_t - 0.6) / 0.4)
-                    drawIconTile(cx, cy, r, step, 3, 3, 2, scale, is_selected, r_acc, g_acc, b_acc, spawn_scale)
+                    drawIconTile(cx, cy, r, step, 3, 3, 2, scale, select_factor, r_acc, g_acc, b_acc, spawn_scale)
                 end
             end
         end
     else
-        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-        drawIconTile(cx, cy, r, step, 3, 2, 2, scale, is_selected, r_acc, g_acc, b_acc)
-        drawIconTile(cx, cy, r, step, 4, 4, 4, scale, is_selected, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 2, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 3, 2, 2, scale, select_factor, r_acc, g_acc, b_acc)
+        drawIconTile(cx, cy, r, step, 4, 4, 4, scale, select_factor, r_acc, g_acc, b_acc)
     end
 
     love.graphics.pop()
 end
 
-local function drawSkull(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
+local function drawSkull(cx, cy, scale, select_factor, r_acc, g_acc, b_acc)
+    if type(select_factor) == "boolean" then
+        select_factor = select_factor and 1.0 or 0.0
+    end
+    select_factor = select_factor or 0.0
+    local is_selected = select_factor > 0.5
+
     love.graphics.push("all")
 
-    local color_r = is_selected and (r_acc or 0.85) or 0.45
-    local color_g = is_selected and (g_acc or 0.10) or 0.5
-    local color_b = is_selected and (b_acc or 0.10) or 0.58
-    local alpha = is_selected and 1.0 or 0.7
+    local r_base, g_base, b_base, a_base = 0.45, 0.5, 0.58, 0.7
+    local r_target, g_target, b_target, a_target = r_acc or 0.85, g_acc or 0.10, b_acc or 0.10, 1.0
+    local color_r = r_base + (r_target - r_base) * select_factor
+    local color_g = g_base + (g_target - g_base) * select_factor
+    local color_b = b_base + (b_target - b_base) * select_factor
+    local alpha = a_base + (a_target - a_base) * select_factor
 
     love.graphics.setColor(color_r, color_g, color_b, alpha)
     love.graphics.setLineWidth(math.floor(1.5 * scale))
@@ -4267,7 +4371,7 @@ local function drawSkull(cx, cy, scale, is_selected, r_acc, g_acc, b_acc)
     -- Ambient float animation for selection
     local float_y = 0
     if is_selected then
-        float_y = math.sin(love.timer.getTime() * 4) * 2 * scale
+        float_y = math.sin(love.timer.getTime() * 4) * 2 * scale * select_factor
     end
     cy = cy + float_y
 
@@ -4440,10 +4544,10 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         }
     }
 
+    -- Loop 1: Draw unselected card backgrounds
     for i, pm in ipairs(play_modes) do
         local cx_pos = panel_x + math.floor(16 * scale) + (i - 1) * (card_w0 + card_gap)
         local cy = cards_top
-        local is_sel = (i == play_select_selection)
 
         local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (i - 1) * 0.05)
         local card_scale = 0.92 + slide_t * 0.08
@@ -4453,44 +4557,93 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         love.graphics.scale(card_scale, card_scale)
         love.graphics.translate(-(cx_pos + card_w0 / 2), -(cy + card_h0 / 2))
 
-        if is_sel then
-            love.graphics.setColor(0.04, 0.12, 0.16, 0.85)
-            roundedRect("fill", cx_pos, cy, card_w0, card_h0, card_cr)
+        love.graphics.setColor(0.08, 0.08, 0.12, 0.6)
+        roundedRect("fill", cx_pos, cy, card_w0, card_h0, card_cr)
+        love.graphics.setColor(0.2, 0.22, 0.28, 0.35)
+        love.graphics.setLineWidth(math.floor(1 * scale))
+        roundedRect("line", cx_pos, cy, card_w0, card_h0, card_cr)
 
-            local pulse = 0.65 + 0.25 * math.sin(t * 5)
-            love.graphics.setLineWidth(math.floor(2 * scale))
-            love.graphics.setColor(pm.accentR, pm.accentG, pm.accentB, pulse)
-            roundedRect("line", cx_pos, cy, card_w0, card_h0, card_cr)
+        love.graphics.pop()
+    end
 
+    -- Phase 2: Draw the single sliding selection highlight box
+    do
+        local active_idx = play_select_selection or 1
+        local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (active_idx - 1) * 0.05)
+        local hl_scale = 0.92 + slide_t * 0.08
 
+        local sel_val = play_select_sel_current or play_select_selection or 1
+        local hl_x = panel_x + math.floor(16 * scale) + (sel_val - 1) * (card_w0 + card_gap)
+        local hl_y = cards_top
+
+        love.graphics.push()
+        love.graphics.translate(hl_x + card_w0 / 2, hl_y + card_h0 / 2)
+        love.graphics.scale(hl_scale, hl_scale)
+        love.graphics.translate(-(hl_x + card_w0 / 2), -(hl_y + card_h0 / 2))
+
+        -- Active selection background fill
+        love.graphics.setColor(0.04, 0.12, 0.16, 0.85)
+        roundedRect("fill", hl_x, hl_y, card_w0, card_h0, card_cr)
+
+        -- Active border with color morphing
+        local r_hl, g_hl, b_hl
+        if sel_val <= 1 then
+            r_hl, g_hl, b_hl = play_modes[1].accentR, play_modes[1].accentG, play_modes[1].accentB
+        elseif sel_val >= 3 then
+            r_hl, g_hl, b_hl = play_modes[3].accentR, play_modes[3].accentG, play_modes[3].accentB
+        elseif sel_val < 2 then
+            local f = sel_val - 1
+            r_hl = play_modes[1].accentR + (play_modes[2].accentR - play_modes[1].accentR) * f
+            g_hl = play_modes[1].accentG + (play_modes[2].accentG - play_modes[1].accentG) * f
+            b_hl = play_modes[1].accentB + (play_modes[2].accentB - play_modes[1].accentB) * f
         else
-            love.graphics.setColor(0.08, 0.08, 0.12, 0.6)
-            roundedRect("fill", cx_pos, cy, card_w0, card_h0, card_cr)
-            love.graphics.setColor(0.2, 0.22, 0.28, 0.35)
-            love.graphics.setLineWidth(math.floor(1 * scale))
-            roundedRect("line", cx_pos, cy, card_w0, card_h0, card_cr)
+            local f = sel_val - 2
+            r_hl = play_modes[2].accentR + (play_modes[3].accentR - play_modes[2].accentR) * f
+            g_hl = play_modes[2].accentG + (play_modes[3].accentG - play_modes[2].accentG) * f
+            b_hl = play_modes[2].accentB + (play_modes[3].accentB - play_modes[2].accentB) * f
         end
+
+        local pulse = 0.65 + 0.25 * math.sin(t * 5)
+        love.graphics.setLineWidth(math.floor(2 * scale))
+        love.graphics.setColor(r_hl, g_hl, b_hl, pulse)
+        roundedRect("line", hl_x, hl_y, card_w0, card_h0, card_cr)
+
+        love.graphics.pop()
+    end
+
+    -- Loop 2: Draw card contents
+    for i, pm in ipairs(play_modes) do
+        local cx_pos = panel_x + math.floor(16 * scale) + (i - 1) * (card_w0 + card_gap)
+        local cy = cards_top
+        local sel_val = play_select_sel_current or play_select_selection or 1
+        local select_factor = math.max(0, 1 - math.abs(i - sel_val))
+
+        local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (i - 1) * 0.05)
+        local card_scale = 0.92 + slide_t * 0.08
+
+        love.graphics.push()
+        love.graphics.translate(cx_pos + card_w0 / 2, cy + card_h0 / 2)
+        love.graphics.scale(card_scale, card_scale)
+        love.graphics.translate(-(cx_pos + card_w0 / 2), -(cy + card_h0 / 2))
 
         local icon_cx = cx_pos + card_w0 / 2
         local icon_cy = cy + math.floor(42 * scale)
         if pm.icon == "classic" then
-            drawClassicIcon(icon_cx, icon_cy, scale, is_sel, pm.accentR, pm.accentG, pm.accentB)
+            drawClassicIcon(icon_cx, icon_cy, scale, select_factor, pm.accentR, pm.accentG, pm.accentB)
         elseif pm.icon == "plus" then
-            drawPlusIcon(icon_cx, icon_cy, scale, is_sel, pm.accentR, pm.accentG, pm.accentB)
+            drawPlusIcon(icon_cx, icon_cy, scale, select_factor, pm.accentR, pm.accentG, pm.accentB)
         elseif pm.icon == "arcade" then
-            drawArcadeIcon(icon_cx, icon_cy, scale, is_sel, pm.accentR, pm.accentG, pm.accentB)
+            drawArcadeIcon(icon_cx, icon_cy, scale, select_factor, pm.accentR, pm.accentG, pm.accentB)
         end
 
         love.graphics.setFont(font_score)
-        if is_sel then
-            love.graphics.setColor(pm.accentR, pm.accentG, pm.accentB, 1.0)
-        else
-            love.graphics.setColor(0.9, 0.92, 0.95, 1.0)
-        end
+        local name_r = 0.9 + (pm.accentR - 0.9) * select_factor
+        local name_g = 0.92 + (pm.accentG - 0.92) * select_factor
+        local name_b = 0.95 + (pm.accentB - 0.95) * select_factor
+        love.graphics.setColor(name_r, name_g, name_b, 1.0)
+
         local tw_lbl = font_score:getWidth(pm.name)
         love.graphics.print(pm.name, cx_pos + (card_w0 - tw_lbl) / 2, cy + math.floor(76 * scale))
-
-
 
         local badge_y = cy + math.floor(76 * scale) + font_score:getHeight() + math.floor(4 * scale)
         local has_badge = false
@@ -4516,19 +4669,25 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
             badge_h = bth + math.floor(3 * scale)
             local bx = cx_pos + (card_w0 - badge_w) / 2
 
-            if is_sel then
-                love.graphics.setColor(pm.accentR * 0.15, pm.accentG * 0.15, pm.accentB * 0.15, 0.4)
-                roundedRect("fill", bx, badge_y, badge_w, badge_h, math.floor(6 * scale))
-                love.graphics.setColor(pm.accentR, pm.accentG, pm.accentB, 0.45)
-                roundedRect("line", bx, badge_y, badge_w, badge_h, math.floor(6 * scale))
-                love.graphics.setColor(pm.accentR, pm.accentG, pm.accentB, 0.95)
-            else
-                love.graphics.setColor(0.12, 0.12, 0.18, 0.4)
-                roundedRect("fill", bx, badge_y, badge_w, badge_h, math.floor(6 * scale))
-                love.graphics.setColor(0.3, 0.32, 0.38, 0.4)
-                roundedRect("line", bx, badge_y, badge_w, badge_h, math.floor(6 * scale))
-                love.graphics.setColor(0.7, 0.72, 0.78, 0.9)
-            end
+            local bg_r = 0.12 + (pm.accentR * 0.15 - 0.12) * select_factor
+            local bg_g = 0.12 + (pm.accentG * 0.15 - 0.12) * select_factor
+            local bg_b = 0.18 + (pm.accentB * 0.15 - 0.18) * select_factor
+            love.graphics.setColor(bg_r, bg_g, bg_b, 0.4)
+            roundedRect("fill", bx, badge_y, badge_w, badge_h, math.floor(6 * scale))
+
+            local ln_r = 0.3 + (pm.accentR - 0.3) * select_factor
+            local ln_g = 0.32 + (pm.accentG - 0.32) * select_factor
+            local ln_b = 0.38 + (pm.accentB - 0.38) * select_factor
+            local ln_a = 0.4 + 0.05 * select_factor
+            love.graphics.setColor(ln_r, ln_g, ln_b, ln_a)
+            roundedRect("line", bx, badge_y, badge_w, badge_h, math.floor(6 * scale))
+
+            local tx_r = 0.7 + (pm.accentR - 0.7) * select_factor
+            local tx_g = 0.72 + (pm.accentG - 0.72) * select_factor
+            local tx_b = 0.78 + (pm.accentB - 0.78) * select_factor
+            local tx_a = 0.9 + 0.05 * select_factor
+            love.graphics.setColor(tx_r, tx_g, tx_b, tx_a)
+
             love.graphics.print(badge_text, bx + math.floor(4 * scale), badge_y + math.floor(1.5 * scale))
         end
 
@@ -4636,13 +4795,13 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         }
     }
 
+    -- Loop 1: Draw unselected card backgrounds
     for i, mode in ipairs(arcade_modes) do
         local col = (i - 1) % 2 + 1
         local row = math.floor((i - 1) / 2) + 1
 
         local cx_pos = panel_x + math.floor(16 * scale) + (col - 1) * (card_w_arc + card_gap)
         local cy = cards_top + (row - 1) * (card_h_arc + card_gap)
-        local is_sel = (i == arcade_selection)
 
         local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (i - 1) * 0.05)
         local card_scale = 0.92 + slide_t * 0.08
@@ -4652,17 +4811,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         love.graphics.scale(card_scale, card_scale)
         love.graphics.translate(-(cx_pos + card_w_arc / 2), -(cy + card_h_arc / 2))
 
-        if is_sel and mode.available then
-            love.graphics.setColor(0.04, 0.12, 0.16, 0.85)
-            roundedRect("fill", cx_pos, cy, card_w_arc, card_h_arc, card_cr)
-
-            local pulse = 0.65 + 0.25 * math.sin(t * 5)
-            love.graphics.setLineWidth(math.floor(2 * scale))
-            love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, pulse)
-            roundedRect("line", cx_pos, cy, card_w_arc, card_h_arc, card_cr)
-
-
-        elseif mode.available then
+        if mode.available then
             love.graphics.setColor(0.08, 0.08, 0.12, 0.6)
             roundedRect("fill", cx_pos, cy, card_w_arc, card_h_arc, card_cr)
             love.graphics.setColor(0.2, 0.22, 0.28, 0.35)
@@ -4676,27 +4825,103 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
             roundedRect("line", cx_pos, cy, card_w_arc, card_h_arc, card_cr)
         end
 
+        love.graphics.pop()
+    end
+
+    -- Phase 2: Draw the single sliding selection highlight box
+    do
+        local active_idx = arcade_selection or 1
+        local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (active_idx - 1) * 0.05)
+        local hl_scale = 0.92 + slide_t * 0.08
+
+        local col_val = arcade_sel_col_current or ((arcade_selection - 1) % 2 + 1)
+        local row_val = arcade_sel_row_current or (math.floor((arcade_selection - 1) / 2) + 1)
+
+        local hl_x = panel_x + math.floor(16 * scale) + (col_val - 1) * (card_w_arc + card_gap)
+        local hl_y = cards_top + (row_val - 1) * (card_h_arc + card_gap)
+
+        love.graphics.push()
+        love.graphics.translate(hl_x + card_w_arc / 2, hl_y + card_h_arc / 2)
+        love.graphics.scale(hl_scale, hl_scale)
+        love.graphics.translate(-(hl_x + card_w_arc / 2), -(hl_y + card_h_arc / 2))
+
+        -- Selection background fill
+        love.graphics.setColor(0.04, 0.12, 0.16, 0.85)
+        roundedRect("fill", hl_x, hl_y, card_w_arc, card_h_arc, card_cr)
+
+        -- Bilinear color interpolation for Page 1 active border
+        local c11 = {r = 0.95, g = 0.80, b = 0.10} -- Time Attack (1,1)
+        local c21 = {r = 0.58, g = 0.25, b = 0.95} -- Huge Mode (2,1)
+        local c12 = {r = 0.85, g = 0.10, b = 0.10} -- No Mercy Mode (1,2)
+        local c22 = {r = 0.15, g = 0.55, b = 0.75} -- Goose Mode (2,2)
+
+        local tx = math.max(0, math.min(1, col_val - 1))
+        local ty = math.max(0, math.min(1, row_val - 1))
+
+        local r_top = c11.r + (c21.r - c11.r) * tx
+        local g_top = c11.g + (c21.g - c11.g) * tx
+        local b_top = c11.b + (c21.b - c11.b) * tx
+
+        local r_bot = c12.r + (c22.r - c12.r) * tx
+        local g_bot = c12.g + (c22.g - c12.g) * tx
+        local b_bot = c12.b + (c22.b - c12.b) * tx
+
+        local r_hl = r_top + (r_bot - r_top) * ty
+        local g_hl = g_top + (g_bot - g_top) * ty
+        local b_hl = b_top + (b_bot - b_top) * ty
+
+        local pulse = 0.65 + 0.25 * math.sin(t * 5)
+        love.graphics.setLineWidth(math.floor(2 * scale))
+        love.graphics.setColor(r_hl, g_hl, b_hl, pulse)
+        roundedRect("line", hl_x, hl_y, card_w_arc, card_h_arc, card_cr)
+
+        love.graphics.pop()
+    end
+
+    -- Loop 2: Draw card contents
+    for i, mode in ipairs(arcade_modes) do
+        local col = (i - 1) % 2 + 1
+        local row = math.floor((i - 1) / 2) + 1
+
+        local cx_pos = panel_x + math.floor(16 * scale) + (col - 1) * (card_w_arc + card_gap)
+        local cy = cards_top + (row - 1) * (card_h_arc + card_gap)
+
+        local col_val = arcade_sel_col_current or ((arcade_selection - 1) % 2 + 1)
+        local row_val = arcade_sel_row_current or (math.floor((arcade_selection - 1) / 2) + 1)
+        local dist_x = math.abs(col - col_val)
+        local dist_y = math.abs(row - row_val)
+        local select_factor = math.max(0, 1 - dist_x) * math.max(0, 1 - dist_y)
+
+        local slide_t = math.max(0, 1 - raw_offset / math.max(1, panel_h * 0.5) - (i - 1) * 0.05)
+        local card_scale = 0.92 + slide_t * 0.08
+
+        love.graphics.push()
+        love.graphics.translate(cx_pos + card_w_arc / 2, cy + card_h_arc / 2)
+        love.graphics.scale(card_scale, card_scale)
+        love.graphics.translate(-(cx_pos + card_w_arc / 2), -(cy + card_h_arc / 2))
+
         local icon_cx = cx_pos + math.floor(28 * scale)
         local icon_cy = cy + card_h_arc / 2
         if mode.icon == "stopwatch" then
-            drawStopwatch(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
+            drawStopwatch(icon_cx, icon_cy, scale, select_factor, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "huge" then
-            drawHugeGrid(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
+            drawHugeGrid(icon_cx, icon_cy, scale, select_factor, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "skull" then
-            drawSkull(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
+            drawSkull(icon_cx, icon_cy, scale, select_factor, mode.accentR, mode.accentG, mode.accentB)
         elseif mode.icon == "lock" then
             drawLock(icon_cx, icon_cy, scale)
         elseif mode.icon == "goose" then
-            drawGooseCardIcon(icon_cx, icon_cy, scale, is_sel, mode.accentR, mode.accentG, mode.accentB)
+            drawGooseCardIcon(icon_cx, icon_cy, scale, select_factor, mode.accentR, mode.accentG, mode.accentB)
         end
 
         local text_x = cx_pos + math.floor(52 * scale)
         local name_y = cy + math.floor(8 * scale)
         love.graphics.setFont(font_score)
-        if is_sel and mode.available then
-            love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 1.0)
-        elseif mode.available then
-            love.graphics.setColor(0.9, 0.92, 0.95, 1.0)
+        if mode.available then
+            local name_r = 0.9 + (mode.accentR - 0.9) * select_factor
+            local name_g = 0.92 + (mode.accentG - 0.92) * select_factor
+            local name_b = 0.95 + (mode.accentB - 0.95) * select_factor
+            love.graphics.setColor(name_r, name_g, name_b, 1.0)
         else
             love.graphics.setColor(0.4, 0.42, 0.48, 0.7)
         end
@@ -4710,18 +4935,30 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
             local best_text = "BEST: " .. tostring(mode.bestScore)
             local btw = font_help_label:getWidth(best_text)
             local bth = font_help_label:getHeight()
-
             local badge_w = btw + math.floor(8 * scale)
             badge_h = bth + math.floor(3 * scale)
             local bx = text_x
             local by = badge_y
 
-            if is_sel and mode.available then
-                love.graphics.setColor(mode.accentR * 0.15, mode.accentG * 0.15, mode.accentB * 0.15, 0.4)
+            if mode.available then
+                local bg_r = 0.12 + (mode.accentR * 0.15 - 0.12) * select_factor
+                local bg_g = 0.12 + (mode.accentG * 0.15 - 0.12) * select_factor
+                local bg_b = 0.18 + (mode.accentB * 0.15 - 0.18) * select_factor
+                love.graphics.setColor(bg_r, bg_g, bg_b, 0.4)
                 roundedRect("fill", bx, by, badge_w, badge_h, math.floor(6 * scale))
-                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.45)
+
+                local ln_r = 0.3 + (mode.accentR - 0.3) * select_factor
+                local ln_g = 0.32 + (mode.accentG - 0.32) * select_factor
+                local ln_b = 0.38 + (mode.accentB - 0.38) * select_factor
+                local ln_a = 0.4 + 0.05 * select_factor
+                love.graphics.setColor(ln_r, ln_g, ln_b, ln_a)
                 roundedRect("line", bx, by, badge_w, badge_h, math.floor(6 * scale))
-                love.graphics.setColor(mode.accentR, mode.accentG, mode.accentB, 0.95)
+
+                local tx_r = 0.7 + (mode.accentR - 0.7) * select_factor
+                local tx_g = 0.72 + (mode.accentG - 0.72) * select_factor
+                local tx_b = 0.78 + (mode.accentB - 0.78) * select_factor
+                local tx_a = 0.9 + 0.05 * select_factor
+                love.graphics.setColor(tx_r, tx_g, tx_b, tx_a)
             else
                 love.graphics.setColor(0.12, 0.12, 0.18, 0.4)
                 roundedRect("fill", bx, by, badge_w, badge_h, math.floor(6 * scale))
