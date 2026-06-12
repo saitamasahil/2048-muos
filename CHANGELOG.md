@@ -1,5 +1,8 @@
 # Changelog
 
+## [3.0.2]
+- Canvas alpha blending overlapping fixed
+
 ## [3.0.1]
 - Achivement section is now perfectly readable
 
