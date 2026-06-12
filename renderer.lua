@@ -5423,7 +5423,7 @@ function renderer.drawAbout(skip_transition)
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
-    local padding = math.floor(20 * scale)
+    local padding = math.floor(12 * scale)
 
     love.graphics.setFont(font_title)
     love.graphics.setColor(ui_text)
@@ -5437,15 +5437,16 @@ function renderer.drawAbout(skip_transition)
     local vw = font_label:getWidth(version_text)
     love.graphics.print(version_text, (w - vw) / 2, padding + font_title:getHeight() - math.floor(2 * scale))
 
-    local start_y = padding + font_title:getHeight() + font_label:getHeight() + math.floor(15 * scale)
+    local start_y = padding + font_title:getHeight() + font_label:getHeight() + math.floor(8 * scale)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
 
     local text = "Developed by saitamasahil.\n" ..
                  "A feature-packed port of the classic 2048 puzzle game.\n\n" ..
+                 "Original concept by Gabriele Cirulli\n" ..
+                 "Built using the LÖVE Framework\n\n" ..
                  "If you enjoy the game, consider supporting!"
 
-    local text_w = font_help_label:getWidth("Developed by saitamasahil.")
     love.graphics.printf(text, 0, start_y, w, "center")
 
     if not qr_image then
@@ -5455,18 +5456,18 @@ function renderer.drawAbout(skip_transition)
 
     if qr_image then
         local iw, ih = qr_image:getDimensions()
-        local qr_size = math.floor(160 * scale)
+        local qr_size = math.floor(120 * scale)
         local qr_scale = qr_size / math.max(iw, ih)
         local scaled_w = iw * qr_scale
         local scaled_h = ih * qr_scale
 
         -- Calculate position
         local _, wrapped = font_help_label:getWrap(text, w)
-        local qr_y = start_y + #wrapped * font_help_label:getHeight() + math.floor(30 * scale)
+        local qr_y = start_y + #wrapped * font_help_label:getHeight() + math.floor(16 * scale)
         local qr_x = (w - scaled_w) / 2
 
         -- Draw white background behind QR
-        local bg_pad = math.floor(6 * scale)
+        local bg_pad = math.floor(4 * scale)
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.rectangle("fill", qr_x - bg_pad, qr_y - bg_pad, scaled_w + bg_pad * 2, scaled_h + bg_pad * 2, math.floor(4 * scale), math.floor(4 * scale))
 
@@ -5477,7 +5478,7 @@ function renderer.drawAbout(skip_transition)
         -- Caption
         love.graphics.setFont(font_help_label)
         love.graphics.setColor(ui_text)
-        love.graphics.printf("Scan to support on Ko-fi", 0, qr_y + scaled_h + math.floor(10 * scale), w, "center")
+        love.graphics.printf("Scan to support on Ko-fi", 0, qr_y + scaled_h + math.floor(6 * scale), w, "center")
     end
 
     -- Footer bar for About
