@@ -788,6 +788,8 @@ function love.update(dt)
                         _G.animation_speed = "fast"
                     elseif _G.animation_speed == "fast" then
                         _G.animation_speed = "instant"
+                    elseif _G.animation_speed == "instant" then
+                        _G.animation_speed = "slow"
                     else
                         _G.animation_speed = "normal"
                     end

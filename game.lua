@@ -78,6 +78,8 @@ function Game.new(mode)
         self.animationDuration = 0.06
     elseif _G.animation_speed == "instant" then
         self.animationDuration = 0
+    elseif _G.animation_speed == "slow" then
+        self.animationDuration = 0.24
     end
 
     -- Try to load saved game state
@@ -522,6 +524,8 @@ function Game:move(direction)
             self.animationDuration = 0.06
         elseif _G.animation_speed == "instant" then
             self.animationDuration = 0
+        elseif _G.animation_speed == "slow" then
+            self.animationDuration = 0.24
         end
 
         if self.mode == "goose" then
@@ -708,6 +712,8 @@ function Game:undo()
         self.animationDuration = 0.06
     elseif _G.animation_speed == "instant" then
         self.animationDuration = 0
+    elseif _G.animation_speed == "slow" then
+        self.animationDuration = 0.24
     end
 
     -- Trigger animation timer
