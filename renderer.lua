@@ -3325,9 +3325,6 @@ end
 -- Main Menu
 -- ============================================================================
 function renderer.getMainMenuOptions()
-    local sound = require("sound")
-    local sound_lbl = "Sound: " .. (sound.isEnabled() and "On" or "Off")
-    local text_size_lbl = "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal")
     local theme_name = _G.theme:gsub("^%l", string.upper)
     local options = {
         "Play Game",
@@ -3338,8 +3335,7 @@ function renderer.getMainMenuOptions()
     if _G.cheats_unlocked then
         table.insert(options, "Secret Menu")
     end
-    table.insert(options, sound_lbl)
-    table.insert(options, text_size_lbl)
+    table.insert(options, "Settings")
     table.insert(options, "About")
     if love.system.getOS() == "Web" then
         table.insert(options, "Exit the Game")
@@ -3347,6 +3343,136 @@ function renderer.getMainMenuOptions()
         table.insert(options, "Quit")
     end
     return options
+end
+
+function renderer.getSettingsOptions()
+    local sound = require("sound")
+    return {
+        "Sound: " .. (sound.isEnabled() and "On" or "Off"),
+        "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal"),
+        "Back"
+    }
+end
+
+function renderer.drawSettings(selection, skip_transition)
+    renderer.clearBackground()
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    local options = renderer.getSettingsOptions()
+    love.graphics.setFont(font_message)
+    local gap = (_G.text_size == "large" and 37 or 34) * scale
+    local menu_h = (#options - 1) * gap + font_message:getHeight()
+    local badge_h = math.floor(28 * scale)
+    local badge_y = h - badge_h - math.floor(15 * scale)
+
+    -- Style the Settings title header (similar size to 2048 main menu logo)
+    local header_h = math.floor((_G.text_size == "large" and 120 or 145) * scale)
+    local total_h = header_h + math.floor(12 * scale) + menu_h
+    local available_h = badge_y - math.floor(10 * scale)
+    local start_y = math.max(math.floor(10 * scale), math.floor(math.floor(10 * scale) + (available_h - total_h) / 2))
+
+    local f_title = font_main_menu_title or font_tile_large
+    local tw = f_title:getWidth("SETTINGS")
+    local th = f_title:getHeight()
+    local tx = (w - tw) / 2
+    local ty = start_y + (header_h - th) / 2
+
+    love.graphics.setColor(getTileColor(2048))
+    love.graphics.setFont(f_title)
+    love.graphics.print("SETTINGS", tx, ty)
+
+    -- Menu options start position
+    local menu_start_y = start_y + header_h + math.floor(12 * scale)
+
+    local max_ow = 0
+    for _, opt in ipairs(options) do
+        local ow = font_message:getWidth(opt)
+        if ow > max_ow then
+            max_ow = ow
+        end
+    end
+    local block_x = (w - max_ow) / 2
+
+    local target_oy = menu_start_y + (selection - 1) * gap
+    local sel_opt = options[selection]
+    local sel_ow = font_message:getWidth(sel_opt)
+
+    local target_ox = block_x - 12 * scale
+    local target_ow = sel_ow + 24 * scale
+
+    menu_anim_target_y = target_oy
+    menu_anim_target_x = target_ox
+    menu_anim_target_w = target_ow
+
+    if not menu_anim_y then menu_anim_y = target_oy end
+    if not menu_anim_x then menu_anim_x = target_ox end
+    if not menu_anim_w then menu_anim_w = target_ow end
+
+    love.graphics.setColor(help_key_color)
+    roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
+
+    for i, opt in ipairs(options) do
+        local oy = menu_start_y + (i - 1) * gap
+        if i == selection then
+            love.graphics.setColor(help_key_text)
+        else
+            love.graphics.setColor(ui_text)
+        end
+        love.graphics.setFont(font_message)
+        love.graphics.print(opt, block_x, oy)
+    end
+
+    -- Draw footer bar for Settings Menu
+    local item_gap = math.floor(10 * scale)
+    local label_gap = math.floor(4 * scale)
+
+    if love.system.getOS() ~= "Web" then
+        -- DPAD Navigate on the left
+        local dpad_x = math.floor(20 * scale)
+        local dpad_size = math.floor(24 * scale)
+        drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+        dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+        love.graphics.setFont(font_help_label)
+        love.graphics.setColor(ui_text)
+        love.graphics.print("Navigate", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Right side actions: A (Select), B (Back), Y (Switch Theme)
+        local right_x = w - math.floor(20 * scale)
+        local actions = {
+            {key = "A", label = "Select"},
+            {key = "B", label = "Back"},
+            {key = "Y", label = "Switch Theme"}
+        }
+        for _, action in ipairs(actions) do
+            -- Label
+            love.graphics.setFont(font_help_label)
+            local lbl_w = font_help_label:getWidth(action.label)
+            right_x = right_x - lbl_w
+            love.graphics.setColor(ui_text)
+            love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+
+            -- Badge
+            right_x = right_x - label_gap
+            local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
+            right_x = right_x - key_w
+            drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+
+            right_x = right_x - item_gap
+        end
+    end
+
+    -- Theme transition overlay
+    if not skip_transition and transition_timer > 0 and transition_canvas then
+        love.graphics.stencil(drawStencilCircle, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
+        love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
+        love.graphics.setStencilTest()
+    end
 end
 
 function renderer.drawMainMenu(selection, skip_transition)

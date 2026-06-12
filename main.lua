@@ -47,6 +47,7 @@ local STATE_DEPTH = {
     ACHIEVEMENTS  = 1,
     THEME_SELECT  = 1,
     CHEATS_MENU   = 1,
+    SETTINGS      = 1,
 }
 
 -- Forward declaration (defined later in the file, after love.update's helper logic)
@@ -369,6 +370,8 @@ function love.update(dt)
                     return function() renderer.drawSecretMenu(_G.cheats_selection or 1, true) end
                 elseif _G.appState == "THEME_SELECT" then
                     return function() renderer.drawThemeSelect(true) end
+                elseif _G.appState == "SETTINGS" then
+                    return function() renderer.drawSettings(_G.settings_selection or 1, true) end
                 elseif _G.appState == "PLAY_SELECT" then
                     return function() renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, true, menuSelection) end
                 elseif _G.appState == "ARCADE_MENU" then
@@ -456,13 +459,9 @@ function love.update(dt)
                         _G.unlockAchievement("ach_secret_menu")
                         _G.appState = "CHEATS_MENU"
                         _G.cheats_selection = 1
-                    elseif sel:match("^Sound") then
-                        sound.toggle()
-                    elseif sel:match("^Text Size") then
-                        _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                        save.saveTextSize(_G.text_size)
-                        renderer.init()
-                        renderer.flashTextSize()
+                    elseif sel == "Settings" then
+                        _G.appState = "SETTINGS"
+                        _G.settings_selection = 1
                     elseif sel == "About" then
                         _G.appState = "ABOUT"
                     elseif sel == "Quit" or sel == "Exit the Game" then
@@ -755,6 +754,39 @@ function love.update(dt)
                 end)
             end
             return
+        elseif _G.appState == "SETTINGS" then
+            local options = renderer.getSettingsOptions()
+            local max_sel = #options
+            if event == input.events.UP then
+                _G.settings_selection = (_G.settings_selection or 1) > 1 and (_G.settings_selection - 1) or max_sel
+                sound.playMenuMove()
+            elseif event == input.events.DOWN then
+                _G.settings_selection = (_G.settings_selection or 1) < max_sel and (_G.settings_selection + 1) or 1
+                sound.playMenuMove()
+            elseif event == input.events.CONFIRM then
+                local sel = options[_G.settings_selection or 1]
+                if sel:match("^Sound") then
+                    sound.playMenuSelect()
+                    sound.toggle()
+                elseif sel:match("^Text Size") then
+                    sound.playMenuSelect()
+                    _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                    save.saveTextSize(_G.text_size)
+                    renderer.init()
+                    renderer.flashTextSize()
+                elseif sel == "Back" then
+                    sound.playMenuBack()
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "MENU"
+                    end)
+                end
+            elseif event == input.events.BACK then
+                sound.playMenuBack()
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                end)
+            end
+            return
         end
 
         -- GAME inputs below
@@ -965,6 +997,8 @@ drawCurrentScreen = function()
         renderer.drawAchievements(_G.achievements_scroll or 0)
     elseif _G.appState == "THEME_SELECT" then
         renderer.drawThemeSelect()
+    elseif _G.appState == "SETTINGS" then
+        renderer.drawSettings(_G.settings_selection or 1)
     elseif _G.appState == "GAME" and game then
         renderer.draw(game)
     end
