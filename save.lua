@@ -113,6 +113,29 @@ function save.loadTextSize()
     return "normal"
 end
 
+local SOUND_FILE = "sound.dat"
+
+function save.saveSound(enabled)
+    local path = getFilePath(SOUND_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(enabled and "1" or "0")
+        file:close()
+    end
+end
+
+function save.loadSound()
+    local path = getFilePath(SOUND_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        return content == "1"
+    end
+    return true -- default to enabled
+end
+
+
 local CHEATS_FILE = "cheats.dat"
 
 function save.saveCheats(unlocked)

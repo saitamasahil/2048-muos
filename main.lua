@@ -9,6 +9,7 @@ local renderer = require("renderer")
 local save     = require("save")
 local splash   = require("splash")
 local server   = require("server")
+local sound    = require("sound")
 
 _G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", "SERVER_ACTIVE", etc.
 local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Theme Selection, 4: Achievements, 5: Tutorial, 6: Text, 7: About, 8: Quit
@@ -71,6 +72,7 @@ end
 
 function love.load(args)
     love.math.setRandomSeed(os.time())
+    sound.init()
 
     -- Handle resolution arguments (same pattern as Scrappy)
     if args and #args > 0 then
@@ -203,6 +205,7 @@ function love.load(args)
                 ach_goose_2048 = "Honk Honk!"
             }
             renderer.showToast("Unlocked: " .. (names[id] or id) .. "!")
+            sound.playAchievement()
         end
     end
 
@@ -323,6 +326,7 @@ function love.update(dt)
         input.update(dt)
         input.processEvents(function(event)
             if event == input.events.CONFIRM or event == input.events.SELECT or event == input.events.START then
+                sound.stopSplash()
                 splash.finished = true
                 splash.is_revealing = false
             end
@@ -427,9 +431,12 @@ function love.update(dt)
             local max_menu = #options
             if event == input.events.UP then
                 menuSelection = menuSelection > 1 and (menuSelection - 1) or max_menu
+                sound.playMenuMove()
             elseif event == input.events.DOWN then
                 menuSelection = menuSelection < max_menu and (menuSelection + 1) or 1
+                sound.playMenuMove()
             elseif event == input.events.CONFIRM then
+                sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     local sel = options[menuSelection]
                     if sel == "Play Game" then
@@ -449,6 +456,8 @@ function love.update(dt)
                         _G.unlockAchievement("ach_secret_menu")
                         _G.appState = "CHEATS_MENU"
                         _G.cheats_selection = 1
+                    elseif sel:match("^Sound") then
+                        sound.toggle()
                     elseif sel:match("^Text Size") then
                         _G.text_size = (_G.text_size == "large") and "normal" or "large"
                         save.saveTextSize(_G.text_size)
@@ -470,9 +479,12 @@ function love.update(dt)
             if arcade_menu_closing_action then return end
             if event == input.events.LEFT then
                 _G.play_select_selection = _G.play_select_selection > 1 and (_G.play_select_selection - 1) or 3
+                sound.playMenuMove()
             elseif event == input.events.RIGHT then
                 _G.play_select_selection = _G.play_select_selection < 3 and (_G.play_select_selection + 1) or 1
+                sound.playMenuMove()
             elseif event == input.events.CONFIRM then
+                sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     if _G.play_select_selection == 1 then
                         _G.appState = "GAME"
@@ -486,6 +498,7 @@ function love.update(dt)
                     end
                 end)
             elseif event == input.events.BACK then
+                sound.playMenuBack()
                 queueTransitionAction(event, 0.08, function()
                     renderer.setArcadeMenuOpen(false)
                     arcade_menu_closing_action = function()
@@ -498,6 +511,7 @@ function love.update(dt)
             if arcade_menu_closing_action then return end
             local row = math.floor((_G.arcade_selection - 1) / 2) + 1
             local col = ((_G.arcade_selection - 1) % 2) + 1
+            local old_sel = _G.arcade_selection
             if event == input.events.UP then
                 row = math.max(1, row - 1)
             elseif event == input.events.DOWN then
@@ -507,6 +521,7 @@ function love.update(dt)
             elseif event == input.events.RIGHT then
                 col = math.min(2, col + 1)
             elseif event == input.events.CONFIRM then
+                sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "GAME"
                     local mode = "timeattack"
@@ -520,23 +535,29 @@ function love.update(dt)
                     game = Game.new(mode)
                 end)
             elseif event == input.events.BACK then
+                sound.playMenuBack()
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "PLAY_SELECT"
                 end)
             end
             _G.arcade_selection = (row - 1) * 2 + col
+            if _G.arcade_selection ~= old_sel then
+                sound.playMenuMove()
+            end
             return
         elseif _G.appState == "TUTORIAL" then
             local cur_page = _G.tutorial_page or 1
             if event == input.events.BACK then
                 -- B always goes back; exits on first page
                 if cur_page > 1 then
+                    sound.playMenuMove()
                     renderer.captureOldTutorialSlide(cur_page)
                     _G.tutorial_page = cur_page - 1
                     _G.tutorial_slide_dir = -1
                     _G.tutorial_slide_timer = 0.20
                     _G.tutorial_slide_ready = false
                 else
+                    sound.playMenuBack()
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)
@@ -544,6 +565,7 @@ function love.update(dt)
             elseif event == input.events.CONFIRM or event == input.events.RIGHT then
                 -- A / Right always goes next; exits on last page
                 if cur_page < 8 then
+                    sound.playMenuMove()
                     renderer.captureOldTutorialSlide(cur_page)
                     _G.tutorial_page = cur_page + 1
                     _G.tutorial_slide_dir = 1
@@ -566,6 +588,11 @@ function love.update(dt)
             return
         elseif _G.appState == "ABOUT" then
             if event == input.events.BACK or event == input.events.CONFIRM then
+                if event == input.events.BACK then
+                    sound.playMenuBack()
+                else
+                    sound.playMenuSelect()
+                end
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "MENU"
                 end)
@@ -573,13 +600,18 @@ function love.update(dt)
             return
         elseif _G.appState == "ACHIEVEMENTS" then
             if event == input.events.BACK then
+                sound.playMenuBack()
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "MENU"
                     _G.achievements_scroll = 0
                     _G.achievements_scroll_target = 0
                 end)
             elseif event == input.events.UP then
-                _G.achievements_scroll_target = math.max(0, (_G.achievements_scroll_target or 0) - 1)
+                local old_target = _G.achievements_scroll_target or 0
+                _G.achievements_scroll_target = math.max(0, old_target - 1)
+                if _G.achievements_scroll_target ~= old_target then
+                    sound.playMenuMove()
+                end
             elseif event == input.events.DOWN then
                 -- 18 achievements total, allow scrolling only if items overflow visible area
                 local w, h = love.graphics.getDimensions()
@@ -591,7 +623,11 @@ function love.update(dt)
                 local total_items = (renderer.getAchievementsCount and renderer.getAchievementsCount()) or 22
                 local total_height = total_items * item_h
                 local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h) + 1)
-                _G.achievements_scroll_target = math.min(max_scroll, (_G.achievements_scroll_target or 0) + 1)
+                local old_target = _G.achievements_scroll_target or 0
+                _G.achievements_scroll_target = math.min(max_scroll, old_target + 1)
+                if _G.achievements_scroll_target ~= old_target then
+                    sound.playMenuMove()
+                end
             end
             return
         elseif _G.appState == "CHEATS_MENU" then
@@ -600,15 +636,19 @@ function love.update(dt)
                 if server.isActive() then
                     renderer.showToast("Please stop the web server before exiting.")
                 else
+                    sound.playMenuBack()
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)
                 end
             elseif event == input.events.UP then
                 _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or max_sel
+                sound.playMenuMove()
             elseif event == input.events.DOWN then
                 _G.cheats_selection = _G.cheats_selection < max_sel and (_G.cheats_selection + 1) or 1
+                sound.playMenuMove()
             elseif event == input.events.CONFIRM then
+                sound.playMenuSelect()
                 if _G.cheats_selection == 1 then
                     for _, t in ipairs(renderer.getAllThemeNames()) do
                         local found = false
@@ -700,12 +740,14 @@ function love.update(dt)
             return
         elseif _G.appState == "THEME_SELECT" then
             if event == input.events.CONFIRM then
+                sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     save.saveTheme(_G.theme)
                     if game then game:saveGameState() end
                     _G.appState = _G.themeSelectPrevState or "MENU"
                 end)
             elseif event == input.events.BACK then
+                sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     _G.theme = _G.themeSelectInitialTheme or "light"
                     renderer.applyTheme()

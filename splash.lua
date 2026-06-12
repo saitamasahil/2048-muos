@@ -163,6 +163,8 @@ function splash.load()
     -- PHASE 2: Logo pops in with elastic bounce
     -- =============================================
     timer.after(0.6, function()
+        local sound = require("sound")
+        sound.playSplash()
         timer.tween(0.1, anim, {logo_alpha = 1}, 'linear')
         timer.tween(0.7, anim, {logo_scale = 1.0}, 'out-elastic')
     end)

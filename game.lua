@@ -389,6 +389,8 @@ function Game:move(direction)
                     if merged.value == self.targetValue and self.state == Game.STATE_PLAYING and self.mode ~= "timeattack" then
                         self.won = true
                         self.state = Game.STATE_WON
+                        local sound = require("sound")
+                        sound.playVictory()
                     end
 
                     if self.mode == "classic" and merged.value >= 2048 and _G.unlockAchievement then
@@ -521,6 +523,8 @@ function Game:move(direction)
         -- Check for loss
         if not self:movesAvailable() then
             self.state = Game.STATE_LOST
+            local sound = require("sound")
+            sound.playGameOver()
         end
     end
 
@@ -868,6 +872,8 @@ function Game:update(dt)
                 self.timeLeft = 0
                 self.state = Game.STATE_LOST
                 self.timesUp = true  -- flag for renderer to show "Time's Up!"
+                local sound = require("sound")
+                sound.playGameOver()
                 self:saveGameState()  -- saves high score only (saveGameState returns early for timeattack)
                 save.saveHighScore(self.highScore, self.mode)
             end

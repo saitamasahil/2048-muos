@@ -3297,6 +3297,8 @@ end
 -- Main Menu
 -- ============================================================================
 function renderer.getMainMenuOptions()
+    local sound = require("sound")
+    local sound_lbl = "Sound: " .. (sound.isEnabled() and "On" or "Off")
     local text_size_lbl = "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal")
     local theme_name = _G.theme:gsub("^%l", string.upper)
     local options = {
@@ -3308,6 +3310,7 @@ function renderer.getMainMenuOptions()
     if _G.cheats_unlocked then
         table.insert(options, "Secret Menu")
     end
+    table.insert(options, sound_lbl)
     table.insert(options, text_size_lbl)
     table.insert(options, "About")
     if love.system.getOS() == "Web" then
