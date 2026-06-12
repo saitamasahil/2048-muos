@@ -13,6 +13,7 @@ function Tile.new(x, y, value)
 
     -- Animation state
     self.previousPosition = nil  -- {x, y} before the last move
+    self.undoSourcePosition = nil -- {x, y} source position for undo slide animation
     self.isNew = false           -- true when just spawned
     self.isMerged = false        -- true when just merged
 

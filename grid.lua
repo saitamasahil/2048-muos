@@ -84,7 +84,19 @@ function Grid:saveState()
         for y = 1, self.sizeY do
             local tile = self.cells[x][y]
             if tile then
-                state[x][y] = {value = tile.value}
+                local saved_tile = {
+                    value = tile.value,
+                    isNew = tile.isNew,
+                    isMerged = tile.isMerged,
+                    previousPosition = tile.previousPosition and {x = tile.previousPosition.x, y = tile.previousPosition.y} or nil
+                }
+                if tile.mergedFrom then
+                    saved_tile.mergedFrom = {
+                        { previousPosition = tile.mergedFrom[1].previousPosition and {x = tile.mergedFrom[1].previousPosition.x, y = tile.mergedFrom[1].previousPosition.y} or nil },
+                        { previousPosition = tile.mergedFrom[2].previousPosition and {x = tile.mergedFrom[2].previousPosition.x, y = tile.mergedFrom[2].previousPosition.y} or nil }
+                    }
+                end
+                state[x][y] = saved_tile
             else
                 state[x][y] = nil
             end
@@ -97,8 +109,19 @@ end
 function Grid:restoreState(state)
     for x = 1, self.sizeX do
         for y = 1, self.sizeY do
-            if state[x][y] then
-                self.cells[x][y] = Tile.new(x, y, state[x][y].value)
+            local s_tile = state[x][y]
+            if s_tile then
+                local tile = Tile.new(x, y, s_tile.value)
+                tile.isNew = s_tile.isNew or false
+                tile.isMerged = s_tile.isMerged or false
+                tile.previousPosition = s_tile.previousPosition
+                if s_tile.mergedFrom then
+                    tile.mergedFrom = {
+                        { previousPosition = s_tile.mergedFrom[1].previousPosition },
+                        { previousPosition = s_tile.mergedFrom[2].previousPosition }
+                    }
+                end
+                self.cells[x][y] = tile
             else
                 self.cells[x][y] = nil
             end

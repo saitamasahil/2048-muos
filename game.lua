@@ -244,6 +244,7 @@ function Game:prepareTiles()
             tile.mergedFrom = nil
             tile.isNew = false
             tile.isMerged = false
+            tile.undoSourcePosition = nil
             tile:savePosition()
         end
     end)
@@ -667,17 +668,16 @@ function Game:undo()
         self.won = false
     end
 
-    -- Clear animation states
+    -- Clear animation states from newly restored grid
     self.grid:eachCell(function(x, y, tile)
         if tile then
             tile.isNew = false
             tile.isMerged = false
-            tile.previousPosition = nil
-            tile.mergedFrom = nil
+            tile.undoSourcePosition = nil
         end
     end)
 
-    -- Apply reverse animation data
+    -- Apply reverse animation data using the restored tiles' history
     for x = 1, self.size do
         for y = 1, self.size do
             local c_tile = current_cells[x][y]
@@ -687,16 +687,16 @@ function Game:undo()
                     local t2 = c_tile.mergedFrom[2]
                     if t1 and t1.previousPosition then
                         local r_t1 = self.grid:cellContent(t1.previousPosition.x, t1.previousPosition.y)
-                        if r_t1 then r_t1.previousPosition = {x = x, y = y} end
+                        if r_t1 then r_t1.undoSourcePosition = {x = x, y = y} end
                     end
                     if t2 and t2.previousPosition then
                         local r_t2 = self.grid:cellContent(t2.previousPosition.x, t2.previousPosition.y)
-                        if r_t2 then r_t2.previousPosition = {x = x, y = y} end
+                        if r_t2 then r_t2.undoSourcePosition = {x = x, y = y} end
                     end
                 elseif not c_tile.isNew then
                     if c_tile.previousPosition then
                         local r_t = self.grid:cellContent(c_tile.previousPosition.x, c_tile.previousPosition.y)
-                        if r_t then r_t.previousPosition = {x = x, y = y} end
+                        if r_t then r_t.undoSourcePosition = {x = x, y = y} end
                     end
                 end
             end

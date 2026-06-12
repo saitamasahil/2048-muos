@@ -1723,7 +1723,12 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local ty = by + cg + (tile.y - 1) * (cs + cg)
 
     -- Slide animation
-    if tile.previousPosition and slideProgress < 1 then
+    if tile.undoSourcePosition and slideProgress < 1 then
+        local px = bx + cg + (tile.undoSourcePosition.x - 1) * (cs + cg)
+        local py = by + cg + (tile.undoSourcePosition.y - 1) * (cs + cg)
+        tx = px + (tx - px) * slideProgress
+        ty = py + (ty - py) * slideProgress
+    elseif tile.previousPosition and slideProgress < 1 then
         local px = bx + cg + (tile.previousPosition.x - 1) * (cs + cg)
         local py = by + cg + (tile.previousPosition.y - 1) * (cs + cg)
         tx = px + (tx - px) * slideProgress
@@ -2677,10 +2682,14 @@ function renderer.updateTransition(dt)
     end
 
     -- Arcade panel slide animation
-    local panel_lerp = 1 - math.exp(-20 * dt)
-    arcade_panel_y_offset = arcade_panel_y_offset + (arcade_panel_target - arcade_panel_y_offset) * panel_lerp
-    if math.abs(arcade_panel_y_offset - arcade_panel_target) < 0.5 then
+    if not _G.screen_transitions then
         arcade_panel_y_offset = arcade_panel_target
+    else
+        local panel_lerp = 1 - math.exp(-20 * dt)
+        arcade_panel_y_offset = arcade_panel_y_offset + (arcade_panel_target - arcade_panel_y_offset) * panel_lerp
+        if math.abs(arcade_panel_y_offset - arcade_panel_target) < 0.5 then
+            arcade_panel_y_offset = arcade_panel_target
+        end
     end
     -- Bg alpha: fully visible (0.75) when panel is near open (offset ~0), fades as panel closes
     local h = love.graphics.getHeight()
@@ -2693,10 +2702,14 @@ function renderer.updateTransition(dt)
     elseif _G.appState == "ARCADE_MENU" then
         panel_page_target = 1
     end
-    local page_lerp = 1 - math.exp(-22 * dt)
-    panel_page_current = panel_page_current + (panel_page_target - panel_page_current) * page_lerp
-    if math.abs(panel_page_current - panel_page_target) < 0.001 then
+    if not _G.screen_transitions then
         panel_page_current = panel_page_target
+    else
+        local page_lerp = 1 - math.exp(-22 * dt)
+        panel_page_current = panel_page_current + (panel_page_target - panel_page_current) * page_lerp
+        if math.abs(panel_page_current - panel_page_target) < 0.001 then
+            panel_page_current = panel_page_target
+        end
     end
 
     -- Text size flash timer
