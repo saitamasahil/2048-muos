@@ -5441,8 +5441,8 @@ function renderer.drawAbout(skip_transition)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
 
-    local text = "Developed by saitamasahil.\n" ..
-                 "A feature-packed port of the classic 2048 puzzle game.\n\n" ..
+    local text = "Developed by saitamasahil\n" ..
+                 "A feature-packed port of the classic 2048 puzzle game\n\n" ..
                  "Original concept by Gabriele Cirulli\n" ..
                  "Built using the LÖVE Framework\n\n" ..
                  "If you enjoy the game, consider supporting!"
