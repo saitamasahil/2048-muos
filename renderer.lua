@@ -1942,6 +1942,18 @@ function renderer.drawScores(game)
         local secs = math.floor(t % 60)
         local timer_str = string.format("%d:%02d", mins, secs)
 
+        -- Determine if score box background is a light color to adjust text contrast
+        local is_light_bg = false
+        if score_bg_color then
+            local r = score_bg_color[1] or 1
+            local g = score_bg_color[2] or 1
+            local b = score_bg_color[3] or 1
+            local brightness = 0.299 * r + 0.587 * g + 0.114 * b
+            if brightness > 0.65 then
+                is_light_bg = true
+            end
+        end
+
         -- Box background (subtly different tint when urgent or flashing)
         if game.timerFlashTimer and game.timerFlashTimer > 0 then
             local f = game.timerFlashTimer / 0.3
@@ -1959,9 +1971,17 @@ function renderer.drawScores(game)
         if t <= 10 then
             -- Pulsing red label
             local pulse = (math.sin(love.timer.getTime() * 8) * 0.5 + 0.5)
-            love.graphics.setColor(1.0, 0.25 + pulse * 0.25, 0.2, 1.0)
+            if is_light_bg then
+                love.graphics.setColor(0.75, 0.05 + pulse * 0.1, 0.05, 1.0)
+            else
+                love.graphics.setColor(1.0, 0.25 + pulse * 0.25, 0.2, 1.0)
+            end
         elseif t <= 30 then
-            love.graphics.setColor(1.0, 0.65, 0.1, 1.0)   -- warm orange
+            if is_light_bg then
+                love.graphics.setColor(0.8, 0.35, 0.0, 1.0)  -- dark orange/rust for light themes
+            else
+                love.graphics.setColor(1.0, 0.65, 0.1, 1.0)  -- warm orange for dark themes
+            end
         else
             love.graphics.setColor(score_label)
         end
@@ -1971,9 +1991,17 @@ function renderer.drawScores(game)
         love.graphics.setFont(font_score)
         if t <= 10 then
             local pulse = (math.sin(love.timer.getTime() * 8) * 0.5 + 0.5)
-            love.graphics.setColor(1.0, 0.2 + pulse * 0.3, 0.2, 1.0)
+            if is_light_bg then
+                love.graphics.setColor(0.75, 0.05 + pulse * 0.1, 0.05, 1.0)
+            else
+                love.graphics.setColor(1.0, 0.2 + pulse * 0.3, 0.2, 1.0)
+            end
         elseif t <= 30 then
-            love.graphics.setColor(1.0, 0.65, 0.1, 1.0)
+            if is_light_bg then
+                love.graphics.setColor(0.8, 0.35, 0.0, 1.0)
+            else
+                love.graphics.setColor(1.0, 0.65, 0.1, 1.0)
+            end
         else
             love.graphics.setColor(score_value)
         end
