@@ -18,14 +18,20 @@ This project is a direct port of the popular open-source [2048 Android](https://
   - **Huge Mode (5x5)**: A spacious 5×5 grid for a more relaxed play style.
   - **No Mercy**: Hardcore mode — no undos, no powerups, two tiles spawn every move.
   - **Goose Mode**: A chaotic mode where a silly Goose tile waddles around the board, blocking random cells.
+- **Procedural Sound Effects**: Rich chiptune audio effects generated dynamically with zero file size overhead.
+- **Unified Settings Menu**: Grouped text size toggles, sound, and a suite of preference parameters under a clean, unified Settings sub-menu:
+  - **Sound**: Toggle audio effects on/off.
+  - **Gameplay Animation Speed**: Choose between Slow (0.24s), Normal (0.12s), Fast (0.06s), or Instant (0s).
+  - **Screen Transitions**: Toggle menu transition animations on/off.
+  - **Undo Limit**: Adjust undo limitations (1-Move, Unlimited, or Disabled) to customize your strategic difficulty.
+  - **Time Attack Max Limit**: Adjust the Time Attack starting and maximum threshold ceiling (30s, 60s, 90s).
+  - **Vibration**: Toggle haptic rumble feedback on supported devices.
+- **Advanced Undo History Stack**: Refactored the gameplay engine to support rolling backward history logs all the way up to 100 consecutive turns.
 - **Achievements & Unlockable Themes**: Track your progress by unlocking 23 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 25 themes total!
 - **Dynamic Animated Backgrounds**: Premium themes (Aurora, Nebula, Inferno, Honk, Matrix, Glitch) feature layered, animated background effects like aurora curtains, twinkling starfields, rising embers, water ripples, falling green digital rain, and cyberpunk glitch effects.
 - **Themes**: Instantly toggle between unlocked themes with a beautifully animated reveal. Your theme preference is saved automatically!
-- **Smooth Screen Transitions**: Enjoy polished crossfade transitions when navigating between screens.
 - **Auto-Save & Resume**: Your progress, board state, and score are saved automatically after every move. Close the game anytime and pick up right where you left off.
 - **Interactive Pause Menu**: A built-in pause overlay makes it easy to safely quit the app or restart a new game cleanly.
-- **Undo System**: Made a mistake? Press `B` to undo your previous move (unlimited in Classic Mode, consumes a powerup in Plus Mode).
-- **High Scores**: Automatically tracks and preserves your best score.
 - **Accurate Aesthetics**: Uses the exact color palette, typography, and smooth slide/merge animations from the beloved Android version, complete with an elegant glowing win animation.
 - **Standalone Package**: Bundled as a standard `.muxapp` package for effortless installation on muOS with dynamic UI scaling for different resolutions.
 
