@@ -3347,9 +3347,27 @@ end
 
 function renderer.getSettingsOptions()
     local sound = require("sound")
+    local anim_speed_lbl = "Animation Speed: " .. (_G.animation_speed:gsub("^%l", string.upper))
+    local transitions_lbl = "Transitions: " .. (_G.screen_transitions and "On" or "Off")
+    
+    local undo_val = "1-Move"
+    if _G.undo_mode == "unlimited" then
+        undo_val = "Unlimited"
+    elseif _G.undo_mode == "disabled" then
+        undo_val = "Disabled"
+    end
+    local undo_lbl = "Undo Limit (Classic/Huge): " .. undo_val
+    local ta_lbl = "Time Attack Max Limit: " .. _G.time_attack_time .. "s"
+    local vib_lbl = "Vibration: " .. (_G.vibration and "On" or "Off")
+
     return {
         "Sound: " .. (sound.isEnabled() and "On" or "Off"),
         "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal"),
+        anim_speed_lbl,
+        transitions_lbl,
+        undo_lbl,
+        ta_lbl,
+        vib_lbl,
         "Back"
     }
 end
@@ -3362,13 +3380,14 @@ function renderer.drawSettings(selection, skip_transition)
 
     local options = renderer.getSettingsOptions()
     love.graphics.setFont(font_message)
+    -- Restore original main menu line spacing
     local gap = (_G.text_size == "large" and 37 or 34) * scale
     local menu_h = (#options - 1) * gap + font_message:getHeight()
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
 
-    -- Style the Settings title header (similar size to 2048 main menu logo)
-    local header_h = math.floor((_G.text_size == "large" and 120 or 145) * scale)
+    -- Style the Settings title header (smaller than main menu to avoid squeezing options)
+    local header_h = math.floor((_G.text_size == "large" and 70 or 85) * scale)
     local total_h = header_h + math.floor(12 * scale) + menu_h
     local available_h = badge_y - math.floor(10 * scale)
     local start_y = math.max(math.floor(10 * scale), math.floor(math.floor(10 * scale) + (available_h - total_h) / 2))
@@ -3386,8 +3405,19 @@ function renderer.drawSettings(selection, skip_transition)
     -- Menu options start position
     local menu_start_y = start_y + header_h + math.floor(12 * scale)
 
+    -- Calculate maximum option width using the longest possible states of each option to prevent shifting/jittering
+    local max_options = {
+        "Sound: Off",
+        "Text Size: Normal",
+        "Animation Speed: Instant",
+        "Transitions: Off",
+        "Undo Limit (Classic/Huge): Unlimited",
+        "Time Attack Max Limit: 90s",
+        "Vibration: Off",
+        "Back"
+    }
     local max_ow = 0
-    for _, opt in ipairs(options) do
+    for _, opt in ipairs(max_options) do
         local ow = font_message:getWidth(opt)
         if ow > max_ow then
             max_ow = ow
@@ -3473,6 +3503,8 @@ function renderer.drawSettings(selection, skip_transition)
         love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
+
+    drawToast()
 end
 
 function renderer.drawMainMenu(selection, skip_transition)
@@ -5396,11 +5428,11 @@ function renderer.drawAbout(skip_transition)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
 
-    local text = "Developed by saitamasahil for muOS.\n" ..
+    local text = "Developed by saitamasahil.\n" ..
                  "A feature-packed port of the classic 2048 puzzle game.\n\n" ..
                  "If you enjoy the game, consider supporting!"
 
-    local text_w = font_help_label:getWidth("Developed by saitamasahil for muOS.")
+    local text_w = font_help_label:getWidth("Developed by saitamasahil.")
     love.graphics.printf(text, 0, start_y, w, "center")
 
     if not qr_image then

@@ -9,6 +9,7 @@ local gameOverSource = nil
 local menuMoveSource = nil
 local menuSelectSource = nil
 local menuBackSource = nil
+local toastSource = nil
 
 local function triangle(phase)
     local p = phase - math.floor(phase)
@@ -50,7 +51,7 @@ function sound.init()
                 env = math.exp(-6 * (t - 0.24))
             end
             phase = phase + freq / sampleRate
-            local val = triangle(phase) * env * 0.4
+            local val = triangle(phase) * env * 0.95
             achSoundData:setSample(i, val)
         end
         achSource = love.audio.newSource(achSoundData)
@@ -72,7 +73,7 @@ function sound.init()
             for _, f in ipairs(freqs) do
                 val = val + math.sin(2 * math.pi * f * t)
             end
-            val = (val / #freqs) * env * 0.4
+            val = (val / #freqs) * env * 0.95
             splashSoundData:setSample(i, val)
         end
         splashSource = love.audio.newSource(splashSoundData)
@@ -108,7 +109,7 @@ function sound.init()
                 env = math.exp(-5 * (t - 0.42))
             end
             vPhase = vPhase + freq / sampleRate
-            local val = triangle(vPhase) * env * 0.4
+            local val = triangle(vPhase) * env * 0.95
             victorySoundData:setSample(i, val)
         end
         victorySource = love.audio.newSource(victorySoundData)
@@ -132,7 +133,7 @@ function sound.init()
                 env = math.exp(-4 * (t - 0.4))
             end
             goPhase = goPhase + freq / sampleRate
-            local val = triangle(goPhase) * env * 0.4
+            local val = triangle(goPhase) * env * 0.95
             gameOverSoundData:setSample(i, val)
         end
         gameOverSource = love.audio.newSource(gameOverSoundData)
@@ -147,7 +148,7 @@ function sound.init()
             local freq = 600
             local env = math.exp(-120 * t)
             mmPhase = mmPhase + freq / sampleRate
-            local val = triangle(mmPhase) * env * 0.12
+            local val = triangle(mmPhase) * env * 0.95
             menuMoveSoundData:setSample(i, val)
         end
         menuMoveSource = love.audio.newSource(menuMoveSoundData)
@@ -168,7 +169,7 @@ function sound.init()
                 env = math.exp(-25 * (t - 0.05))
             end
             msPhase = msPhase + freq / sampleRate
-            local val = triangle(msPhase) * env * 0.25
+            local val = triangle(msPhase) * env * 0.95
             menuSelectSoundData:setSample(i, val)
         end
         menuSelectSource = love.audio.newSource(menuSelectSoundData)
@@ -189,10 +190,31 @@ function sound.init()
                 env = math.exp(-25 * (t - 0.05))
             end
             mbPhase = mbPhase + freq / sampleRate
-            local val = triangle(mbPhase) * env * 0.22
+            local val = triangle(mbPhase) * env * 0.95
             menuBackSoundData:setSample(i, val)
         end
         menuBackSource = love.audio.newSource(menuBackSoundData)
+
+        -- 8. Toast Sound (High Chime Beep)
+        local toastDuration = 0.15
+        local toastLength = math.floor(sampleRate * toastDuration)
+        local toastSoundData = love.sound.newSoundData(toastLength, sampleRate, 16, 1)
+        local toastPhase = 0
+        for i = 0, toastLength - 1 do
+            local t = i / sampleRate
+            local freq, env
+            if t < 0.05 then
+                freq = 1760.00 -- A6
+                env = math.exp(-40 * t)
+            else
+                freq = 2093.00 -- C7
+                env = math.exp(-25 * (t - 0.05))
+            end
+            toastPhase = toastPhase + freq / sampleRate
+            local val = triangle(toastPhase) * env * 0.95
+            toastSoundData:setSample(i, val)
+        end
+        toastSource = love.audio.newSource(toastSoundData)
     end
 end
 
@@ -210,6 +232,7 @@ function sound.playAchievement()
         achSource:seek(0)
         achSource:play()
     end
+    sound.vibrate(0.15)
 end
 
 function sound.playSplash()
@@ -230,6 +253,7 @@ function sound.playVictory()
         victorySource:seek(0)
         victorySource:play()
     end
+    sound.vibrate(0.4)
 end
 
 function sound.playGameOver()
@@ -237,6 +261,7 @@ function sound.playGameOver()
         gameOverSource:seek(0)
         gameOverSource:play()
     end
+    sound.vibrate(0.5)
 end
 
 function sound.playMenuMove()
@@ -257,6 +282,26 @@ function sound.playMenuBack()
     if enabled and menuBackSource then
         menuBackSource:seek(0)
         menuBackSource:play()
+    end
+end
+
+function sound.playToast()
+    if enabled and toastSource then
+        toastSource:seek(0)
+        toastSource:play()
+    end
+end
+
+function sound.vibrate(duration)
+    if not _G.vibration then return end
+    if love.joystick then
+        local joysticks = love.joystick.getJoysticks()
+        if #joysticks > 0 then
+            local joystick = joysticks[1]
+            if joystick:isVibrationSupported() then
+                joystick:setVibration(0.6, 0.6, duration or 0.1)
+            end
+        end
     end
 end
 

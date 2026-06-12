@@ -68,13 +68,17 @@ function Game.new(mode)
     self.swapAnimation = nil
 
     -- Undo state
-    self.undoState = nil
-    self.undoScore = 0
+    self.undoHistory = {}
     self.canUndo = false
 
     -- Animation tracking
     self.animationTimer = 0
     self.animationDuration = 0.12  -- seconds
+    if _G.animation_speed == "fast" then
+        self.animationDuration = 0.06
+    elseif _G.animation_speed == "instant" then
+        self.animationDuration = 0
+    end
 
     -- Try to load saved game state
     local savedState = save.loadState(self.mode)
@@ -86,13 +90,18 @@ function Game.new(mode)
             self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
         end
         self.canUndo = savedState.canUndo or false
-        self.undoScore = savedState.undoScore or 0
         self.grid:restoreState(savedState.gridState)
-        if savedState.undoState then
-            self.undoState = savedState.undoState
-        end
-        if savedState.undoRNG then
-            self.undoRNG = savedState.undoRNG
+        if savedState.undoHistory then
+            self.undoHistory = savedState.undoHistory
+        else
+            self.undoHistory = {}
+            if savedState.undoState then
+                table.insert(self.undoHistory, {
+                    gridState = savedState.undoState,
+                    score = savedState.undoScore or 0,
+                    rng = savedState.undoRNG
+                })
+            end
         end
 
         if savedState.powerups then
@@ -123,7 +132,7 @@ function Game.new(mode)
 
     -- Time Attack: initialize timer after everything is set up if not loaded from save
     if mode == "timeattack" and not self.timeLeft then
-        self.totalTime = 60.0
+        self.totalTime = tonumber(_G.time_attack_time) or 60.0
         self.timeLeft = self.totalTime
     end
 
@@ -136,10 +145,8 @@ function Game:saveGameState()
         state = self.state,
         won = self.won,
         canUndo = self.canUndo,
-        undoScore = self.undoScore,
         gridState = self.grid:saveState(),
-        undoState = self.undoState,
-        undoRNG = self.undoRNG,
+        undoHistory = self.undoHistory,
         powerups = self.powerups,
         milestonesReached = self.milestonesReached
     }
@@ -490,10 +497,32 @@ function Game:move(direction)
 
             self.timeAttackBonus = 0
         end
-        self.undoState = pendingUndoState
-        self.undoScore = pendingUndoScore
-        self.undoRNG = pendingUndoRNG
-        self.canUndo = true
+        local pending = {
+            gridState = pendingUndoState,
+            score = pendingUndoScore,
+            rng = pendingUndoRNG
+        }
+        if _G.undo_mode == "unlimited" then
+            table.insert(self.undoHistory, pending)
+            if #self.undoHistory > 100 then
+                table.remove(self.undoHistory, 1)
+            end
+            self.canUndo = true
+        elseif _G.undo_mode == "classic" then
+            self.undoHistory = { pending }
+            self.canUndo = true
+        else
+            self.undoHistory = {}
+            self.canUndo = false
+        end
+
+        self.animationDuration = 0.12
+        if _G.animation_speed == "fast" then
+            self.animationDuration = 0.06
+        elseif _G.animation_speed == "instant" then
+            self.animationDuration = 0
+        end
+
         if self.mode == "goose" then
             self:walkGoose()
         end
@@ -597,82 +626,94 @@ function Game:movesAvailable()
 end
 
 function Game:undo()
-    if self.canUndo and self.undoState then
-        if self.mode == "plus" then
-            if self.powerups.undo <= 0 then return end
-            self.powerups.undo = self.powerups.undo - 1
-        end
-        if _G.achievements.powerups_used_this_run then
-            _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
-            save.saveAchievements(_G.achievements)
-        end
+    if _G.undo_mode == "disabled" then return end
+    if not self.canUndo or #self.undoHistory == 0 then return end
 
-        -- Snapshot the current tiles before restoring the old grid
-        local current_cells = {}
-        for x = 1, self.size do
-            current_cells[x] = {}
-            for y = 1, self.size do
-                current_cells[x][y] = self.grid.cells[x][y]
-            end
-        end
+    if self.mode == "plus" then
+        if self.powerups.undo <= 0 then return end
+        self.powerups.undo = self.powerups.undo - 1
+    end
+    if _G.achievements.powerups_used_this_run then
+        _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
+        save.saveAchievements(_G.achievements)
+    end
 
-        self.grid:restoreState(self.undoState)
-        self.score = self.undoScore
+    local state = table.remove(self.undoHistory)
+    if _G.undo_mode == "classic" or #self.undoHistory == 0 then
         self.canUndo = false
+    end
 
-        if self.undoRNG then
-            love.math.setRandomState(self.undoRNG)
+    -- Snapshot the current tiles before restoring the old grid
+    local current_cells = {}
+    for x = 1, self.size do
+        current_cells[x] = {}
+        for y = 1, self.size do
+            current_cells[x][y] = self.grid.cells[x][y]
         end
+    end
 
-        -- Reset game state if we were lost/won
-        if self.state == Game.STATE_LOST then
-            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
-        elseif self.state == Game.STATE_WON then
-            self.state = Game.STATE_PLAYING
-            self.won = false
+    self.grid:restoreState(state.gridState)
+    self.score = state.score
+
+    if state.rng then
+        love.math.setRandomState(state.rng)
+    end
+
+    -- Reset game state if we were lost/won
+    if self.state == Game.STATE_LOST then
+        self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
+    elseif self.state == Game.STATE_WON then
+        self.state = Game.STATE_PLAYING
+        self.won = false
+    end
+
+    -- Clear animation states
+    self.grid:eachCell(function(x, y, tile)
+        if tile then
+            tile.isNew = false
+            tile.isMerged = false
+            tile.previousPosition = nil
+            tile.mergedFrom = nil
         end
+    end)
 
-        -- Clear animation states
-        self.grid:eachCell(function(x, y, tile)
-            if tile then
-                tile.isNew = false
-                tile.isMerged = false
-                tile.previousPosition = nil
-                tile.mergedFrom = nil
-            end
-        end)
-
-        -- Apply reverse animation data
-        for x = 1, self.size do
-            for y = 1, self.size do
-                local c_tile = current_cells[x][y]
-                if c_tile then
-                    if c_tile.isMerged and c_tile.mergedFrom then
-                        local t1 = c_tile.mergedFrom[1]
-                        local t2 = c_tile.mergedFrom[2]
-                        if t1 and t1.previousPosition then
-                            local r_t1 = self.grid:cellContent(t1.previousPosition.x, t1.previousPosition.y)
-                            if r_t1 then r_t1.previousPosition = {x = x, y = y} end
-                        end
-                        if t2 and t2.previousPosition then
-                            local r_t2 = self.grid:cellContent(t2.previousPosition.x, t2.previousPosition.y)
-                            if r_t2 then r_t2.previousPosition = {x = x, y = y} end
-                        end
-                    elseif not c_tile.isNew then
-                        if c_tile.previousPosition then
-                            local r_t = self.grid:cellContent(c_tile.previousPosition.x, c_tile.previousPosition.y)
-                            if r_t then r_t.previousPosition = {x = x, y = y} end
-                        end
+    -- Apply reverse animation data
+    for x = 1, self.size do
+        for y = 1, self.size do
+            local c_tile = current_cells[x][y]
+            if c_tile then
+                if c_tile.isMerged and c_tile.mergedFrom then
+                    local t1 = c_tile.mergedFrom[1]
+                    local t2 = c_tile.mergedFrom[2]
+                    if t1 and t1.previousPosition then
+                        local r_t1 = self.grid:cellContent(t1.previousPosition.x, t1.previousPosition.y)
+                        if r_t1 then r_t1.previousPosition = {x = x, y = y} end
+                    end
+                    if t2 and t2.previousPosition then
+                        local r_t2 = self.grid:cellContent(t2.previousPosition.x, t2.previousPosition.y)
+                        if r_t2 then r_t2.previousPosition = {x = x, y = y} end
+                    end
+                elseif not c_tile.isNew then
+                    if c_tile.previousPosition then
+                        local r_t = self.grid:cellContent(c_tile.previousPosition.x, c_tile.previousPosition.y)
+                        if r_t then r_t.previousPosition = {x = x, y = y} end
                     end
                 end
             end
         end
-
-        -- Trigger animation timer
-        self.animationTimer = self.animationDuration
-
-        self:saveGameState()
     end
+
+    self.animationDuration = 0.12
+    if _G.animation_speed == "fast" then
+        self.animationDuration = 0.06
+    elseif _G.animation_speed == "instant" then
+        self.animationDuration = 0
+    end
+
+    -- Trigger animation timer
+    self.animationTimer = self.animationDuration
+
+    self:saveGameState()
 end
 
 function Game:continueGame()
@@ -689,7 +730,7 @@ function Game:restart()
     self.state = Game.STATE_PLAYING
     self.won = false
     self.canUndo = false
-    self.undoState = nil
+    self.undoHistory = {}
     self.animationTimer = 0
     if self.mode == "plus" then
         local initial_powerups = _G.cheat_max_powerups and 99 or 1
@@ -697,7 +738,8 @@ function Game:restart()
         self.milestonesReached = {}
     end
     -- Reset Time Attack timer
-    if self.mode == "timeattack" and self.totalTime then
+    if self.mode == "timeattack" then
+        self.totalTime = tonumber(_G.time_attack_time) or 60.0
         self.timeLeft = self.totalTime
         self.timeAttackBonus = 0
         self.shownUrgentWarning = false
@@ -771,9 +813,24 @@ function Game:confirmTarget()
     if self.state == Game.STATE_TARGETING_BOMB then
         if self.grid.cells[cx][cy] then
             -- Delete the tile
-            self.undoState = self.grid:saveState()
-            self.undoScore = self.score
-            self.canUndo = true
+            local pending = {
+                gridState = self.grid:saveState(),
+                score = self.score,
+                rng = love.math.getRandomState()
+            }
+            if _G.undo_mode == "unlimited" then
+                table.insert(self.undoHistory, pending)
+                if #self.undoHistory > 100 then
+                    table.remove(self.undoHistory, 1)
+                end
+                self.canUndo = true
+            elseif _G.undo_mode == "classic" then
+                self.undoHistory = { pending }
+                self.canUndo = true
+            else
+                self.undoHistory = {}
+                self.canUndo = false
+            end
 
             local t = self.grid.cells[cx][cy]
             self.bombAnimation = {x = cx, y = cy, tileValue = t.value, timer = 0.15, duration = 0.15}
@@ -807,9 +864,24 @@ function Game:confirmTarget()
         end
     elseif self.state == Game.STATE_TARGETING_SWAP_2 then
         if (self.swapTarget.x ~= cx or self.swapTarget.y ~= cy) then
-            self.undoState = self.grid:saveState()
-            self.undoScore = self.score
-            self.canUndo = true
+            local pending = {
+                gridState = self.grid:saveState(),
+                score = self.score,
+                rng = love.math.getRandomState()
+            }
+            if _G.undo_mode == "unlimited" then
+                table.insert(self.undoHistory, pending)
+                if #self.undoHistory > 100 then
+                    table.remove(self.undoHistory, 1)
+                end
+                self.canUndo = true
+            elseif _G.undo_mode == "classic" then
+                self.undoHistory = { pending }
+                self.canUndo = true
+            else
+                self.undoHistory = {}
+                self.canUndo = false
+            end
 
             local t1 = self.grid.cells[self.swapTarget.x][self.swapTarget.y]
             local t2 = self.grid.cells[cx][cy]

@@ -271,4 +271,116 @@ function save.clearState(mode)
     os.remove(path)
 end
 
+local ANIM_SPEED_FILE = "anim_speed.dat"
+function save.saveAnimationSpeed(speed)
+    local path = getFilePath(ANIM_SPEED_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(speed)
+        file:close()
+    end
+end
+
+function save.loadAnimationSpeed()
+    local path = getFilePath(ANIM_SPEED_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "normal"
+end
+
+local TRANSITIONS_FILE = "transitions.dat"
+function save.saveScreenTransitions(enabled)
+    local path = getFilePath(TRANSITIONS_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(enabled and "1" or "0")
+        file:close()
+    end
+end
+
+function save.loadScreenTransitions()
+    local path = getFilePath(TRANSITIONS_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        return content ~= "0"
+    end
+    return true
+end
+
+local UNDO_MODE_FILE = "undo_mode.dat"
+function save.saveUndoMode(mode)
+    local path = getFilePath(UNDO_MODE_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(mode)
+        file:close()
+    end
+end
+
+function save.loadUndoMode()
+    local path = getFilePath(UNDO_MODE_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "classic"
+end
+
+local TIME_ATTACK_TIME_FILE = "time_attack_time.dat"
+function save.saveTimeAttackTime(time)
+    local path = getFilePath(TIME_ATTACK_TIME_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(tostring(time))
+        file:close()
+    end
+end
+
+function save.loadTimeAttackTime()
+    local path = getFilePath(TIME_ATTACK_TIME_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        local time = tonumber(content)
+        if time then
+            return time
+        end
+    end
+    return 60
+end
+
+local VIBRATION_FILE = "vibration.dat"
+function save.saveVibration(enabled)
+    local path = getFilePath(VIBRATION_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(enabled and "1" or "0")
+        file:close()
+    end
+end
+
+function save.loadVibration()
+    local path = getFilePath(VIBRATION_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        return content ~= "0"
+    end
+    return true
+end
+
 return save

@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.0.0]
+
+### Added
+- Added sound in game.
+- Added Unified Settings Menu: Sound, Text Size, and other settings under a dedicated Settings sub-menu, simplifying and cleaning up the Main Menu list.
+- Expanded Preferences: Added five new settings options:
+  - Animation Speed: Choose between Normal, Fast, or Instant tile sliding speeds.
+  - Screen Transitions: Toggle slide-in screen transition animations on/off.
+  - Undo Limit: Set undo limits to 1-Move, Unlimited, or Disabled.
+  - Time Attack Max Limit: Set the Time Attack start & max limit to 60s or 90s.
+  - Vibration: Toggle haptic rumble feedback on supported devices.
+- Full Undo History Stack: Refactored the gameplay engine to support unlimited undos up to 100 moves.
+
+### Changed
+- Relocated Toast Notifications: Toast messages now pop up at the top of the screen instead of the bottom to prevent covering footer controls.
+
 ## [3.0.2]
 - Canvas alpha blending overlapping fixed
 

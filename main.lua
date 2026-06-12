@@ -218,6 +218,11 @@ function love.load(args)
 
     _G.cheats_unlocked = save.loadCheats()
     _G.text_size = save.loadTextSize() or "normal"
+    _G.animation_speed = save.loadAnimationSpeed() or "normal"
+    _G.screen_transitions = save.loadScreenTransitions()
+    _G.undo_mode = save.loadUndoMode() or "classic"
+    _G.time_attack_time = save.loadTimeAttackTime() or 60
+    _G.vibration = save.loadVibration()
     -- Crucially apply the loaded theme to the renderer NOW
     renderer.applyTheme()
 
@@ -250,7 +255,7 @@ function love.update(dt)
             local going_to_game_from_play = (last_app_state == "PLAY_SELECT" or last_app_state == "ARCADE_MENU") and _G.appState == "GAME"
             local skip_slide = not going_to_game_from_play and
                 (_G.appState == "ARCADE_MENU" or last_app_state == "ARCADE_MENU" or _G.appState == "PLAY_SELECT" or last_app_state == "PLAY_SELECT")
-            if not skip_slide then
+            if not skip_slide and _G.screen_transitions then
                 -- Determine direction from hierarchy depth
                 local old_depth = STATE_DEPTH[last_app_state] or 0
                 local new_depth = STATE_DEPTH[_G.appState] or 0
@@ -774,6 +779,44 @@ function love.update(dt)
                     save.saveTextSize(_G.text_size)
                     renderer.init()
                     renderer.flashTextSize()
+                elseif sel:match("^Animation Speed") then
+                    sound.playMenuSelect()
+                    if _G.animation_speed == "normal" then
+                        _G.animation_speed = "fast"
+                    elseif _G.animation_speed == "fast" then
+                        _G.animation_speed = "instant"
+                    else
+                        _G.animation_speed = "normal"
+                    end
+                    save.saveAnimationSpeed(_G.animation_speed)
+                elseif sel:match("^Transitions") then
+                    sound.playMenuSelect()
+                    _G.screen_transitions = not _G.screen_transitions
+                    save.saveScreenTransitions(_G.screen_transitions)
+                elseif sel:match("^Undo Limit") then
+                    sound.playMenuSelect()
+                    if _G.undo_mode == "classic" then
+                        _G.undo_mode = "unlimited"
+                    elseif _G.undo_mode == "unlimited" then
+                        _G.undo_mode = "disabled"
+                    else
+                        _G.undo_mode = "classic"
+                    end
+                    save.saveUndoMode(_G.undo_mode)
+                elseif sel:match("^Time Attack") then
+                    sound.playMenuSelect()
+                    if _G.time_attack_time == 30 then
+                        _G.time_attack_time = 60
+                    elseif _G.time_attack_time == 60 then
+                        _G.time_attack_time = 90
+                    else
+                        _G.time_attack_time = 30
+                    end
+                    save.saveTimeAttackTime(_G.time_attack_time)
+                elseif sel:match("^Vibration") then
+                    _G.vibration = not _G.vibration
+                    save.saveVibration(_G.vibration)
+                    sound.playMenuSelect()
                 elseif sel == "Back" then
                     sound.playMenuBack()
                     queueTransitionAction(event, 0.08, function()

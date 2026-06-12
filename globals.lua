@@ -3,9 +3,9 @@
 _G.timer = require("timer")
 
 local sem_ver = {
-    major = 3,
+    major = 4,
     minor = 0,
-    patch = 2,
+    patch = 0,
     extra = ""
 }
 
@@ -49,6 +49,11 @@ _G.WORK_DIR = ""
 -- Current visual theme (light / dark / oled / neon / retro / peach / ocean / forest / sunset / candy)
 _G.theme = "light"
 _G.text_size = "normal"
+_G.animation_speed = "normal"
+_G.screen_transitions = true
+_G.undo_mode = "classic"
+_G.time_attack_time = 60
+_G.vibration = true
 
 -- Achievements and Unlockables
 _G.achievements = {
