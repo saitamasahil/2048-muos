@@ -5240,7 +5240,7 @@ function renderer.drawAbout(skip_transition)
     love.graphics.setColor(ui_text)
 
     local text = "Developed by saitamasahil for muOS.\n" ..
-                 "A port of the classic 2048 puzzle game.\n\n" ..
+                 "A feature-packed port of the classic 2048 puzzle game.\n\n" ..
                  "If you enjoy the game, consider supporting!"
 
     local text_w = font_help_label:getWidth("Developed by saitamasahil for muOS.")
