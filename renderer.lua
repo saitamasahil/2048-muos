@@ -3360,7 +3360,7 @@ end
 
 function renderer.getSettingsOptions()
     local sound = require("sound")
-    local anim_speed_lbl = "Animation Speed: " .. (_G.animation_speed:gsub("^%l", string.upper))
+    local anim_speed_lbl = "Gameplay Animation Speed: " .. (_G.animation_speed:gsub("^%l", string.upper))
     local transitions_lbl = "Transitions: " .. (_G.screen_transitions and "On" or "Off")
     
     local undo_val = "1-Move"
@@ -3422,7 +3422,7 @@ function renderer.drawSettings(selection, skip_transition)
     local max_options = {
         "Sound: Off",
         "Text Size: Normal",
-        "Animation Speed: Instant",
+        "Gameplay Animation Speed: Instant",
         "Transitions: Off",
         "Undo Limit (Classic/Huge): Unlimited",
         "Time Attack Max Limit: 90s",

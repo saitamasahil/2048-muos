@@ -779,7 +779,7 @@ function love.update(dt)
                     save.saveTextSize(_G.text_size)
                     renderer.init()
                     renderer.flashTextSize()
-                elseif sel:match("^Animation Speed") then
+                elseif sel:match("Animation Speed") then
                     sound.playMenuSelect()
                     if _G.animation_speed == "normal" then
                         _G.animation_speed = "fast"

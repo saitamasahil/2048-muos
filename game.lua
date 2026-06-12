@@ -73,9 +73,9 @@ function Game.new(mode)
 
     -- Animation tracking
     self.animationTimer = 0
-    self.animationDuration = 0.20  -- seconds
+    self.animationDuration = 0.12  -- seconds
     if _G.animation_speed == "fast" then
-        self.animationDuration = 0.08
+        self.animationDuration = 0.06
     elseif _G.animation_speed == "instant" then
         self.animationDuration = 0
     end
@@ -517,9 +517,9 @@ function Game:move(direction)
             self.canUndo = false
         end
 
-        self.animationDuration = 0.20
+        self.animationDuration = 0.12
         if _G.animation_speed == "fast" then
-            self.animationDuration = 0.08
+            self.animationDuration = 0.06
         elseif _G.animation_speed == "instant" then
             self.animationDuration = 0
         end
@@ -703,9 +703,9 @@ function Game:undo()
         end
     end
 
-    self.animationDuration = 0.20
+    self.animationDuration = 0.12
     if _G.animation_speed == "fast" then
-        self.animationDuration = 0.08
+        self.animationDuration = 0.06
     elseif _G.animation_speed == "instant" then
         self.animationDuration = 0
     end
