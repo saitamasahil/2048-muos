@@ -3149,7 +3149,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             -- 1. Draw old page (underneath)
             if tutorial_old_canvas then
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
                 love.graphics.draw(tutorial_old_canvas, old_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
 
                 -- Dim the old page
                 love.graphics.setColor(0, 0, 0, 0.5 * p)
@@ -3166,7 +3168,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             -- 3. Draw new page (on top)
             if tutorial_new_canvas then
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
                 love.graphics.draw(tutorial_new_canvas, new_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
             end
         else
             -- Backward transition: Old page slides out on top to the right (0 -> w)
@@ -3177,7 +3181,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             -- 1. Draw new page (underneath)
             if tutorial_new_canvas then
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
                 love.graphics.draw(tutorial_new_canvas, new_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
             end
 
             -- Dim the new page
@@ -3194,7 +3200,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
 
                 -- 3. Draw old page (on top)
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
                 love.graphics.draw(tutorial_old_canvas, old_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
             end
         end
     else
@@ -3276,7 +3284,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 
@@ -3474,7 +3484,9 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 
@@ -4565,7 +4577,9 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 
@@ -4716,7 +4730,9 @@ function renderer.drawSecretMenu(selection, skip_transition)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 
@@ -4884,7 +4900,9 @@ function renderer.drawThemeSelect(skip_transition)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 
@@ -4915,7 +4933,9 @@ function renderer.draw(game, skip_transition)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0) -- Draw where stencil is 0
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest() -- Disable stencil
     end
 
@@ -5185,7 +5205,9 @@ function renderer.drawAchievements(scroll, skip_transition)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 end
@@ -5291,7 +5313,9 @@ function renderer.drawAbout(skip_transition)
         love.graphics.stencil(drawStencilCircle, "replace", 1)
         love.graphics.setStencilTest("equal", 0)
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("replace", "premultiplied")
         love.graphics.draw(transition_canvas, 0, 0)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
         love.graphics.setStencilTest()
     end
 

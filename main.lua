@@ -968,7 +968,9 @@ function love.draw()
             -- 1. Draw old screen (underneath)
             if old_screen_canvas then
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
                 love.graphics.draw(old_screen_canvas, old_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
 
                 -- Dim the old screen (dimming fades in from 0% to 50% opacity)
                 love.graphics.setColor(0, 0, 0, 0.5 * p)
@@ -984,7 +986,9 @@ function love.draw()
 
             -- 3. Draw new screen (on top)
             love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setBlendMode("replace", "premultiplied")
             love.graphics.draw(screen_canvas, new_x, 0)
+            love.graphics.setBlendMode("alpha", "alphamultiply")
         else
             -- Backward transition: Old screen slides out on top to the right (0 -> w)
             -- New screen slides in underneath from the left at 30% speed (-0.3*w -> 0)
@@ -993,7 +997,9 @@ function love.draw()
 
             -- 1. Draw new screen (underneath)
             love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setBlendMode("replace", "premultiplied")
             love.graphics.draw(screen_canvas, new_x, 0)
+            love.graphics.setBlendMode("alpha", "alphamultiply")
 
             -- Dim the new screen (dimming fades out from 50% to 0% opacity)
             love.graphics.setColor(0, 0, 0, 0.5 * (1 - p))
@@ -1009,7 +1015,9 @@ function love.draw()
 
                 -- 3. Draw old screen (on top)
                 love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
                 love.graphics.draw(old_screen_canvas, old_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
             end
         end
 
