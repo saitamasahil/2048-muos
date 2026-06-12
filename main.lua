@@ -73,7 +73,6 @@ end
 
 function love.load(args)
     love.math.setRandomSeed(os.time())
-    sound.init()
 
     -- Handle resolution arguments (same pattern as Scrappy)
     if args and #args > 0 then
@@ -104,6 +103,8 @@ function love.load(args)
         _G.WORK_DIR = love.filesystem.getWorkingDirectory() or "."
         save.init(_G.WORK_DIR .. "/static")
     end
+
+    sound.init()
 
     -- Load achievements
     local loadedAchievements = save.loadAchievements()
