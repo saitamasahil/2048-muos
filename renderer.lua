@@ -2703,9 +2703,9 @@ local function drawToast()
         alpha = (toast_max_duration - toast_timer) / 0.3
     end
 
-    local y = h - (70 * _G.scale) - boxH
-    -- Slide up slightly
-    y = y + (1.0 - alpha) * 10 * _G.scale
+    -- Slide down from the top banner
+    local target_y = 10 * _G.scale
+    local y = target_y - (1.0 - alpha) * 20 * _G.scale
 
     love.graphics.setColor(0.1, 0.1, 0.1, 0.85 * alpha)
     roundedRect("fill", (w - boxW) / 2, y, boxW, boxH, 12 * _G.scale)
