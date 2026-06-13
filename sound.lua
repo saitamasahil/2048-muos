@@ -55,28 +55,14 @@ function sound.init()
             achSoundData:setSample(i, val)
         end
         achSource = love.audio.newSource(achSoundData)
+        achSource:setVolume(0.60)
 
-        -- 2. Splash Sound (Warm Synth Chord)
-        local splashDuration = 2.0
-        local splashLength = math.floor(sampleRate * splashDuration)
-        local splashSoundData = love.sound.newSoundData(splashLength, sampleRate, 16, 1)
-        local freqs = { 130.81, 196.00, 261.63, 293.66, 329.63, 392.00, 493.88 }
-        for i = 0, splashLength - 1 do
-            local t = i / sampleRate
-            local env
-            if t < 0.4 then
-                env = t / 0.4
-            else
-                env = math.max(0, 1 - (t - 0.4) / (splashDuration - 0.4))
-            end
-            local val = 0
-            for _, f in ipairs(freqs) do
-                val = val + math.sin(2 * math.pi * f * t)
-            end
-            val = (val / #freqs) * env * 0.95
-            splashSoundData:setSample(i, val)
+        -- 2. Splash Sound (Logo Pop WAV File)
+        local success, src = pcall(love.audio.newSource, "assets/sfx/logo_pop.wav", "static")
+        if success then
+            splashSource = src
+            splashSource:setVolume(1.0)
         end
-        splashSource = love.audio.newSource(splashSoundData)
 
         -- 3. Victory Sound (Triumphant Ascending Fanfare)
         local victoryDuration = 1.0
@@ -113,6 +99,7 @@ function sound.init()
             victorySoundData:setSample(i, val)
         end
         victorySource = love.audio.newSource(victorySoundData)
+        victorySource:setVolume(0.60)
 
         -- 4. Game Over Sound (Melancholic Descending Cadence)
         local gameOverDuration = 0.8
@@ -137,21 +124,23 @@ function sound.init()
             gameOverSoundData:setSample(i, val)
         end
         gameOverSource = love.audio.newSource(gameOverSoundData)
+        gameOverSource:setVolume(0.60)
 
         -- 5. Menu Hover (Move) Sound (Soft Retro Tick)
-        local menuMoveDuration = 0.03
+        local menuMoveDuration = 0.04
         local menuMoveLength = math.floor(sampleRate * menuMoveDuration)
         local menuMoveSoundData = love.sound.newSoundData(menuMoveLength, sampleRate, 16, 1)
         local mmPhase = 0
         for i = 0, menuMoveLength - 1 do
             local t = i / sampleRate
             local freq = 600
-            local env = math.exp(-120 * t)
+            local env = math.exp(-75 * t)
             mmPhase = mmPhase + freq / sampleRate
             local val = triangle(mmPhase) * env * 0.95
             menuMoveSoundData:setSample(i, val)
         end
         menuMoveSource = love.audio.newSource(menuMoveSoundData)
+        menuMoveSource:setVolume(1.0)
 
         -- 6. Menu Select (Confirm) Sound (Bright Double Beep)
         local menuSelectDuration = 0.13
@@ -173,6 +162,7 @@ function sound.init()
             menuSelectSoundData:setSample(i, val)
         end
         menuSelectSource = love.audio.newSource(menuSelectSoundData)
+        menuSelectSource:setVolume(0.40)
 
         -- 7. Menu Back (Cancel) Sound (Descending Retro Double Beep)
         local menuBackDuration = 0.13
@@ -194,6 +184,7 @@ function sound.init()
             menuBackSoundData:setSample(i, val)
         end
         menuBackSource = love.audio.newSource(menuBackSoundData)
+        menuBackSource:setVolume(0.40)
 
         -- 8. Toast Sound (High Chime Beep)
         local toastDuration = 0.15
@@ -215,6 +206,7 @@ function sound.init()
             toastSoundData:setSample(i, val)
         end
         toastSource = love.audio.newSource(toastSoundData)
+        toastSource:setVolume(0.40)
     end
 end
 
