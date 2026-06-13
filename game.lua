@@ -122,6 +122,18 @@ function Game.new(mode)
         -- Start a fresh game if no save state exists
         self:addStartTiles()
 
+        if _G.stats then
+            _G.stats.games_played = (_G.stats.games_played or 0) + 1
+            if self.mode == "classic" then
+                _G.stats.classic_games = (_G.stats.classic_games or 0) + 1
+            elseif self.mode == "plus" then
+                _G.stats.plus_games = (_G.stats.plus_games or 0) + 1
+            else
+                _G.stats.arcade_games = (_G.stats.arcade_games or 0) + 1
+            end
+            save.saveStats(_G.stats)
+        end
+
         if _G.achievements then
             _G.achievements.powerups_used_this_run = 0
             save.saveAchievements(_G.achievements)
@@ -142,6 +154,25 @@ function Game.new(mode)
 end
 
 function Game:saveGameState()
+    if _G.stats then
+        local maxVal = 0
+        for x = 1, self.size do
+            for y = 1, self.size do
+                local cell = self.grid:cellContent(x, y)
+                if cell and type(cell.value) == "number" and cell.value > maxVal then
+                    maxVal = cell.value
+                end
+            end
+        end
+        if maxVal > (_G.stats.highest_tile or 0) then
+            _G.stats.highest_tile = maxVal
+        end
+        if self.score > (_G.stats.highest_score or 0) then
+            _G.stats.highest_score = self.score
+        end
+        save.saveStats(_G.stats)
+    end
+
     local stateTable = {
         score = self.score,
         state = self.state,
@@ -329,6 +360,9 @@ function Game:move(direction)
                 -- Can we merge with the next tile?
                 if nextTile and nextTile.value == tile.value and nextTile.mergedFrom == nil then
                     -- Merge!
+                    if _G.stats then
+                        _G.stats.tiles_merged = (_G.stats.tiles_merged or 0) + 1
+                    end
                     local merged = Tile.new(nextX, nextY, tile.value * 2)
                     merged.mergedFrom = {tile, nextTile}
                     merged.isMerged = true
@@ -481,6 +515,12 @@ function Game:move(direction)
     end
 
     if moved then
+        if _G.stats then
+            _G.stats.moves_made = (_G.stats.moves_made or 0) + 1
+            if self.score > (_G.stats.highest_score or 0) then
+                _G.stats.highest_score = self.score
+            end
+        end
         -- Apply accumulated time attack bonus (capped at 30s per move for balance)
         if self.mode == "timeattack" and self.timeLeft and (self.timeAttackBonus or 0) > 0 then
             local cap = 30.0
@@ -642,6 +682,10 @@ function Game:undo()
         _G.achievements.powerups_used_this_run = _G.achievements.powerups_used_this_run + 1
         save.saveAchievements(_G.achievements)
     end
+    if _G.stats then
+        _G.stats.undos_used = (_G.stats.undos_used or 0) + 1
+        save.saveStats(_G.stats)
+    end
 
     local state = table.remove(self.undoHistory)
     if _G.undo_mode == "classic" or #self.undoHistory == 0 then
@@ -754,6 +798,17 @@ function Game:restart()
         self.timerFlashTimer = 0
     end
     self:addStartTiles()
+    if _G.stats then
+        _G.stats.games_played = (_G.stats.games_played or 0) + 1
+        if self.mode == "classic" then
+            _G.stats.classic_games = (_G.stats.classic_games or 0) + 1
+        elseif self.mode == "plus" then
+            _G.stats.plus_games = (_G.stats.plus_games or 0) + 1
+        else
+            _G.stats.arcade_games = (_G.stats.arcade_games or 0) + 1
+        end
+        save.saveStats(_G.stats)
+    end
     if _G.achievements then
         _G.achievements.powerups_used_this_run = 0
         save.saveAchievements(_G.achievements)
@@ -843,6 +898,9 @@ function Game:confirmTarget()
 
             self.grid.cells[cx][cy] = nil
             self.powerups.bomb = self.powerups.bomb - 1
+            if _G.stats then
+                _G.stats.bombs_used = (_G.stats.bombs_used or 0) + 1
+            end
 
             if _G.achievements.bombs_used then
                 _G.achievements.bombs_used = _G.achievements.bombs_used + 1
@@ -913,6 +971,9 @@ function Game:confirmTarget()
             if t2 then t2:setPosition(self.swapTarget.x, self.swapTarget.y) end
 
             self.powerups.swap = self.powerups.swap - 1
+            if _G.stats then
+                _G.stats.swaps_used = (_G.stats.swaps_used or 0) + 1
+            end
             self.swapTarget = nil
 
             if _G.achievements.powerups_used_this_run then
@@ -931,6 +992,12 @@ function Game:confirmTarget()
 end
 
 function Game:update(dt)
+    if self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS then
+        if _G.stats then
+            _G.stats.time_played = (_G.stats.time_played or 0) + dt
+        end
+    end
+
     if self.animationTimer > 0 then
         self.animationTimer = self.animationTimer - dt
         if self.animationTimer < 0 then

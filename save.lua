@@ -383,4 +383,46 @@ function save.loadVibration()
     return true
 end
 
+local STATS_FILE = "stats.dat"
+
+function save.saveStats(stats)
+    local path = getFilePath(STATS_FILE)
+    local file = io.open(path, "w")
+    if file then
+        local function serialize(o)
+            if type(o) == "number" then
+                return tostring(o)
+            elseif type(o) == "string" then
+                return string.format("%q", o)
+            elseif type(o) == "boolean" then
+                return tostring(o)
+            elseif type(o) == "table" then
+                local s = "{"
+                for k, v in pairs(o) do
+                    local key = type(k) == "string" and string.format("[%q]", k) or "[" .. tostring(k) .. "]"
+                    s = s .. key .. "=" .. serialize(v) .. ","
+                end
+                return s .. "}"
+            end
+            return "nil"
+        end
+        file:write("return " .. serialize(stats))
+        file:close()
+    end
+end
+
+function save.loadStats()
+    local path = getFilePath(STATS_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        local chunk = (loadstring or load)(content)
+        if chunk then
+            return chunk()
+        end
+    end
+    return nil
+end
+
 return save

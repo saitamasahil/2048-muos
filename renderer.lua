@@ -26,6 +26,8 @@ local menu_anim_w = nil
 local menu_anim_target_w = nil
 local tutorial_old_canvas = nil
 local tutorial_new_canvas = nil
+local achievements_old_canvas = nil
+local achievements_new_canvas = nil
 local logo_2048 = nil
 
 -- Win animation state
@@ -84,6 +86,9 @@ function renderer.resetMenuAnimation()
     menu_anim_target_w = nil
     tutorial_old_canvas = nil
     tutorial_new_canvas = nil
+    achievements_old_canvas = nil
+    achievements_new_canvas = nil
+    _G.achievements_slide_timer = 0
 end
 
 function renderer.captureOldTutorialSlide(page)
@@ -94,6 +99,17 @@ function renderer.captureOldTutorialSlide(page)
     love.graphics.setCanvas({tutorial_old_canvas, stencil = true})
     love.graphics.clear()
     renderer.drawTutorial(page, true, true)
+    love.graphics.setCanvas()
+end
+
+function renderer.captureOldAchievementsSlide(tab)
+    local w, h = love.graphics.getDimensions()
+    if not achievements_old_canvas then
+        achievements_old_canvas = love.graphics.newCanvas(w, h)
+    end
+    love.graphics.setCanvas(achievements_old_canvas)
+    love.graphics.clear()
+    renderer.drawAchievements(0, true, true, tab)
     love.graphics.setCanvas()
 end
 
@@ -2201,6 +2217,10 @@ local function drawKeyBadge(text, x, y, w, h)
             is_up = Input.state["up"] == true
             is_down = Input.state["down"] == true
             is_pressed = is_left or is_right or is_up or is_down
+        elseif original_text == "L/R" then
+            local l_mapped = love.system.getOS() == "Web" and "z" or "l1"
+            local r_mapped = love.system.getOS() == "Web" and "x" or "r1"
+            is_pressed = (Input.state[l_mapped] == true) or (Input.state[r_mapped] == true)
         else
             if original_text == "START" then
                 is_pressed = (Input.state["space"] == true) or (Input.state["rshift"] == true) or (Input.state["return"] == true)
@@ -3398,7 +3418,7 @@ function renderer.getMainMenuOptions()
     local options = {
         "Play Game",
         "Select Theme: " .. theme_name,
-        "Achievements",
+        "Achievements & Stats",
         "Tutorial"
     }
     if _G.cheats_unlocked then
@@ -5429,206 +5449,444 @@ function renderer.getAchievementsCount()
     return #achievementsList
 end
 
-function renderer.drawAchievements(scroll, skip_transition)
+function renderer.drawAchievements(scroll, skip_transition, static_only, override_tab)
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+    local padding = math.floor(20 * scale)
+    local active_tab = override_tab or _G.achievements_tab
+
+    -- Slide animation state
+    if not static_only and _G.achievements_slide_timer and _G.achievements_slide_timer > 0 then
+        local dt = love.timer.getDelta()
+        _G.achievements_slide_timer = _G.achievements_slide_timer - dt
+        if _G.achievements_slide_timer < 0 then _G.achievements_slide_timer = 0 end
+    end
+
+    -- Draw slide content with iOS Push & Dim transition
+    if not static_only and _G.achievements_slide_timer and _G.achievements_slide_timer > 0 then
+        local progress = 1 - (_G.achievements_slide_timer / 0.20)
+        local p = 1 - math.pow(1 - progress, 3) -- cubic ease-out
+
+        local dir = _G.achievements_slide_dir or 1
+        local shadow_w = math.floor(20 * scale)
+
+        -- Capture the new tab to achievements_new_canvas ONCE at the start of transition
+        if not _G.achievements_slide_ready then
+            if not achievements_new_canvas then
+                achievements_new_canvas = love.graphics.newCanvas(w, h)
+            end
+            love.graphics.setCanvas(achievements_new_canvas)
+            love.graphics.clear()
+            renderer.drawAchievements(scroll, true, true, active_tab)
+            love.graphics.setCanvas()
+            _G.achievements_slide_ready = true
+        end
+
+        if dir == 1 then
+            -- Forward transition (Tab 1 -> Tab 2): New page slides in on top from right (w -> 0)
+            -- Old page slides out underneath to the left at 30% speed (0 -> -0.3*w)
+            local old_x = math.floor(-0.3 * w * p)
+            local new_x = math.floor(w * (1 - p))
+
+            -- 1. Draw old page (underneath)
+            if achievements_old_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
+                love.graphics.draw(achievements_old_canvas, old_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
+
+                -- Dim the old page
+                love.graphics.setColor(0, 0, 0, 0.5 * p)
+                love.graphics.rectangle("fill", old_x, 0, w, h)
+            end
+
+            -- 2. Draw shadow to the left of the new page
+            for i = 0, shadow_w - 1 do
+                local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.rectangle("fill", new_x - shadow_w + i, 0, 1, h)
+            end
+
+            -- 3. Draw new page (on top)
+            if achievements_new_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
+                love.graphics.draw(achievements_new_canvas, new_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
+            end
+        else
+            -- Backward transition (Tab 2 -> Tab 1): Old page slides out on top to the right (0 -> w)
+            -- New page slides in underneath from the left at 30% speed (-0.3*w -> 0)
+            local new_x = math.floor(-0.3 * w * (1 - p))
+            local old_x = math.floor(w * p)
+
+            -- 1. Draw new page (underneath)
+            if achievements_new_canvas then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
+                love.graphics.draw(achievements_new_canvas, new_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
+            end
+
+            -- Dim the new page
+            love.graphics.setColor(0, 0, 0, 0.5 * (1 - p))
+            love.graphics.rectangle("fill", new_x, 0, w, h)
+
+            -- 2. Draw shadow to the left of the old page (sliding on top)
+            if achievements_old_canvas then
+                for i = 0, shadow_w - 1 do
+                    local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                    love.graphics.setColor(0, 0, 0, alpha)
+                    love.graphics.rectangle("fill", old_x - shadow_w + i, 0, 1, h)
+                end
+
+                -- 3. Draw old page (on top)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
+                love.graphics.draw(achievements_old_canvas, old_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
+            end
+        end
+
+        -- Theme transition overlay
+        if not skip_transition and transition_timer > 0 and transition_canvas then
+            love.graphics.stencil(drawStencilCircle, "replace", 1)
+            love.graphics.setStencilTest("equal", 0)
+            love.graphics.draw(transition_canvas, 0, 0)
+            love.graphics.setStencilTest()
+        end
+        return
+    end
+
     renderer.clearBackground()
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
     local padding = math.floor(20 * scale)
 
-    -- Header
+    -- Header Title
     love.graphics.setFont(font_title)
     love.graphics.setColor(ui_text)
-    local title = "Achievements"
+    local title = "Achievements & Stats"
     love.graphics.print(title, padding, padding)
 
+    -- Tab selection bar
+    local tab1_txt = "Achievements"
+    local tab2_txt = "Statistics"
+    local t1_w = font_score:getWidth(tab1_txt)
+    local t2_w = font_score:getWidth(tab2_txt)
+    local tab_gap = math.floor(40 * scale)
 
-    local list_y = padding + font_title:getHeight() + math.floor(20 * scale)
-    local item_h = math.floor(85 * scale)
+    local total_tab_w = t1_w + t2_w + tab_gap
+    local start_tab_x = (w - total_tab_w) / 2
+    local tab_y = padding + font_title:getHeight() + math.floor(10 * scale)
+
+    -- Draw Tab 1 text
+    local t1_x = start_tab_x
+    if active_tab == 1 then
+        love.graphics.setColor(ui_text) -- highlighted
+    else
+        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.5) -- muted
+    end
+    love.graphics.setFont(font_score)
+    love.graphics.print(tab1_txt, t1_x, tab_y)
+
+    -- Draw Tab 2 text
+    local t2_x = t1_x + t1_w + tab_gap
+    if active_tab == 2 then
+        love.graphics.setColor(ui_text) -- highlighted
+    else
+        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.5) -- muted
+    end
+    love.graphics.print(tab2_txt, t2_x, tab_y)
+
+    -- Underline for active tab
+    local line_h = math.floor(3 * scale)
+    local line_y = tab_y + font_score:getHeight() + math.floor(4 * scale)
+    love.graphics.setColor(ui_text)
+    if active_tab == 1 then
+        love.graphics.rectangle("fill", t1_x, line_y, t1_w, line_h)
+    else
+        love.graphics.rectangle("fill", t2_x, line_y, t2_w, line_h)
+    end
+
+    local list_y = line_y + math.floor(12 * scale)
     local footer_h = math.floor(55 * scale)
 
-    love.graphics.setScissor(0, list_y - math.floor(5 * scale), w, h - list_y - footer_h + math.floor(5 * scale))
+    -- Helper to format numbers with commas
+    local function formatNum(n)
+        local formatted = tostring(math.floor(n or 0))
+        while true do
+            formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+            if k == 0 then break end
+        end
+        return formatted
+    end
 
-    local current_y = list_y - (scroll * item_h)
-    for i, ach in ipairs(achievementsList) do
-        do
-            local isUnlocked = _G.achievements[ach.id]
-
-            -- Card background
-            love.graphics.setColor(board_color[1], board_color[2], board_color[3], isUnlocked and 0.9 or 0.7)
-            roundedRect("fill", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
-
-            -- Card border
-            if isUnlocked then
-                love.graphics.setColor(help_key_color)
-            else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.4)
-            end
-            love.graphics.setLineWidth(math.floor(2 * scale))
-            roundedRect("line", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
-
-            -- Icon Area (centered vertically in card)
-            local icon_s = math.floor(48 * scale)
-            local card_h = item_h - math.floor(10 * scale)
-            local icon_x = padding + math.floor(12 * scale)
-            local icon_y = current_y + (card_h - icon_s) / 2
-
-            if _G.theme == "matrix" then
-                local cx = icon_x + icon_s / 2
-                local cy = icon_y + icon_s / 2
-
-                -- Outer wireframe box for icon
-                love.graphics.setColor(ui_text)
-                love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
-                roundedRect("line", icon_x, icon_y, icon_s, icon_s)
-
-                if isUnlocked then
-                    -- Matrix checkmark [X]
-                    love.graphics.setFont(font_message)
-                    love.graphics.setColor(ui_text)
-                    local txt = "X"
-                    local tw = font_message:getWidth(txt)
-                    local th = font_message:getHeight()
-                    love.graphics.print(txt, cx - tw / 2, cy - th / 2)
-                else
-                    -- Matrix Lock
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-                    local lock_w = math.floor(20 * scale)
-                    local lock_h = math.floor(15 * scale)
-                    local lock_x = cx - lock_w / 2
-                    local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
-
-                    -- Wireframe lock body
-                    roundedRect("line", lock_x, lock_y, lock_w, lock_h)
-
-                    -- Lock shackle
-                    local shackle_r = math.floor(7 * scale)
-                    local shackle_cy = lock_y - math.floor(1 * scale)
-                    love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
-                    love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
-                    love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
-                    love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
-                end
-            else
-                if isUnlocked then
-                    -- Solid green circle background
-                    local cx = icon_x + icon_s / 2
-                    local cy = icon_y + icon_s / 2
-                    local r = icon_s / 2
-                    love.graphics.setColor(0.18, 0.72, 0.35)
-                    love.graphics.circle("fill", cx, cy, r)
-                    -- Darker green border
-                    love.graphics.setColor(0.12, 0.55, 0.25)
-                    love.graphics.setLineWidth(math.max(1, math.floor(2 * scale)))
-                    love.graphics.circle("line", cx, cy, r)
-
-                    -- White checkmark drawn with thick lines
-                    love.graphics.setColor(1, 1, 1)
-                    love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
-                    local check_s = icon_s * 0.3
-                    love.graphics.line(
-                        cx - check_s, cy,
-                        cx - check_s * 0.3, cy + check_s * 0.7,
-                        cx + check_s, cy - check_s * 0.6
-                    )
-                else
-                    -- Muted circle background using ui_text at low alpha
-                    local cx = icon_x + icon_s / 2
-                    local cy = icon_y + icon_s / 2
-                    local r = icon_s / 2
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.15)
-                    love.graphics.circle("fill", cx, cy, r)
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
-                    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
-                    love.graphics.circle("line", cx, cy, r)
-
-                    -- Draw Padlock using ui_text color (always visible)
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-                    local lock_w = math.floor(20 * scale)
-                    local lock_h = math.floor(15 * scale)
-                    local lock_x = cx - lock_w / 2
-                    local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
-
-                    -- Lock body
-                    roundedRect("fill", lock_x, lock_y, lock_w, lock_h, math.floor(3 * scale))
-
-                    -- Lock keyhole
-                    love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3], 0.8)
-                    love.graphics.circle("fill", lock_x + lock_w/2, lock_y + lock_h * 0.4, math.max(1, math.floor(2 * scale)))
-                    love.graphics.rectangle("fill", lock_x + lock_w/2 - math.floor(1 * scale), lock_y + lock_h * 0.4, math.floor(2 * scale), math.floor(5 * scale))
-
-                    -- Lock shackle (arc + vertical lines)
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-                    local shackle_r = math.floor(7 * scale)
-                    local shackle_cy = lock_y - math.floor(1 * scale)
-                    love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
-                    love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
-                    love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
-                    love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
-                end
-            end
-
-            -- Name & Desc
-            local text_x = icon_x + icon_s + math.floor(15 * scale)
-            if isUnlocked then
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 1)
-            else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.75)
-            end
-            love.graphics.setFont(font_label)
-            love.graphics.print(ach.name, text_x, current_y + math.floor(12 * scale))
-
-            love.graphics.setFont(font_help_label)
-            if isUnlocked then
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.8)
-            else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.65)
-            end
-            love.graphics.print(ach.desc, text_x, current_y + math.floor(42 * scale))
-
-            -- Reward Tag
-            love.graphics.setFont(font_help_label)
-            local rew_text = "Unlocks: " .. ach.reward
-            local rw = font_help_label:getWidth(rew_text)
-            local tag_x = w - padding - rw - math.floor(25 * scale)
-            local tag_y = current_y + math.floor(13 * scale)
-
-            -- Tag background
-            if isUnlocked then
-                love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 0.2)
-            else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.18)
-            end
-            roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_help_label:getHeight() + math.floor(8 * scale), math.floor(6 * scale))
-
-            if isUnlocked then
-                love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 1)
-            else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
-            end
-            love.graphics.print(rew_text, tag_x, tag_y)
-
-            current_y = current_y + item_h
+    -- Helper to format time played
+    local function formatTime(sec)
+        sec = math.floor(sec or 0)
+        local hours = math.floor(sec / 3600)
+        local mins = math.floor((sec % 3600) / 60)
+        local secs = sec % 60
+        if hours > 0 then
+            return string.format("%dh %dm %ds", hours, mins, secs)
+        elseif mins > 0 then
+            return string.format("%dm %ds", mins, secs)
+        else
+            return string.format("%ds", secs)
         end
     end
 
-    love.graphics.setScissor()
+    if active_tab == 1 then
+        -- Tab 1: Scrollable Achievements
+        local item_h = math.floor(85 * scale)
+        love.graphics.setScissor(0, list_y - math.floor(5 * scale), w, h - list_y - footer_h + math.floor(5 * scale))
 
-    -- Footer bar for Achievements
+        local current_y = list_y - (scroll * item_h)
+        for i, ach in ipairs(achievementsList) do
+            do
+                local isUnlocked = _G.achievements[ach.id]
+
+                -- Card background
+                love.graphics.setColor(board_color[1], board_color[2], board_color[3], isUnlocked and 0.9 or 0.7)
+                roundedRect("fill", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
+
+                -- Card border
+                if isUnlocked then
+                    love.graphics.setColor(help_key_color)
+                else
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.4)
+                end
+                love.graphics.setLineWidth(math.floor(2 * scale))
+                roundedRect("line", padding, current_y, w - padding * 2, item_h - math.floor(10 * scale), math.floor(12 * scale))
+
+                -- Icon Area (centered vertically in card)
+                local icon_s = math.floor(48 * scale)
+                local card_h = item_h - math.floor(10 * scale)
+                local icon_x = padding + math.floor(12 * scale)
+                local icon_y = current_y + (card_h - icon_s) / 2
+
+                if _G.theme == "matrix" then
+                    local cx = icon_x + icon_s / 2
+                    local cy = icon_y + icon_s / 2
+
+                    -- Outer wireframe box for icon
+                    love.graphics.setColor(ui_text)
+                    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+                    roundedRect("line", icon_x, icon_y, icon_s, icon_s)
+
+                    if isUnlocked then
+                        -- Matrix checkmark [X]
+                        love.graphics.setFont(font_message)
+                        love.graphics.setColor(ui_text)
+                        local txt = "X"
+                        local tw = font_message:getWidth(txt)
+                        local th = font_message:getHeight()
+                        love.graphics.print(txt, cx - tw / 2, cy - th / 2)
+                    else
+                        -- Matrix Lock
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                        local lock_w = math.floor(20 * scale)
+                        local lock_h = math.floor(15 * scale)
+                        local lock_x = cx - lock_w / 2
+                        local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
+
+                        -- Wireframe lock body
+                        roundedRect("line", lock_x, lock_y, lock_w, lock_h)
+
+                        -- Lock shackle
+                        local shackle_r = math.floor(7 * scale)
+                        local shackle_cy = lock_y - math.floor(1 * scale)
+                        love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
+                        love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
+                        love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
+                        love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
+                    end
+                else
+                    if isUnlocked then
+                        -- Solid green circle background
+                        local cx = icon_x + icon_s / 2
+                        local cy = icon_y + icon_s / 2
+                        local r = icon_s / 2
+                        love.graphics.setColor(0.18, 0.72, 0.35)
+                        love.graphics.circle("fill", cx, cy, r)
+                        -- Darker green border
+                        love.graphics.setColor(0.12, 0.55, 0.25)
+                        love.graphics.setLineWidth(math.max(1, math.floor(2 * scale)))
+                        love.graphics.circle("line", cx, cy, r)
+
+                        -- White checkmark drawn with thick lines
+                        love.graphics.setColor(1, 1, 1)
+                        love.graphics.setLineWidth(math.max(2, math.floor(3 * scale)))
+                        local check_s = icon_s * 0.3
+                        love.graphics.line(
+                            cx - check_s, cy,
+                            cx - check_s * 0.3, cy + check_s * 0.7,
+                            cx + check_s, cy - check_s * 0.6
+                        )
+                    else
+                        -- Muted circle background using ui_text at low alpha
+                        local cx = icon_x + icon_s / 2
+                        local cy = icon_y + icon_s / 2
+                        local r = icon_s / 2
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.15)
+                        love.graphics.circle("fill", cx, cy, r)
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
+                        love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+                        love.graphics.circle("line", cx, cy, r)
+
+                        -- Draw Padlock using ui_text color (always visible)
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                        local lock_w = math.floor(20 * scale)
+                        local lock_h = math.floor(15 * scale)
+                        local lock_x = cx - lock_w / 2
+                        local lock_y = cy - lock_h / 2 + math.floor(4 * scale)
+
+                        -- Lock body
+                        roundedRect("fill", lock_x, lock_y, lock_w, lock_h, math.floor(3 * scale))
+
+                        -- Lock keyhole
+                        love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3], 0.8)
+                        love.graphics.circle("fill", lock_x + lock_w/2, lock_y + lock_h * 0.4, math.max(1, math.floor(2 * scale)))
+                        love.graphics.rectangle("fill", lock_x + lock_w/2 - math.floor(1 * scale), lock_y + lock_h * 0.4, math.floor(2 * scale), math.floor(5 * scale))
+
+                        -- Lock shackle (arc + vertical lines)
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                        local shackle_r = math.floor(7 * scale)
+                        local shackle_cy = lock_y - math.floor(1 * scale)
+                        love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
+                        love.graphics.arc("line", "open", cx, shackle_cy, shackle_r, math.pi, math.pi*2, 12)
+                        love.graphics.line(cx - shackle_r, shackle_cy, cx - shackle_r, lock_y)
+                        love.graphics.line(cx + shackle_r, shackle_cy, cx + shackle_r, lock_y)
+                    end
+                end
+
+                -- Name & Desc
+                local text_x = icon_x + icon_s + math.floor(15 * scale)
+                if isUnlocked then
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 1)
+                else
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.75)
+                end
+                love.graphics.setFont(font_label)
+                love.graphics.print(ach.name, text_x, current_y + math.floor(12 * scale))
+
+                love.graphics.setFont(font_help_label)
+                if isUnlocked then
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.8)
+                else
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.65)
+                end
+                love.graphics.print(ach.desc, text_x, current_y + math.floor(42 * scale))
+
+                -- Reward Tag
+                love.graphics.setFont(font_help_label)
+                local rew_text = "Unlocks: " .. ach.reward
+                local rw = font_help_label:getWidth(rew_text)
+                local tag_x = w - padding - rw - math.floor(25 * scale)
+                local tag_y = current_y + math.floor(13 * scale)
+
+                -- Tag background
+                if isUnlocked then
+                    love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 0.2)
+                else
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.18)
+                end
+                roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_help_label:getHeight() + math.floor(8 * scale), math.floor(6 * scale))
+
+                if isUnlocked then
+                    love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 1)
+                else
+                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                end
+                love.graphics.print(rew_text, tag_x, tag_y)
+
+                current_y = current_y + item_h
+            end
+        end
+        love.graphics.setScissor()
+    elseif active_tab == 2 then
+        -- Tab 2: Statistics Cards
+        local avail_h = h - list_y - footer_h
+        local col_w = math.floor((w - padding * 3) / 2)
+        local row_h = math.floor(avail_h / 4)
+        local card_gap = math.floor(8 * scale)
+
+        local function drawStatCard(x, y, card_w, card_h, label, value)
+            -- Card background
+            love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.75)
+            roundedRect("fill", x, y, card_w, card_h, math.floor(10 * scale))
+
+            -- Card border
+            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.25)
+            love.graphics.setLineWidth(math.floor(1.5 * scale))
+            roundedRect("line", x, y, card_w, card_h, math.floor(10 * scale))
+
+            -- Muted small label
+            love.graphics.setFont(font_label)
+            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.6)
+            love.graphics.print(label, x + math.floor(12 * scale), y + math.floor(8 * scale))
+
+            -- Large value
+            love.graphics.setFont(font_score)
+            love.graphics.setColor(ui_text) -- High-contrast text color
+            love.graphics.print(value, x + math.floor(12 * scale), y + card_h - font_score:getHeight() - math.floor(8 * scale))
+        end
+
+        local s = _G.stats or {}
+        local games_played = s.games_played or 0
+        local classic = s.classic_games or 0
+        local plus = s.plus_games or 0
+        local arcade = s.arcade_games or 0
+        local games_str = string.format("%s (C:%d P:%d A:%d)", formatNum(games_played), classic, plus, arcade)
+
+        local highest_tile = s.highest_tile or 0
+        local tile_str = highest_tile > 0 and tostring(highest_tile) or "None"
+
+        local bombs = s.bombs_used or 0
+        local swaps = s.swaps_used or 0
+        local powerups_str = string.format("Bombs: %s | Swaps: %s", formatNum(bombs), formatNum(swaps))
+
+        -- Left Column (Overall Profile)
+        local x1 = padding
+        drawStatCard(x1, list_y + row_h * 0, col_w, row_h - card_gap, "HIGHEST SCORE", formatNum(s.highest_score or 0))
+        drawStatCard(x1, list_y + row_h * 1, col_w, row_h - card_gap, "HIGHEST TILE REACHED", tile_str)
+        drawStatCard(x1, list_y + row_h * 2, col_w, row_h - card_gap, "TOTAL TIME PLAYED", formatTime(s.time_played or 0))
+        drawStatCard(x1, list_y + row_h * 3, col_w, row_h - card_gap, "GAMES STARTED", games_str)
+
+        -- Right Column (Gameplay & Powerups)
+        local x2 = padding * 2 + col_w
+        drawStatCard(x2, list_y + row_h * 0, col_w, row_h - card_gap, "TOTAL MOVES MADE", formatNum(s.moves_made or 0))
+        drawStatCard(x2, list_y + row_h * 1, col_w, row_h - card_gap, "TOTAL TILES MERGED", formatNum(s.tiles_merged or 0))
+        drawStatCard(x2, list_y + row_h * 2, col_w, row_h - card_gap, "POWERUPS USED", powerups_str)
+        drawStatCard(x2, list_y + row_h * 3, col_w, row_h - card_gap, "UNDOS TRIGGERED", formatNum(s.undos_used or 0))
+    end
+
+    -- Footer bar for Achievements & Stats
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(15 * scale)
     local item_gap = math.floor(10 * scale)
     local label_gap = math.floor(4 * scale)
 
-    -- Left side: DPAD (Scroll)
     if love.system.getOS() ~= "Web" then
-        local dpad_x = padding
+        -- Left side: L/R (Switch Tab) and DPAD (Scroll, if on Tab 1)
+        local left_x = padding
         local dpad_size = math.floor(24 * scale)
-        drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
-        dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+
+        drawKeyBadge("L/R", left_x, badge_y + (badge_h - dpad_size) / 2, math.floor(34 * scale), dpad_size)
+        left_x = left_x + math.floor(34 * scale) + math.floor(6 * scale)
         love.graphics.setFont(font_help_label)
         love.graphics.setColor(ui_text)
-        love.graphics.print("Scroll", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+        love.graphics.print("Switch Tab", left_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+        left_x = left_x + font_help_label:getWidth("Switch Tab") + math.floor(15 * scale)
+
+        if active_tab == 1 then
+            drawKeyBadge("DPAD", left_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+            left_x = left_x + dpad_size + math.floor(6 * scale)
+            love.graphics.setColor(ui_text)
+            love.graphics.print("Scroll", left_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+        end
 
         -- Right side actions: B (Back), Y (Theme)
         local right_x = w - padding

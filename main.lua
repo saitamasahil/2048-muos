@@ -230,6 +230,29 @@ function love.load(args)
     _G.undo_mode = save.loadUndoMode() or "classic"
     _G.time_attack_time = save.loadTimeAttackTime() or 60
     _G.vibration = save.loadVibration()
+
+    -- Load and initialize global stats
+    _G.stats = save.loadStats() or {}
+    local defaults = {
+        games_played = 0,
+        moves_made = 0,
+        tiles_merged = 0,
+        highest_score = 0,
+        highest_tile = 0,
+        time_played = 0,
+        undos_used = 0,
+        bombs_used = 0,
+        swaps_used = 0,
+        classic_games = 0,
+        plus_games = 0,
+        arcade_games = 0,
+    }
+    for k, v in pairs(defaults) do
+        if _G.stats[k] == nil then
+            _G.stats[k] = v
+        end
+    end
+
     -- Crucially apply the loaded theme to the renderer NOW
     renderer.applyTheme()
 
@@ -471,8 +494,9 @@ function love.update(dt)
                         _G.themeSelectPrevState = "MENU"
                         _G.themeSelectInitialTheme = _G.theme
                         _G.appState = "THEME_SELECT"
-                    elseif sel == "Achievements" then
+                    elseif sel == "Achievements" or sel == "Achievements & Stats" then
                         _G.appState = "ACHIEVEMENTS"
+                        _G.achievements_tab = 1
                     elseif sel == "Tutorial" then
                         _G.appState = "TUTORIAL"
                         _G.tutorial_page = 1
@@ -633,18 +657,44 @@ function love.update(dt)
                     _G.achievements_scroll = 0
                     _G.achievements_scroll_target = 0
                 end)
-            elseif event == input.events.UP then
+            elseif event == input.events.LEFT or event == input.events.L1 then
+                if _G.achievements_tab == 2 then
+                    sound.playMenuMove()
+                    queueTransitionAction(event, 0.08, function()
+                        if _G.screen_transitions then
+                            renderer.captureOldAchievementsSlide(2)
+                            _G.achievements_slide_dir = -1
+                            _G.achievements_slide_timer = 0.20
+                            _G.achievements_slide_ready = false
+                        end
+                        _G.achievements_tab = 1
+                    end)
+                end
+            elseif event == input.events.RIGHT or event == input.events.R1 then
+                if _G.achievements_tab == 1 then
+                    sound.playMenuMove()
+                    queueTransitionAction(event, 0.08, function()
+                        if _G.screen_transitions then
+                            renderer.captureOldAchievementsSlide(1)
+                            _G.achievements_slide_dir = 1
+                            _G.achievements_slide_timer = 0.20
+                            _G.achievements_slide_ready = false
+                        end
+                        _G.achievements_tab = 2
+                    end)
+                end
+            elseif event == input.events.UP and _G.achievements_tab == 1 then
                 local old_target = _G.achievements_scroll_target or 0
                 _G.achievements_scroll_target = math.max(0, old_target - 1)
                 if _G.achievements_scroll_target ~= old_target then
                     sound.playMenuMove()
                 end
-            elseif event == input.events.DOWN then
+            elseif event == input.events.DOWN and _G.achievements_tab == 1 then
                 -- 18 achievements total, allow scrolling only if items overflow visible area
                 local w, h = love.graphics.getDimensions()
                 local scale = _G.scale
                 local item_h = math.floor(85 * scale)
-                local header_h = math.floor(90 * scale)
+                local header_h = math.floor(115 * scale)
                 local footer_h = math.floor(55 * scale)
                 local visible_area = h - header_h - footer_h
                 local total_items = (renderer.getAchievementsCount and renderer.getAchievementsCount()) or 22

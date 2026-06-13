@@ -14,6 +14,7 @@
   - Vibration: Toggle haptic rumble feedback on supported devices.
 - Full Undo History Stack: Refactored the gameplay engine to support unlimited undos up to 100 moves.
 - Added smooth sliding visual highlight transitions for card selection highlights on the game mode select menus, with bilinear color morphing and proximity-based icon/text blending.
+- Unified Achievements & Statistics: Merged both screens into a single, clean tabbed dashboard with fluid slide transitions, tracking real-time player profile metrics (highest score, highest tile, total time played, games started per mode, moves, merges, power-ups, and undos) persistently.
 
 ### Changed
 - Relocated Toast Notifications: Toast messages now pop up at the top of the screen instead of the bottom to prevent covering footer controls.
