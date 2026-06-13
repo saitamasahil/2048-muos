@@ -8,7 +8,6 @@ local input    = require("input")
 local renderer = require("renderer")
 local save     = require("save")
 local splash   = require("splash")
-local server   = require("server")
 local sound    = require("sound")
 
 _G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", "SERVER_ACTIVE", etc.
@@ -270,11 +269,6 @@ function love.load(args)
 end
 
 function love.update(dt)
-    -- Update local HTTP server if active
-    if server and server.isActive() then
-        server.update()
-    end
-
     -- Cap dt to prevent animation glitches on frame drops
     dt = math.min(dt, 0.05)
 
@@ -511,11 +505,7 @@ function love.update(dt)
                     elseif sel == "About" then
                         _G.appState = "ABOUT"
                     elseif sel == "Quit" or sel == "Exit the Game" then
-                        if love.system.getOS() == "Web" then
-                            print("STOP_SERVER")
-                        else
-                            love.event.quit()
-                        end
+                        love.event.quit()
                     end
                 end)
             end
@@ -709,16 +699,12 @@ function love.update(dt)
             end
             return
         elseif _G.appState == "CHEATS_MENU" then
-            local max_sel = (love.system.getOS() ~= "Web") and 8 or 7
+            local max_sel = 7
             if event == input.events.BACK then
-                if server.isActive() then
-                    renderer.showToast("Please stop the web server before exiting.")
-                else
-                    sound.playMenuBack()
-                    queueTransitionAction(event, 0.08, function()
-                        _G.appState = "MENU"
-                    end)
-                end
+                sound.playMenuBack()
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                end)
             elseif event == input.events.UP then
                 _G.cheats_selection = _G.cheats_selection > 1 and (_G.cheats_selection - 1) or max_sel
                 sound.playMenuMove()
@@ -762,57 +748,17 @@ function love.update(dt)
                         _G.cheat_debug_layout = "None"
                     end
                     renderer.showToast("Debug Layout: " .. _G.cheat_debug_layout .. ". Start new game to apply.")
-                else
-                    -- Dynamic actions based on OS
-                    if love.system.getOS() ~= "Web" then
-                        if _G.cheats_selection == 6 then
-                            if server.isActive() then
-                                server.stop()
-                                renderer.showToast("Play on Web server stopped.")
-                            else
-                                if not server.hasNetwork() then
-                                    renderer.showToast("No WiFi available. Connect to a network first.")
-                                elseif server.start() then
-                                    local url = "http://" .. server.getLocalIP() .. ":" .. server.getPort()
-                                    renderer.showToast("Web server started! Play at " .. url, 5.0)
-                                else
-                                    renderer.showToast("Failed to start web server!")
-                                end
-                            end
-                        elseif _G.cheats_selection == 7 then
-                            if server.isActive() then
-                                renderer.showToast("Please stop the web server before exiting.")
-                            else
-                                queueTransitionAction(event, 0.08, function()
-                                    _G.cheats_unlocked = false
-                                    save.saveCheats(false)
-                                    _G.appState = "MENU"
-                                    renderer.showToast("Secret Menu Locked. Enter the code to unlock again.", 4.0)
-                                end)
-                            end
-                        elseif _G.cheats_selection == 8 then
-                            if server.isActive() then
-                                renderer.showToast("Please stop the web server before exiting.")
-                            else
-                                queueTransitionAction(event, 0.08, function()
-                                    _G.appState = "MENU"
-                                end)
-                            end
-                        end
-                    else
-                        if _G.cheats_selection == 6 then
-                            queueTransitionAction(event, 0.08, function()
-                                _G.cheats_unlocked = false
-                                save.saveCheats(false)
-                                _G.appState = "MENU"
-                                renderer.showToast("Secret Menu Locked. Enter the code to unlock again.", 4.0)
-                            end)
-                        elseif _G.cheats_selection == 7 then
-                            queueTransitionAction(event, 0.08, function()
-                                _G.appState = "MENU"
-                            end)
-                        end
-                    end
+                elseif _G.cheats_selection == 6 then
+                    queueTransitionAction(event, 0.08, function()
+                        _G.cheats_unlocked = false
+                        save.saveCheats(false)
+                        _G.appState = "MENU"
+                        renderer.showToast("Secret Menu Locked. Enter the code to unlock again.", 4.0)
+                    end)
+                elseif _G.cheats_selection == 7 then
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "MENU"
+                    end)
                 end
             end
             return

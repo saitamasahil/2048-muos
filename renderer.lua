@@ -4,7 +4,6 @@
 
 local Game = require("game")
 local save = require("save")
-local server = require("server")
 
 local renderer = {}
 
@@ -5093,15 +5092,6 @@ function renderer.drawSecretMenu(selection, skip_transition)
         "Start with 1024 (Plus Mode): " .. (_G.cheat_start_1024_plus and "ON" or "OFF"),
         "Debug Layout: " .. (_G.cheat_debug_layout or "None"),
     }
-    if love.system.getOS() ~= "Web" then
-        local server = require("server")
-        if server.isActive() then
-            local url = server.getLocalIP() .. ":" .. server.getPort()
-            table.insert(options, "Web: ON (" .. url .. ")")
-        else
-            table.insert(options, "Play on Web: OFF")
-        end
-    end
     table.insert(options, "Lock Secret Menu")
     table.insert(options, "Back")
 
