@@ -26,6 +26,7 @@ This project is a direct port of the popular open-source [2048 Android](https://
   - **Undo Limit**: Adjust undo limitations (1-Move, Unlimited, or Disabled) to customize your strategic difficulty.
   - **Time Attack Max Limit**: Adjust the Time Attack starting and maximum threshold ceiling (30s, 60s, 90s).
   - **Vibration**: Toggle haptic rumble feedback on supported devices.
+  - **CRT Shader**: Toggle retro curved screen curvature, scanline, and phosphor mask post-processing filters.
 - **Advanced Undo History Stack**: Refactored the gameplay engine to support rolling backward history logs all the way up to 100 consecutive turns.
 - **Achievements & Unlockable Themes**: Track your progress by unlocking 23 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 25 themes total!
 - **Statistics Dashboard**: Tracks real-time statistics including highest score, highest tile reached, games started per mode, total play time, moves, merges, undos, and power-up usage persistently.

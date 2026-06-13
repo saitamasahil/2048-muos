@@ -3448,6 +3448,7 @@ function renderer.getSettingsOptions()
     local undo_lbl = "Undo Limit (Classic/Huge): " .. undo_val
     local ta_lbl = "Time Attack Max Limit: " .. _G.time_attack_time .. "s"
     local vib_lbl = "Vibration: " .. (_G.vibration and "On" or "Off")
+    local crt_lbl = "CRT Shader: " .. (_G.crt_filter and "On" or "Off")
 
     return {
         "Sound: " .. (sound.isEnabled() and "On" or "Off"),
@@ -3457,6 +3458,7 @@ function renderer.getSettingsOptions()
         undo_lbl,
         ta_lbl,
         vib_lbl,
+        crt_lbl,
         "Back"
     }
 end
@@ -3503,6 +3505,7 @@ function renderer.drawSettings(selection, skip_transition)
         "Undo Limit (Classic/Huge): Unlimited",
         "Time Attack Max Limit: 90s",
         "Vibration: Off",
+        "CRT Shader: Off",
         "Back"
     }
     local max_ow = 0

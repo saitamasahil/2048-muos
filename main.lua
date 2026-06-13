@@ -230,6 +230,7 @@ function love.load(args)
     _G.undo_mode = save.loadUndoMode() or "classic"
     _G.time_attack_time = save.loadTimeAttackTime() or 60
     _G.vibration = save.loadVibration()
+    _G.crt_filter = save.loadCrtFilter()
 
     -- Load and initialize global stats
     _G.stats = save.loadStats() or {}
@@ -892,6 +893,10 @@ function love.update(dt)
                     _G.vibration = not _G.vibration
                     save.saveVibration(_G.vibration)
                     sound.playMenuSelect()
+                elseif sel:match("^CRT Shader") then
+                    _G.crt_filter = not _G.crt_filter
+                    save.saveCrtFilter(_G.crt_filter)
+                    sound.playMenuSelect()
                 elseif sel == "Back" then
                     sound.playMenuBack()
                     queueTransitionAction(event, 0.08, function()
@@ -1125,102 +1130,188 @@ drawCurrentScreen = function()
     end
 end
 
+local crt_shader_code = [[
+    extern vec2 screen_size;
+
+    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+        // 1. Curvature / Barrel distortion
+        vec2 cc = texture_coords - 0.5;
+        float dist = dot(cc, cc);
+        
+        // Barrel distortion formula
+        vec2 distorted_coords = cc * (1.0 + dist * 0.08 + dist * dist * 0.04) + 0.5;
+
+        // Clip edges (simulate screen bezel)
+        if (distorted_coords.x < 0.0 || distorted_coords.x > 1.0 || 
+            distorted_coords.y < 0.0 || distorted_coords.y > 1.0) {
+            return vec4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        // 2. Sample texture
+        vec4 tex_color = Texel(texture, distorted_coords);
+
+        // 3. Scanlines (subtle brightness fluctuation based on vertical coord)
+        float scanline = sin(distorted_coords.y * screen_size.y * 1.5) * 0.07 + 0.93;
+
+        // 4. Subtle phosphor horizontal mask
+        float mask = sin(distorted_coords.x * screen_size.x * 2.0) * 0.03 + 0.97;
+
+        return tex_color * vec4(scanline * mask) * color;
+    }
+]]
+
+local crt_shader = nil
+local crt_main_canvas = nil
+
 function love.draw()
-    if not splash.finished then
-        splash.draw()
-        return
+    local w, h = love.graphics.getDimensions()
+    local old_setCanvas = love.graphics.setCanvas
+
+    local apply_crt = _G.crt_filter
+    if apply_crt then
+        if not crt_shader then
+            local success, err = pcall(function()
+                crt_shader = love.graphics.newShader(crt_shader_code)
+            end)
+            if not success then
+                print("Failed to compile CRT shader: " .. tostring(err))
+                _G.crt_filter = false
+                apply_crt = false
+            end
+        end
     end
 
-    if screen_transition_timer > 0 then
-        -- Cubic ease-out progress (0 → 1) - starts fast, slows down smoothly
-        local t_progress = 1 - (screen_transition_timer / screen_transition_duration)
-        local p = 1 - math.pow(1 - t_progress, 3)
+    if apply_crt and crt_shader then
+        if not crt_main_canvas or crt_main_canvas:getWidth() ~= w or crt_main_canvas:getHeight() ~= h then
+            crt_main_canvas = love.graphics.newCanvas(w, h)
+        end
+        crt_shader:send("screen_size", {w, h})
 
-        local w, h = love.graphics.getDimensions()
-        if not screen_canvas then
-            screen_canvas = love.graphics.newCanvas(w, h)
+        love.graphics.setCanvas = function(canvas, ...)
+            if canvas == nil or canvas == crt_main_canvas then
+                old_setCanvas({crt_main_canvas, stencil = true})
+            else
+                old_setCanvas(canvas, ...)
+            end
+        end
+        love.graphics.setCanvas(crt_main_canvas)
+        love.graphics.clear()
+    end
+
+    local function draw_internal()
+        if not splash.finished then
+            splash.draw()
+            return
         end
 
-        -- Only render the new screen to the canvas ONCE at the start of the transition
-        if not _G.screen_canvas_ready then
-            love.graphics.setCanvas({screen_canvas, stencil = true})
-            love.graphics.clear()
-            drawCurrentScreen()
-            love.graphics.setCanvas()
-            _G.screen_canvas_ready = true
-        end
+        if screen_transition_timer > 0 then
+            -- Cubic ease-out progress (0 → 1) - starts fast, slows down smoothly
+            local t_progress = 1 - (screen_transition_timer / screen_transition_duration)
+            local p = 1 - math.pow(1 - t_progress, 3)
 
-        -- Draw background fill to avoid any gaps
-        love.graphics.clear(0.05, 0.05, 0.08, 1.0)
-
-        local dir = transition_direction or 1
-        local shadow_w = math.floor(20 * (_G.scale or 1))
-
-        if dir == 1 then
-            -- Forward transition: New screen slides in on top from right (w -> 0)
-            -- Old screen slides out underneath to the left at 30% speed (0 -> -0.3*w)
-            local old_x = math.floor(-0.3 * w * p)
-            local new_x = math.floor(w * (1 - p))
-
-            -- 1. Draw old screen (underneath)
-            if old_screen_canvas then
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.setBlendMode("replace", "premultiplied")
-                love.graphics.draw(old_screen_canvas, old_x, 0)
-                love.graphics.setBlendMode("alpha", "alphamultiply")
-
-                -- Dim the old screen (dimming fades in from 0% to 50% opacity)
-                love.graphics.setColor(0, 0, 0, 0.5 * p)
-                love.graphics.rectangle("fill", old_x, 0, w, h)
+            if not screen_canvas then
+                screen_canvas = love.graphics.newCanvas(w, h)
             end
 
-            -- 2. Draw shadow to the left of the new screen
-            for i = 0, shadow_w - 1 do
-                local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
-                love.graphics.setColor(0, 0, 0, alpha)
-                love.graphics.rectangle("fill", new_x - shadow_w + i, 0, 1, h)
+            -- Only render the new screen to the canvas ONCE at the start of the transition
+            if not _G.screen_canvas_ready then
+                love.graphics.setCanvas({screen_canvas, stencil = true})
+                love.graphics.clear()
+                drawCurrentScreen()
+                love.graphics.setCanvas()
+                _G.screen_canvas_ready = true
             end
 
-            -- 3. Draw new screen (on top)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.setBlendMode("replace", "premultiplied")
-            love.graphics.draw(screen_canvas, new_x, 0)
-            love.graphics.setBlendMode("alpha", "alphamultiply")
-        else
-            -- Backward transition: Old screen slides out on top to the right (0 -> w)
-            -- New screen slides in underneath from the left at 30% speed (-0.3*w -> 0)
-            local new_x = math.floor(-0.3 * w * (1 - p))
-            local old_x = math.floor(w * p)
+            -- Draw background fill to avoid any gaps
+            love.graphics.clear(0.05, 0.05, 0.08, 1.0)
 
-            -- 1. Draw new screen (underneath)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.setBlendMode("replace", "premultiplied")
-            love.graphics.draw(screen_canvas, new_x, 0)
-            love.graphics.setBlendMode("alpha", "alphamultiply")
+            local dir = transition_direction or 1
+            local shadow_w = math.floor(20 * (_G.scale or 1))
 
-            -- Dim the new screen (dimming fades out from 50% to 0% opacity)
-            love.graphics.setColor(0, 0, 0, 0.5 * (1 - p))
-            love.graphics.rectangle("fill", new_x, 0, w, h)
+            if dir == 1 then
+                -- Forward transition: New screen slides in on top from right (w -> 0)
+                -- Old screen slides out underneath to the left at 30% speed (0 -> -0.3*w)
+                local old_x = math.floor(-0.3 * w * p)
+                local new_x = math.floor(w * (1 - p))
 
-            if old_screen_canvas then
-                -- 2. Draw shadow to the left of the old screen (sliding on top)
+                -- 1. Draw old screen (underneath)
+                if old_screen_canvas then
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.setBlendMode("replace", "premultiplied")
+                    love.graphics.draw(old_screen_canvas, old_x, 0)
+                    love.graphics.setBlendMode("alpha", "alphamultiply")
+
+                    -- Dim the old screen (dimming fades in from 0% to 50% opacity)
+                    love.graphics.setColor(0, 0, 0, 0.5 * p)
+                    love.graphics.rectangle("fill", old_x, 0, w, h)
+                end
+
+                -- 2. Draw shadow to the left of the new screen
                 for i = 0, shadow_w - 1 do
                     local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
                     love.graphics.setColor(0, 0, 0, alpha)
-                    love.graphics.rectangle("fill", old_x - shadow_w + i, 0, 1, h)
+                    love.graphics.rectangle("fill", new_x - shadow_w + i, 0, 1, h)
                 end
 
-                -- 3. Draw old screen (on top)
+                -- 3. Draw new screen (on top)
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.setBlendMode("replace", "premultiplied")
-                love.graphics.draw(old_screen_canvas, old_x, 0)
+                love.graphics.draw(screen_canvas, new_x, 0)
                 love.graphics.setBlendMode("alpha", "alphamultiply")
-            end
-        end
+            else
+                -- Backward transition: Old screen slides out on top to the right (0 -> w)
+                -- New screen slides in underneath from the left at 30% speed (-0.3*w -> 0)
+                local new_x = math.floor(-0.3 * w * (1 - p))
+                local old_x = math.floor(w * p)
 
+                -- 1. Draw new screen (underneath)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setBlendMode("replace", "premultiplied")
+                love.graphics.draw(screen_canvas, new_x, 0)
+                love.graphics.setBlendMode("alpha", "alphamultiply")
+
+                -- Dim the new screen (dimming fades out from 50% to 0% opacity)
+                love.graphics.setColor(0, 0, 0, 0.5 * (1 - p))
+                love.graphics.rectangle("fill", new_x, 0, w, h)
+
+                if old_screen_canvas then
+                    -- 2. Draw shadow to the left of the old screen (sliding on top)
+                    for i = 0, shadow_w - 1 do
+                        local alpha = 0.35 * math.pow((shadow_w - i) / shadow_w, 2)
+                        love.graphics.setColor(0, 0, 0, alpha)
+                        love.graphics.rectangle("fill", old_x - shadow_w + i, 0, 1, h)
+                    end
+
+                    -- 3. Draw old screen (on top)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.setBlendMode("replace", "premultiplied")
+                    love.graphics.draw(old_screen_canvas, old_x, 0)
+                    love.graphics.setBlendMode("alpha", "alphamultiply")
+                end
+            end
+
+            love.graphics.setColor(1, 1, 1, 1)
+        else
+            _G.screen_canvas_ready = false
+            drawCurrentScreen()
+        end
+    end
+
+    local success, err = pcall(draw_internal)
+    if not success then
+        if apply_crt then
+            love.graphics.setCanvas = old_setCanvas
+            love.graphics.setCanvas()
+        end
+        error(err)
+    end
+
+    if apply_crt and crt_shader and crt_main_canvas then
+        love.graphics.setCanvas = old_setCanvas
+        love.graphics.setCanvas()
         love.graphics.setColor(1, 1, 1, 1)
-    else
-        _G.screen_canvas_ready = false
-        drawCurrentScreen()
+        love.graphics.setShader(crt_shader)
+        love.graphics.draw(crt_main_canvas, 0, 0)
+        love.graphics.setShader()
     end
 end

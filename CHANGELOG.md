@@ -5,13 +5,14 @@
 ### Added
 - Added sound in game.
 - Added Unified Settings Menu: Sound, Text Size, and other settings under a dedicated Settings sub-menu, simplifying and cleaning up the Main Menu list.
-- Added five new settings options:
+- Added new settings options:
   - Sound: On/Off
   - Gameplay Animation Speed: Choose between Slow, Normal, Fast, or Instant tile sliding speeds.
   - Screen Transitions: Toggle screen transition animations on/off.
   - Undo Limit: Set undo limits to 1-Move, Unlimited, or Disabled for Classic or Huge Mode.
   - Time Attack Max Limit: Set the Time Attack max limit to 30s, 60s or 90s.
   - Vibration: Toggle haptic rumble feedback on supported devices.
+  - CRT Shader: Toggle retro curved screen curvature, scanline, and phosphor mask post-processing filters.
 - Full Undo History Stack: Refactored the gameplay engine to support unlimited undos up to 100 moves.
 - Added smooth sliding visual highlight transitions for card selection highlights on the game mode select menus, with bilinear color morphing and proximity-based icon/text blending.
 - Unified Achievements & Statistics: Merged both screens into a single, clean tabbed dashboard with fluid slide transitions, tracking real-time player profile metrics (highest score, highest tile, total time played, games started per mode, moves, merges, power-ups, and undos) persistently.

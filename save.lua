@@ -383,6 +383,28 @@ function save.loadVibration()
     return true
 end
 
+local CRT_FILE = "crt_filter.dat"
+function save.saveCrtFilter(enabled)
+    local path = getFilePath(CRT_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(enabled and "1" or "0")
+        file:close()
+    end
+end
+
+function save.loadCrtFilter()
+    local path = getFilePath(CRT_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        return content == "1"
+    end
+    return false -- default to off
+end
+
+
 local STATS_FILE = "stats.dat"
 
 function save.saveStats(stats)
