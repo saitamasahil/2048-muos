@@ -65,6 +65,12 @@ local function captureOldScreen()
 end
 
 local function queueTransitionAction(key, delay, action, direction)
+    if not _G.screen_transitions then
+        if action then
+            action()
+        end
+        return
+    end
     transition_next_direction = direction or 1
     transition_delay_key = key
     transition_delay_timer = 0.12 -- Extended visual hold duration for a satisfying physical button click
@@ -302,7 +308,9 @@ function love.update(dt)
             end
             if transition_delay_action then
                 -- Capture the current (old) screen BEFORE state changes
-                captureOldScreen()
+                if _G.screen_transitions then
+                    captureOldScreen()
+                end
                 local action = transition_delay_action
                 transition_delay_action = nil
                 action()
@@ -319,11 +327,15 @@ function love.update(dt)
     -- Smooth scroll interpolation for achievements
     if _G.achievements_scroll == nil then _G.achievements_scroll = 0 end
     if _G.achievements_scroll_target == nil then _G.achievements_scroll_target = 0 end
-    if _G.achievements_scroll ~= _G.achievements_scroll_target then
-        local diff = _G.achievements_scroll_target - _G.achievements_scroll
-        _G.achievements_scroll = _G.achievements_scroll + diff * 15 * dt
-        if math.abs(_G.achievements_scroll - _G.achievements_scroll_target) < 0.01 then
-            _G.achievements_scroll = _G.achievements_scroll_target
+    if not _G.screen_transitions then
+        _G.achievements_scroll = _G.achievements_scroll_target
+    else
+        if _G.achievements_scroll ~= _G.achievements_scroll_target then
+            local diff = _G.achievements_scroll_target - _G.achievements_scroll
+            _G.achievements_scroll = _G.achievements_scroll + diff * 15 * dt
+            if math.abs(_G.achievements_scroll - _G.achievements_scroll_target) < 0.01 then
+                _G.achievements_scroll = _G.achievements_scroll_target
+            end
         end
     end
 
@@ -351,7 +363,9 @@ function love.update(dt)
     if arcade_menu_closing_action and renderer.isArcadeMenuClosed() then
         local action = arcade_menu_closing_action
         arcade_menu_closing_action = nil
-        captureOldScreen()
+        if _G.screen_transitions then
+            captureOldScreen()
+        end
         action()
     end
 
@@ -558,11 +572,13 @@ function love.update(dt)
                 -- B always goes back; exits on first page
                 if cur_page > 1 then
                     sound.playMenuMove()
-                    renderer.captureOldTutorialSlide(cur_page)
+                    if _G.screen_transitions then
+                        renderer.captureOldTutorialSlide(cur_page)
+                        _G.tutorial_slide_dir = -1
+                        _G.tutorial_slide_timer = 0.20
+                        _G.tutorial_slide_ready = false
+                    end
                     _G.tutorial_page = cur_page - 1
-                    _G.tutorial_slide_dir = -1
-                    _G.tutorial_slide_timer = 0.20
-                    _G.tutorial_slide_ready = false
                 else
                     sound.playMenuBack()
                     queueTransitionAction(event, 0.08, function()
@@ -573,11 +589,13 @@ function love.update(dt)
                 -- A / Right always goes next; exits on last page
                 if cur_page < 8 then
                     sound.playMenuMove()
-                    renderer.captureOldTutorialSlide(cur_page)
+                    if _G.screen_transitions then
+                        renderer.captureOldTutorialSlide(cur_page)
+                        _G.tutorial_slide_dir = 1
+                        _G.tutorial_slide_timer = 0.20
+                        _G.tutorial_slide_ready = false
+                    end
                     _G.tutorial_page = cur_page + 1
-                    _G.tutorial_slide_dir = 1
-                    _G.tutorial_slide_timer = 0.20
-                    _G.tutorial_slide_ready = false
                 else
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
@@ -585,11 +603,13 @@ function love.update(dt)
                 end
             elseif event == input.events.LEFT then
                 if cur_page > 1 then
-                    renderer.captureOldTutorialSlide(cur_page)
+                    if _G.screen_transitions then
+                        renderer.captureOldTutorialSlide(cur_page)
+                        _G.tutorial_slide_dir = -1
+                        _G.tutorial_slide_timer = 0.20
+                        _G.tutorial_slide_ready = false
+                    end
                     _G.tutorial_page = cur_page - 1
-                    _G.tutorial_slide_dir = -1
-                    _G.tutorial_slide_timer = 0.20
-                    _G.tutorial_slide_ready = false
                 end
             end
             return

@@ -2635,6 +2635,9 @@ local function drawStencilCircle()
 end
 
 function renderer.startThemeTransition(drawTarget)
+    if not _G.screen_transitions then
+        return
+    end
     local w, h = love.graphics.getDimensions()
     if not transition_canvas then
         transition_canvas = love.graphics.newCanvas(w, h)
@@ -2670,35 +2673,47 @@ function renderer.updateTransition(dt)
     end
 
     if menu_anim_target_y then
-        if not menu_anim_y then
+        if not _G.screen_transitions then
             menu_anim_y = menu_anim_target_y
-        end
-        local lerp_factor = 1 - math.exp(-25 * dt)
-        menu_anim_y = menu_anim_y + (menu_anim_target_y - menu_anim_y) * lerp_factor
-        if math.abs(menu_anim_y - menu_anim_target_y) < 0.5 then
-            menu_anim_y = menu_anim_target_y
+        else
+            if not menu_anim_y then
+                menu_anim_y = menu_anim_target_y
+            end
+            local lerp_factor = 1 - math.exp(-25 * dt)
+            menu_anim_y = menu_anim_y + (menu_anim_target_y - menu_anim_y) * lerp_factor
+            if math.abs(menu_anim_y - menu_anim_target_y) < 0.5 then
+                menu_anim_y = menu_anim_target_y
+            end
         end
     end
 
     if menu_anim_target_x then
-        if not menu_anim_x then
+        if not _G.screen_transitions then
             menu_anim_x = menu_anim_target_x
-        end
-        local lerp_factor = 1 - math.exp(-25 * dt)
-        menu_anim_x = menu_anim_x + (menu_anim_target_x - menu_anim_x) * lerp_factor
-        if math.abs(menu_anim_x - menu_anim_target_x) < 0.5 then
-            menu_anim_x = menu_anim_target_x
+        else
+            if not menu_anim_x then
+                menu_anim_x = menu_anim_target_x
+            end
+            local lerp_factor = 1 - math.exp(-25 * dt)
+            menu_anim_x = menu_anim_x + (menu_anim_target_x - menu_anim_x) * lerp_factor
+            if math.abs(menu_anim_x - menu_anim_target_x) < 0.5 then
+                menu_anim_x = menu_anim_target_x
+            end
         end
     end
 
     if menu_anim_target_w then
-        if not menu_anim_w then
+        if not _G.screen_transitions then
             menu_anim_w = menu_anim_target_w
-        end
-        local lerp_factor = 1 - math.exp(-25 * dt)
-        menu_anim_w = menu_anim_w + (menu_anim_target_w - menu_anim_w) * lerp_factor
-        if math.abs(menu_anim_w - menu_anim_target_w) < 0.5 then
-            menu_anim_w = menu_anim_target_w
+        else
+            if not menu_anim_w then
+                menu_anim_w = menu_anim_target_w
+            end
+            local lerp_factor = 1 - math.exp(-25 * dt)
+            menu_anim_w = menu_anim_w + (menu_anim_target_w - menu_anim_w) * lerp_factor
+            if math.abs(menu_anim_w - menu_anim_target_w) < 0.5 then
+                menu_anim_w = menu_anim_target_w
+            end
         end
     end
 
