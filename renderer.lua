@@ -130,6 +130,35 @@ function renderer.showToast(msg, custom_duration)
     end
 end
 
+function renderer.getContrastTextColor(bg_col, desired_text_col, dark_fallback)
+    if not bg_col then return desired_text_col end
+    
+    local r_bg, g_bg, b_bg = bg_col[1] or 0, bg_col[2] or 0, bg_col[3] or 0
+    local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
+    
+    if bg_lum > 0.65 then
+        -- Light background: we want a dark text color.
+        if desired_text_col then
+            local r_tx, g_tx, b_tx = desired_text_col[1] or 0, desired_text_col[2] or 0, desired_text_col[3] or 0
+            local tx_lum = 0.299 * r_tx + 0.587 * g_tx + 0.114 * b_tx
+            if tx_lum < 0.45 then
+                return desired_text_col
+            end
+        end
+        return dark_fallback or {0.15, 0.15, 0.15, 1}
+    else
+        -- Dark background: we want a light text color.
+        if desired_text_col then
+            local r_tx, g_tx, b_tx = desired_text_col[1] or 0, desired_text_col[2] or 0, desired_text_col[3] or 0
+            local tx_lum = 0.299 * r_tx + 0.587 * g_tx + 0.114 * b_tx
+            if tx_lum > 0.45 then
+                return desired_text_col
+            end
+        end
+        return {0.95, 0.95, 0.95, 1}
+    end
+end
+
 -- Color palette (from Android cell_rectangle_*.xml and colors.xml)
 -- ============================================================================
 local function hex(h)
@@ -308,16 +337,16 @@ local themes = {
         super_tile_color = {hex("#c27a7e")},
         dark_text        = {hex("#783f44")},
         light_text       = {hex("#ffffff")},
-        ui_text          = {hex("#c27a7e")},
+        ui_text          = {hex("#783f44")},
         bg_color         = {hex("#ffe5b4")},
         board_color      = {hex("#ffdab9")},
         score_bg_color   = {hex("#ffdab9")},
-        score_label      = {hex("#c27a7e")},
-        score_value      = {hex("#c27a7e")},
+        score_label      = {hex("#783f44")},
+        score_value      = {hex("#541e22")},
         overlay_win      = {hex("#ff69b4")},
         overlay_lose     = {hex("#ffdab9")},
         help_bg_color    = {hex("#ffdab9")},
-        help_key_color   = {hex("#c27a7e")},
+        help_key_color   = {hex("#9e5055")},
         help_key_text    = {hex("#ffffff")},
     },
     glitch = {
@@ -3195,7 +3224,12 @@ function renderer.drawTutorial(page, skip_transition, static_only)
         roundedRect("line", msg_box_x, msg_y, msg_box_w, msg_box_h, math.floor(10 * scale))
 
         -- Message text
-        love.graphics.setColor(r, g, b, a * alpha_mod)
+        local txt_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
+        local tr, tg, tb, ta = 1, 1, 1, 1
+        if type(txt_col) == "table" then
+            tr = txt_col[1] or 1; tg = txt_col[2] or 1; tb = txt_col[3] or 1; ta = txt_col[4] or 1
+        end
+        love.graphics.setColor(tr, tg, tb, ta * alpha_mod)
         local text_y = msg_y + msg_pad
         for _, line in ipairs(slide_data.lines) do
             local formatted_line = renderer.formatText(line)
@@ -5757,41 +5791,56 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
 
                 -- Name & Desc
                 local text_x = icon_x + icon_s + math.floor(15 * scale)
+                local base_text_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
+                
                 if isUnlocked then
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 1)
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 1)
                 else
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.75)
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.75)
                 end
                 love.graphics.setFont(font_label)
                 love.graphics.print(ach.name, text_x, current_y + math.floor(12 * scale))
-
+ 
                 love.graphics.setFont(font_help_label)
                 if isUnlocked then
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.8)
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.8)
                 else
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.65)
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.65)
                 end
                 love.graphics.print(ach.desc, text_x, current_y + math.floor(42 * scale))
-
+ 
                 -- Reward Tag
                 love.graphics.setFont(font_help_label)
                 local rew_text = "Unlocks: " .. ach.reward
                 local rw = font_help_label:getWidth(rew_text)
                 local tag_x = w - padding - rw - math.floor(25 * scale)
                 local tag_y = current_y + math.floor(13 * scale)
+ 
+                local tag_text_color = super_tile_color
+                if isUnlocked then
+                    local r_bg, g_bg, b_bg = board_color[1] or 0, board_color[2] or 0, board_color[3] or 0
+                    local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
+                    if bg_lum > 0.65 then
+                        local r_tx, g_tx, b_tx = super_tile_color[1] or 0, super_tile_color[2] or 0, super_tile_color[3] or 0
+                        local tx_lum = 0.299 * r_tx + 0.587 * g_tx + 0.114 * b_tx
+                        if tx_lum > 0.45 then
+                            tag_text_color = dark_text
+                        end
+                    end
+                end
 
                 -- Tag background
                 if isUnlocked then
-                    love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 0.2)
+                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
                 else
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.18)
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.18)
                 end
                 roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_help_label:getHeight() + math.floor(8 * scale), math.floor(6 * scale))
-
+ 
                 if isUnlocked then
-                    love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], 1)
+                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                 else
-                    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.7)
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.7)
                 end
                 love.graphics.print(rew_text, tag_x, tag_y)
 
@@ -5810,20 +5859,29 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
             -- Card background
             love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.75)
             roundedRect("fill", x, y, card_w, card_h, math.floor(10 * scale))
+ 
+            local border_color = ui_text
+            local label_color = ui_text
+            local val_color = ui_text
+            
+            local base_text_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
+            border_color = base_text_col
+            label_color = base_text_col
+            val_color = base_text_col
 
             -- Card border
-            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.25)
+            love.graphics.setColor(border_color[1], border_color[2], border_color[3], 0.25)
             love.graphics.setLineWidth(math.floor(1.5 * scale))
             roundedRect("line", x, y, card_w, card_h, math.floor(10 * scale))
-
+ 
             -- Muted small label
             love.graphics.setFont(font_label)
-            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.6)
+            love.graphics.setColor(label_color[1], label_color[2], label_color[3], 0.7)
             love.graphics.print(label, x + math.floor(12 * scale), y + math.floor(8 * scale))
-
+ 
             -- Large value
             love.graphics.setFont(font_score)
-            love.graphics.setColor(ui_text) -- High-contrast text color
+            love.graphics.setColor(val_color[1], val_color[2], val_color[3], 1)
             love.graphics.print(value, x + math.floor(12 * scale), y + card_h - font_score:getHeight() - math.floor(8 * scale))
         end
 
