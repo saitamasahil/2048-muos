@@ -363,9 +363,7 @@ function love.update(dt)
         input.update(dt)
         input.processEvents(function(event)
             if event == input.events.CONFIRM or event == input.events.SELECT or event == input.events.START then
-                sound.stopSplash()
-                splash.finished = true
-                splash.is_revealing = false
+                splash.skip()
             end
         end)
         return

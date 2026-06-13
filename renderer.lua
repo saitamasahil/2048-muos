@@ -1507,7 +1507,7 @@ function renderer.updateLayout(size)
         tile_scale = 1.05
     end
 
-    local cache_key = tostring(size) .. "_" .. _G.text_size
+    local cache_key = tostring(size) .. "_" .. _G.text_size .. "_" .. tostring(cell_size)
     if not font_cache[cache_key] then
         local tile_font_size = math.floor(cell_size * 0.45 * tile_scale)
         local tile_small_size = math.floor(cell_size * 0.35 * tile_scale)
@@ -3130,7 +3130,7 @@ function renderer.drawTutorial(page, skip_transition, static_only)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 24 themes total!"
+                "achievements. 25 themes total!"
             },
             tiles = {
                 {2, 0, 0, 0},
@@ -3503,6 +3503,7 @@ function renderer.drawSettings(selection, skip_transition)
     local scale = _G.scale
 
     local options = renderer.getSettingsOptions()
+    selection = math.max(1, math.min(#options, selection or 1))
     love.graphics.setFont(font_message)
     -- Restore original main menu line spacing
     local gap = (_G.text_size == "large" and 37 or 34) * scale
@@ -5101,6 +5102,7 @@ end
 -- ============================================================================
 function renderer.drawSecretMenu(selection, skip_transition)
     renderer.clearBackground()
+    selection = math.max(1, math.min(7, selection or 1))
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
@@ -5323,7 +5325,12 @@ function renderer.drawThemeSelect(skip_transition)
     }
 
     -- Set up font for swatch labels
-    local font_swatch = love.graphics.newFont(font_path, math.max(10, math.floor(cell_size * 0.20)))
+    local swatch_size = math.max(10, math.floor(cell_size * 0.20))
+    local swatch_key = "swatch_" .. tostring(swatch_size)
+    if not font_cache[swatch_key] then
+        font_cache[swatch_key] = love.graphics.newFont(font_path, swatch_size)
+    end
+    local font_swatch = font_cache[swatch_key]
 
     for i, sw in ipairs(swatches) do
         local sx = positions[i].x

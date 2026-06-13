@@ -392,4 +392,14 @@ function splash.draw()
     love.graphics.pop()
 end
 
+function splash.skip()
+    if not splash.finished then
+        local sound = require("sound")
+        sound.stopSplash()
+        splash.finished = true
+        splash.is_revealing = false
+        timer.clear()
+    end
+end
+
 return splash

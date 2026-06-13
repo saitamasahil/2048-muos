@@ -190,7 +190,10 @@ function save.loadAchievements()
         -- Use basic load implementation to parse serialized table
         local chunk = (loadstring or load)(content)
         if chunk then
-            return chunk()
+            local success, result = pcall(chunk)
+            if success and type(result) == "table" then
+                return result
+            end
         end
     end
     return nil
@@ -260,7 +263,10 @@ function save.loadState(mode)
         -- But for a local game save, this works as long as the file isn't tampered with maliciously.
         local chunk = (loadstring or load)(content)
         if chunk then
-            return chunk()
+            local success, result = pcall(chunk)
+            if success and type(result) == "table" then
+                return result
+            end
         end
     end
     return nil
@@ -441,7 +447,10 @@ function save.loadStats()
         file:close()
         local chunk = (loadstring or load)(content)
         if chunk then
-            return chunk()
+            local success, result = pcall(chunk)
+            if success and type(result) == "table" then
+                return result
+            end
         end
     end
     return nil
