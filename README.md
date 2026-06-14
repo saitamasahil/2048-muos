@@ -98,18 +98,16 @@ This project is inspired by and references the popular open-source [2048 Android
 
 ## Controls
 
-**General & Navigation**
-- **D-Pad**: Swipe tiles Up, Down, Left, or Right
-- **Y**: Cycle through unlocked themes
-- **B**: Undo previous move
-- **A**: Confirm / Continue
-- **Start / Select**: Open Pause Menu to Restart or Quit
-- **Menu + Start**: Exit the game safely
-
-**Plus Mode Exclusive Controls**
-- **L1**: Activate **Swap** (Use D-Pad to aim, press A to select two adjacent tiles and swap them)
-- **R1**: Activate **Bomb** (Use D-Pad to aim, press A to destroy the targeted tile)
-- **B**: Activate **Undo** (Consumes an Undo powerup to revert your last move)
+| Button | Action |
+|--|--| 
+|D-Pad / Left Stick|Swipe tiles (Move Up, Down, Left, or Right)|
+|A|Confirm / Continue / Confirm Powerup Target|
+|B|Undo previous move|
+|Y|Cycle through unlocked themes|
+|L1|Activate Swap Powerup (Plus Mode)|
+|R1|Activate Bomb Powerup (Plus Mode)|
+|Start / Select|Open Pause Menu (Restart / Quit / Resume)|
+|Menu + Start|Exit the game safely (force quit)|
 
 *Note: Your progress is automatically saved after every move. You can safely close the game and pick up exactly where you left off.*
 
