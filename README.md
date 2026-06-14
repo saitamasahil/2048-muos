@@ -88,6 +88,12 @@ This project is a direct port of the popular open-source [2048 Android](https://
   <img src="screenshots/screenshot9.png" width="30%" />
 </p>
 
+<p align="center">
+  <img src="screenshots/screenshot10.png" width="30%" />
+  <img src="screenshots/screenshot11.png" width="30%" />
+  <img src="screenshots/screenshot12.png" width="30%" />
+</p>
+
 </details>
 
 ## Controls
