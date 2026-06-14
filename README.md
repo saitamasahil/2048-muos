@@ -4,9 +4,9 @@
   <img src="demo.webp" alt="Gameplay Animation" width="400" />
 </p>
 
-A feature-packed port of the classic puzzle game 2048 for muOS, built using the LÖVE framework.
+A feature-packed implementation of the classic puzzle game 2048 for muOS, built using the LÖVE framework.
 
-This project is a direct port of the popular open-source [2048 Android](https://github.com/tpcstld/2048) application by tpcstld, which itself is based on the original web game by Gabriele Cirulli. In addition to the original gameplay, I have introduced numerous new features, including multiple game modes, an achievement system, and a wide variety of themes to enhance the overall experience.
+This project is inspired by and references the popular open-source [2048 Android](https://github.com/tpcstld/2048) game by tpcstld, which itself is based on the original web game by Gabriele Cirulli. While taking visual and design references from the Android version, this codebase was written from the ground up in Lua for the LÖVE engine. In addition to the classic gameplay, I have introduced numerous new features, including multiple game modes, an achievement system, and a wide variety of themes to enhance the overall experience.
 
 ## Features
 

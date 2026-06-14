@@ -1,5 +1,5 @@
 -- 2048 Plus — Main entry point
--- A feature-packed port of the classic 2048 game
+-- A feature-packed implementation of the classic 2048 game
 
 require("globals")
 
