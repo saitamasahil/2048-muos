@@ -5464,7 +5464,7 @@ local achievementsList = {
     { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile in Classic Mode", reward = "OLED Dark Theme" },
     { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme" },
     { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme" },
-    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 4 bombs in Plus Mode", reward = "Retro Theme" },
+    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode", reward = "Retro Theme" },
     { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme" },
     { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme" },
     { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Glitch Theme" },
