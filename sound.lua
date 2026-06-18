@@ -232,7 +232,6 @@ function sound.playSplash()
         splashSource:seek(0)
         splashSource:play()
     end
-    sound.vibrate(0.15)
 end
 
 function sound.stopSplash()
