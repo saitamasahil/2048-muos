@@ -29,6 +29,13 @@ local achievements_old_canvas = nil
 local achievements_new_canvas = nil
 local logo_2048 = nil
 
+local badge_canvas = nil
+local badge_quad = nil
+local menu_logo_canvas = nil
+local menu_logo_quad = nil
+local selection_canvas = nil
+local selection_quad = nil
+
 -- Win animation state
 local win_timer = 0
 
@@ -1633,6 +1640,41 @@ local function roundedRect(mode, x, y, w, h, r)
     end
 end
 
+local function drawSelectionPill(x, y, w, h, cr)
+    local canvas_w = math.ceil(w * 2)
+    local canvas_h = math.ceil(h * 2)
+    if not selection_canvas or selection_canvas:getWidth() < canvas_w or selection_canvas:getHeight() < canvas_h then
+        local new_w = selection_canvas and math.max(selection_canvas:getWidth(), canvas_w) or canvas_w
+        local new_h = selection_canvas and math.max(selection_canvas:getHeight(), canvas_h) or canvas_h
+        selection_canvas = love.graphics.newCanvas(new_w, new_h)
+        selection_canvas:setFilter("linear", "linear")
+    end
+    if not selection_quad then
+        selection_quad = love.graphics.newQuad(0, 0, canvas_w, canvas_h, selection_canvas:getDimensions())
+    else
+        selection_quad:setViewport(0, 0, canvas_w, canvas_h, selection_canvas:getDimensions())
+    end
+
+    local r, g, b, a = love.graphics.getColor()
+    local old_canvas = love.graphics.getCanvas()
+    love.graphics.setCanvas(selection_canvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.push("all")
+    love.graphics.scale(2, 2)
+    love.graphics.translate(-x, -y)
+
+    love.graphics.setColor(r, g, b, a)
+    roundedRect("fill", x, y, w, h, cr)
+
+    love.graphics.pop()
+    love.graphics.setCanvas(old_canvas)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setBlendMode("alpha", "premultiplied")
+    love.graphics.draw(selection_canvas, selection_quad, x, y, 0, 0.5, 0.5)
+    love.graphics.setBlendMode("alpha", "alphamultiply")
+end
+
 -- ============================================================================
 -- Get tile color / text color
 -- ============================================================================
@@ -2265,6 +2307,7 @@ local function drawKeyBadge(text, x, y, w, h)
     local visual_offset_y = -math.max(1, math.floor(1.5 * scale))
     local original_text = text
     text = renderer.getButtonPrompt(text)
+    local letter_offset_y = (text == "Y" or text == "C") and visual_offset_y or (visual_offset_y - math.max(1, math.floor(1 * scale)))
 
     -- Save dynamically tracked coordinates for the Theme Y button
     if text == "Y" then
@@ -2322,24 +2365,56 @@ local function drawKeyBadge(text, x, y, w, h)
         shadow_shrink = 0.3
     end
 
-    if original_text == "DPAD" then
-        local aw = w * 0.32
-        local cr = math.floor(aw * 0.25)
+    local function draw()
+        if original_text == "DPAD" then
+            local aw = w * 0.32
+            local cr = math.floor(aw * 0.25)
 
-        if _G.theme == "matrix" then
-            -- Black background cross (shifted by press_shift_y)
-            love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.rectangle("fill", x, y + (h - aw) / 2 + press_shift_y, w, aw)
-            love.graphics.rectangle("fill", x + (w - aw) / 2, y + press_shift_y, aw, h)
+            if _G.theme == "matrix" then
+                -- Black background cross (shifted by press_shift_y)
+                love.graphics.setColor(0, 0, 0, 1)
+                love.graphics.rectangle("fill", x, y + (h - aw) / 2 + press_shift_y, w, aw)
+                love.graphics.rectangle("fill", x + (w - aw) / 2, y + press_shift_y, aw, h)
 
-            -- Green outline cross (shifted by press_shift_y)
+                -- Green outline cross (shifted by press_shift_y)
+                love.graphics.setColor(help_key_color)
+                love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+                love.graphics.rectangle("line", x, y + (h - aw) / 2 + press_shift_y, w, aw)
+                love.graphics.rectangle("line", x + (w - aw) / 2, y + press_shift_y, aw, h)
+
+                -- Center core circle outline
+                love.graphics.circle("line", x + w/2, y + h/2 + press_shift_y, aw * 0.7)
+
+                -- Draw four small direction dots inside in help_key_text (press-feedback highlights)
+                love.graphics.setColor(help_key_text)
+                local dot_r = math.max(1.2 * scale, 1)
+                local offset = w * 0.35
+
+                local dot_l = is_left and math.max(2.5 * scale, 2) or dot_r
+                local dot_r_active = is_right and math.max(2.5 * scale, 2) or dot_r
+                local dot_u = is_up and math.max(2.5 * scale, 2) or dot_r
+                local dot_d = is_down and math.max(2.5 * scale, 2) or dot_r
+
+                love.graphics.circle("fill", x + w/2 - offset, y + h/2 + press_shift_y, dot_l) -- Left
+                love.graphics.circle("fill", x + w/2 + offset, y + h/2 + press_shift_y, dot_r_active) -- Right
+                love.graphics.circle("fill", x + w/2, y + h/2 - offset + press_shift_y, dot_u) -- Up
+                love.graphics.circle("fill", x + w/2, y + h/2 + offset + press_shift_y, dot_d) -- Down
+                return
+            end
+
+            -- D-Pad shadow (shrinks when depressed)
+            love.graphics.setColor(0, 0, 0, 0.2)
+            local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
+            love.graphics.rectangle("fill", x, y + (h - aw) / 2 + sh, w, aw, cr)
+            love.graphics.rectangle("fill", x + (w - aw) / 2, y + sh, aw, h, cr)
+
+            -- D-Pad body (shifted by press_shift_y)
             love.graphics.setColor(help_key_color)
-            love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
-            love.graphics.rectangle("line", x, y + (h - aw) / 2 + press_shift_y, w, aw)
-            love.graphics.rectangle("line", x + (w - aw) / 2, y + press_shift_y, aw, h)
+            love.graphics.rectangle("fill", x, y + (h - aw) / 2 + press_shift_y, w, aw, cr)
+            love.graphics.rectangle("fill", x + (w - aw) / 2, y + press_shift_y, aw, h, cr)
 
-            -- Center core circle outline
-            love.graphics.circle("line", x + w/2, y + h/2 + press_shift_y, aw * 0.7)
+            -- Center core circle to blend the intersection
+            love.graphics.circle("fill", x + w/2, y + h/2 + press_shift_y, aw * 0.7)
 
             -- Draw four small direction dots inside in help_key_text (press-feedback highlights)
             love.graphics.setColor(help_key_text)
@@ -2358,48 +2433,40 @@ local function drawKeyBadge(text, x, y, w, h)
             return
         end
 
-        -- D-Pad shadow (shrinks when depressed)
-        love.graphics.setColor(0, 0, 0, 0.2)
-        local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
-        love.graphics.rectangle("fill", x, y + (h - aw) / 2 + sh, w, aw, cr)
-        love.graphics.rectangle("fill", x + (w - aw) / 2, y + sh, aw, h, cr)
+        if text == "A" or text == "B" or text == "X" or text == "Y" then
+            local cx, cy = x + w/2, y + h/2
+            local r = h * 0.45
 
-        -- D-Pad body (shifted by press_shift_y)
-        love.graphics.setColor(help_key_color)
-        love.graphics.rectangle("fill", x, y + (h - aw) / 2 + press_shift_y, w, aw, cr)
-        love.graphics.rectangle("fill", x + (w - aw) / 2, y + press_shift_y, aw, h, cr)
+            if _G.theme == "matrix" then
+                -- Black background circle
+                love.graphics.setColor(0, 0, 0, 1)
+                love.graphics.circle("fill", cx, cy + press_shift_y, r)
 
-        -- Center core circle to blend the intersection
-        love.graphics.circle("fill", x + w/2, y + h/2 + press_shift_y, aw * 0.7)
+                -- Green outline circle
+                love.graphics.setColor(help_key_color)
+                love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+                love.graphics.circle("line", cx, cy + press_shift_y, r)
 
-        -- Draw four small direction dots inside in help_key_text (press-feedback highlights)
-        love.graphics.setColor(help_key_text)
-        local dot_r = math.max(1.2 * scale, 1)
-        local offset = w * 0.35
+                -- Text letter
+                love.graphics.setFont(font_help_key)
+                love.graphics.setColor(help_key_text)
+                local tw = font_help_key:getWidth(text)
+                local th = font_help_key:getHeight()
+                love.graphics.print(text, cx - tw/2, cy - th/2 + letter_offset_y + press_shift_y)
+                return
+            end
 
-        local dot_l = is_left and math.max(2.5 * scale, 2) or dot_r
-        local dot_r_active = is_right and math.max(2.5 * scale, 2) or dot_r
-        local dot_u = is_up and math.max(2.5 * scale, 2) or dot_r
-        local dot_d = is_down and math.max(2.5 * scale, 2) or dot_r
+            -- Button shadow (shrinks when depressed)
+            love.graphics.setColor(0, 0, 0, 0.25)
+            local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
+            love.graphics.circle("fill", cx, cy + sh, r)
 
-        love.graphics.circle("fill", x + w/2 - offset, y + h/2 + press_shift_y, dot_l) -- Left
-        love.graphics.circle("fill", x + w/2 + offset, y + h/2 + press_shift_y, dot_r_active) -- Right
-        love.graphics.circle("fill", x + w/2, y + h/2 - offset + press_shift_y, dot_u) -- Up
-        love.graphics.circle("fill", x + w/2, y + h/2 + offset + press_shift_y, dot_d) -- Down
-        return
-    end
-
-    if text == "A" or text == "B" or text == "X" or text == "Y" then
-        local cx, cy = x + w/2, y + h/2
-        local r = h * 0.45
-
-        if _G.theme == "matrix" then
-            -- Black background circle
-            love.graphics.setColor(0, 0, 0, 1)
+            -- Button body (shifted by press_shift_y)
+            love.graphics.setColor(help_key_color)
             love.graphics.circle("fill", cx, cy + press_shift_y, r)
 
-            -- Green outline circle
-            love.graphics.setColor(help_key_color)
+            -- Button border
+            love.graphics.setColor(1, 1, 1, 0.15)
             love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
             love.graphics.circle("line", cx, cy + press_shift_y, r)
 
@@ -2408,43 +2475,43 @@ local function drawKeyBadge(text, x, y, w, h)
             love.graphics.setColor(help_key_text)
             local tw = font_help_key:getWidth(text)
             local th = font_help_key:getHeight()
-            love.graphics.print(text, cx - tw/2, cy - th/2 + visual_offset_y + press_shift_y)
+            love.graphics.print(text, cx - tw/2, cy - th/2 + letter_offset_y + press_shift_y)
             return
         end
 
-        -- Button shadow (shrinks when depressed)
-        love.graphics.setColor(0, 0, 0, 0.25)
-        local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
-        love.graphics.circle("fill", cx, cy + sh, r)
+        if original_text == "L1" or original_text == "R1" or original_text == "L" or original_text == "R" or original_text == "START" or original_text == "SELECT" or (love.system.getOS() == "Web" and string.len(text) > 1) then
+            local cr = math.floor(h * 0.4)
 
-        -- Button body (shifted by press_shift_y)
-        love.graphics.setColor(help_key_color)
-        love.graphics.circle("fill", cx, cy + press_shift_y, r)
+            if _G.theme == "matrix" then
+                -- Black background capsule
+                love.graphics.setColor(0, 0, 0, 1)
+                roundedRect("fill", x, y + press_shift_y, w, h, cr)
 
-        -- Button border
-        love.graphics.setColor(1, 1, 1, 0.15)
-        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
-        love.graphics.circle("line", cx, cy + press_shift_y, r)
+                -- Green outline capsule
+                love.graphics.setColor(help_key_color)
+                love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+                roundedRect("line", x, y + press_shift_y, w, h, cr)
 
-        -- Text letter
-        love.graphics.setFont(font_help_key)
-        love.graphics.setColor(help_key_text)
-        local tw = font_help_key:getWidth(text)
-        local th = font_help_key:getHeight()
-        love.graphics.print(text, cx - tw/2, cy - th/2 + visual_offset_y + press_shift_y)
-        return
-    end
+                -- Text
+                love.graphics.setFont(font_help_key)
+                love.graphics.setColor(help_key_text)
+                local tw = font_help_key:getWidth(text)
+                local th = font_help_key:getHeight()
+                love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2 + letter_offset_y + press_shift_y)
+                return
+            end
 
-    if original_text == "L1" or original_text == "R1" or original_text == "L" or original_text == "R" or original_text == "START" or original_text == "SELECT" or (love.system.getOS() == "Web" and string.len(text) > 1) then
-        local cr = math.floor(h * 0.4)
+            -- Shadow (shrinks when depressed)
+            love.graphics.setColor(0, 0, 0, 0.2)
+            local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
+            roundedRect("fill", x, y + sh, w, h, cr)
 
-        if _G.theme == "matrix" then
-            -- Black background capsule
-            love.graphics.setColor(0, 0, 0, 1)
+            -- Body (shifted by press_shift_y)
+            love.graphics.setColor(help_key_color)
             roundedRect("fill", x, y + press_shift_y, w, h, cr)
 
-            -- Green outline capsule
-            love.graphics.setColor(help_key_color)
+            -- Border
+            love.graphics.setColor(1, 1, 1, 0.15)
             love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
             roundedRect("line", x, y + press_shift_y, w, h, cr)
 
@@ -2453,66 +2520,76 @@ local function drawKeyBadge(text, x, y, w, h)
             love.graphics.setColor(help_key_text)
             local tw = font_help_key:getWidth(text)
             local th = font_help_key:getHeight()
-            love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2 + visual_offset_y + press_shift_y)
+            love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2 + letter_offset_y + press_shift_y)
             return
         end
 
-        -- Shadow (shrinks when depressed)
-        love.graphics.setColor(0, 0, 0, 0.2)
-        local sh = math.max(1, math.floor(1.5 * scale)) * shadow_shrink
-        roundedRect("fill", x, y + sh, w, h, cr)
+        local cr = math.floor(h * 0.3)
 
-        -- Body (shifted by press_shift_y)
+        -- Badge shadow (smooth depth effect, shrinks when depressed)
+        love.graphics.setColor(0, 0, 0, 0.2)
+        local sh_off = math.max(1, math.floor(2 * scale)) * shadow_shrink
+        roundedRect("fill", x, y + sh_off, w, h, cr)
+
+        -- Badge background (shifted by press_shift_y)
         love.graphics.setColor(help_key_color)
         roundedRect("fill", x, y + press_shift_y, w, h, cr)
 
-        -- Border
+        -- Subtle border for a clean, premium feel
         love.graphics.setColor(1, 1, 1, 0.15)
         love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
         roundedRect("line", x, y + press_shift_y, w, h, cr)
 
-        -- Text
+        -- Badge text
         love.graphics.setFont(font_help_key)
         love.graphics.setColor(help_key_text)
         local tw = font_help_key:getWidth(text)
         local th = font_help_key:getHeight()
-        love.graphics.print(text, x + (w - tw) / 2, y + (h - th) / 2 + visual_offset_y + press_shift_y)
-        return
+
+        -- Visual alignment corrections for arrows in ClearSans
+        local offset_x, offset_y = 0, letter_offset_y + press_shift_y
+        if text == "←" then
+            offset_y = offset_y - math.floor(2 * scale)
+            offset_x = math.floor(1 * scale)
+        elseif text == "→" then
+            offset_y = offset_y - math.floor(2 * scale)
+            offset_x = -math.floor(1 * scale)
+        end
+
+        love.graphics.print(text, x + (w - tw) / 2 + offset_x, y + (h - th) / 2 + offset_y)
     end
 
-    local cr = math.floor(h * 0.3)
-
-    -- Badge shadow (smooth depth effect, shrinks when depressed)
-    love.graphics.setColor(0, 0, 0, 0.2)
-    local sh_off = math.max(1, math.floor(2 * scale)) * shadow_shrink
-    roundedRect("fill", x, y + sh_off, w, h, cr)
-
-    -- Badge background (shifted by press_shift_y)
-    love.graphics.setColor(help_key_color)
-    roundedRect("fill", x, y + press_shift_y, w, h, cr)
-
-    -- Subtle border for a clean, premium feel
-    love.graphics.setColor(1, 1, 1, 0.15)
-    love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
-    roundedRect("line", x, y + press_shift_y, w, h, cr)
-
-    -- Badge text
-    love.graphics.setFont(font_help_key)
-    love.graphics.setColor(help_key_text)
-    local tw = font_help_key:getWidth(text)
-    local th = font_help_key:getHeight()
-
-    -- Visual alignment corrections for arrows in ClearSans
-    local offset_x, offset_y = 0, visual_offset_y + press_shift_y
-    if text == "←" then
-        offset_y = offset_y - math.floor(2 * scale)
-        offset_x = math.floor(1 * scale)
-    elseif text == "→" then
-        offset_y = offset_y - math.floor(2 * scale)
-        offset_x = -math.floor(1 * scale)
+    -- Canvas supersampling wrapper:
+    local canvas_w = math.ceil(w * 2)
+    local canvas_h = math.ceil(h * 2)
+    if not badge_canvas or badge_canvas:getWidth() < canvas_w or badge_canvas:getHeight() < canvas_h then
+        local new_w = badge_canvas and math.max(badge_canvas:getWidth(), canvas_w) or canvas_w
+        local new_h = badge_canvas and math.max(badge_canvas:getHeight(), canvas_h) or canvas_h
+        badge_canvas = love.graphics.newCanvas(new_w, new_h)
+        badge_canvas:setFilter("linear", "linear")
+    end
+    if not badge_quad then
+        badge_quad = love.graphics.newQuad(0, 0, canvas_w, canvas_h, badge_canvas:getDimensions())
+    else
+        badge_quad:setViewport(0, 0, canvas_w, canvas_h, badge_canvas:getDimensions())
     end
 
-    love.graphics.print(text, x + (w - tw) / 2 + offset_x, y + (h - th) / 2 + offset_y)
+    local old_canvas = love.graphics.getCanvas()
+    love.graphics.setCanvas(badge_canvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.push("all")
+    love.graphics.scale(2, 2)
+    love.graphics.translate(-x, -y)
+
+    draw()
+
+    love.graphics.pop()
+    love.graphics.setCanvas(old_canvas)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setBlendMode("alpha", "premultiplied")
+    love.graphics.draw(badge_canvas, badge_quad, x, y, 0, 0.5, 0.5)
+    love.graphics.setBlendMode("alpha", "alphamultiply")
 end
 
 -- ============================================================================
@@ -3644,7 +3721,7 @@ function renderer.drawSettings(selection, skip_transition)
     if not menu_anim_w then menu_anim_w = target_ow end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
+    drawSelectionPill(menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
         local oy = menu_start_y + (i - 1) * gap
@@ -3736,6 +3813,27 @@ function renderer.drawMainMenu(selection, skip_transition)
         local tile_x = (w - tile_size) / 2
         local tile_y = start_y + (header_h - tile_size) / 2
 
+        local canvas_w = math.ceil(tile_size * 2)
+        local canvas_h = math.ceil(tile_size * 2)
+        if not menu_logo_canvas or menu_logo_canvas:getWidth() < canvas_w or menu_logo_canvas:getHeight() < canvas_h then
+            local new_w = menu_logo_canvas and math.max(menu_logo_canvas:getWidth(), canvas_w) or canvas_w
+            local new_h = menu_logo_canvas and math.max(menu_logo_canvas:getHeight(), canvas_h) or canvas_h
+            menu_logo_canvas = love.graphics.newCanvas(new_w, new_h)
+            menu_logo_canvas:setFilter("linear", "linear")
+        end
+        if not menu_logo_quad then
+            menu_logo_quad = love.graphics.newQuad(0, 0, canvas_w, canvas_h, menu_logo_canvas:getDimensions())
+        else
+            menu_logo_quad:setViewport(0, 0, canvas_w, canvas_h, menu_logo_canvas:getDimensions())
+        end
+
+        local old_canvas = love.graphics.getCanvas()
+        love.graphics.setCanvas(menu_logo_canvas)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.push("all")
+        love.graphics.scale(2, 2)
+        love.graphics.translate(-tile_x, -tile_y)
+
         -- Draw tile background (using 2048 tile color from active theme!)
         love.graphics.setColor(getTileColor(2048))
         roundedRect("fill", tile_x, tile_y, tile_size, tile_size, tile_size * 0.12)
@@ -3775,6 +3873,14 @@ function renderer.drawMainMenu(selection, skip_transition)
 
         love.graphics.setFont(f_plus)
         love.graphics.print("PLUS", x_plus, y_plus, 0, logo_s, logo_s)
+
+        love.graphics.pop()
+        love.graphics.setCanvas(old_canvas)
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode("alpha", "premultiplied")
+        love.graphics.draw(menu_logo_canvas, menu_logo_quad, tile_x, tile_y, 0, 0.5, 0.5)
+        love.graphics.setBlendMode("alpha", "alphamultiply")
     end
 
     -- Menu options start position
@@ -3810,7 +3916,7 @@ function renderer.drawMainMenu(selection, skip_transition)
     if not menu_anim_w then menu_anim_w = target_ow end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
+    drawSelectionPill(menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
 
     for i, opt in ipairs(options) do
         local oy = menu_start_y + (i - 1) * gap
@@ -5244,7 +5350,7 @@ function renderer.drawSecretMenu(selection, skip_transition)
     if not menu_anim_w then menu_anim_w = target_ow end
 
     love.graphics.setColor(help_key_color)
-    roundedRect("fill", menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
+    drawSelectionPill(menu_anim_x, menu_anim_y - 1 * scale, menu_anim_w, font_message:getHeight() + 2 * scale, 8 * scale)
 
     local max_text_w = w - block_x - margin
     for i, opt in ipairs(options) do
