@@ -6111,23 +6111,16 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
     local label_gap = math.floor(4 * scale)
 
     if love.system.getOS() ~= "Web" then
-        -- Left side: L/R (Switch Tab) and DPAD (Scroll, if on Tab 1)
+        -- Left side: DPAD (Scroll / Switch Tab)
         local left_x = padding
         local dpad_size = math.floor(24 * scale)
 
-        drawKeyBadge("L/R", left_x, badge_y + (badge_h - dpad_size) / 2, math.floor(34 * scale), dpad_size)
-        left_x = left_x + math.floor(34 * scale) + math.floor(6 * scale)
+        drawKeyBadge("DPAD", left_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+        left_x = left_x + dpad_size + math.floor(6 * scale)
         love.graphics.setFont(font_help_label)
         love.graphics.setColor(ui_text)
-        love.graphics.print("Switch Tab", left_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
-        left_x = left_x + font_help_label:getWidth("Switch Tab") + math.floor(15 * scale)
-
-        if active_tab == 1 then
-            drawKeyBadge("DPAD", left_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
-            left_x = left_x + dpad_size + math.floor(6 * scale)
-            love.graphics.setColor(ui_text)
-            love.graphics.print("Scroll", left_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
-        end
+        local label = (active_tab == 1) and "Scroll / Switch Tab" or "Switch Tab"
+        love.graphics.print(label, left_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
         -- Right side actions: B (Back), Y (Theme)
         local right_x = w - padding
