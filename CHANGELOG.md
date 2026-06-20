@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.0.2]
+
+### Added
+- Smooth Edges: Made the splash screen logo, main menu logo, menu highlights, and all footer buttons look clean and smooth on handheld screens.
+
+### Changed
+- Controls Help: Updated the footer on the Achievements screen to show that you can switch tabs using the D-Pad.
+
+### Fixed
+- Button Centering: Fixed the alignment so that letters (like A, B, and X) sit perfectly inside their button circles.
+- Menu Spacing: Adjusted the menu selection bar to have a cleaner height and perfectly balanced gaps above and below.
+
+## [4.0.1]
+
+### Added
+- Dynamic particle burst effects for achievement toasts
+- Force exit on quit to bypass deadlock
+
+### Updated
+- Demolition Expert achievement, Now it requires 10 Bombs to unlock
+
+### Fixed
+- Minor gameplay lag during first vibration
+
 ## [4.0.0]
 
 ### Added
