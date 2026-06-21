@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.0.3]
+
+### Fixed
+- Menu Highlights: Corrected the vertical alignment and height of the selection highlight pill to perfectly center the option text and wrap descenders cleanly.
+
 ## [4.0.2]
 
 ### Added
