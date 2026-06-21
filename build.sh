@@ -56,6 +56,10 @@ cp "$PROJECT_ROOT/sound.lua" "$WORKDIR/$APP_NAME/.game/"
 cp "$PROJECT_ROOT/splash.lua" "$WORKDIR/$APP_NAME/.game/"
 cp "$PROJECT_ROOT/timer.lua" "$WORKDIR/$APP_NAME/.game/"
 
+# Copy licenses
+echo "Copying licenses..."
+cp -r "$PROJECT_ROOT/licenses" "$WORKDIR/$APP_NAME/.game/"
+
 # Copy assets (excluding glyph subfolder — handled separately)
 echo "Copying assets..."
 mkdir -p "$WORKDIR/$APP_NAME/.game/assets"
