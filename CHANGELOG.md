@@ -7,6 +7,9 @@
 - Footer Controls: Added the missing D-Pad Navigate icon and label to the Arcade Mode selection screen footer.
 - Key Badges: Resolved rendering conflict where key badges (DPAD, A, B) were drawn incorrectly as "Y" due to active scissor coordinates clipping canvas drawing operations.
 
+### Updated
+- Glyph icon
+
 ## [4.0.2]
 
 ### Added
