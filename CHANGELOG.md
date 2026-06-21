@@ -4,6 +4,8 @@
 
 ### Fixed
 - Menu Highlights: Corrected the vertical alignment and height of the selection highlight pill to perfectly center the option text and wrap descenders cleanly.
+- Footer Controls: Added the missing D-Pad Navigate icon and label to the Arcade Mode selection screen footer.
+- Key Badges: Resolved rendering conflict where key badges (DPAD, A, B) were drawn incorrectly as "Y" due to active scissor coordinates clipping canvas drawing operations.
 
 ## [4.0.2]
 
