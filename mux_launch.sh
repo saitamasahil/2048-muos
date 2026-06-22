@@ -3,11 +3,12 @@
 # ICON: logo_2048
 # GRID: 2048 Plus
 
-STAGE_OVERLAY=0 . /opt/muos/script/var/func.sh
+. /opt/muos/script/var/func.sh
 
 # Check for SETUP_APP (Jacaranda or newer)
 if command -v SETUP_APP >/dev/null 2>&1; then
     # --- Jacaranda Logic ---
+    SETUP_STAGE_OVERLAY
     APP_BIN="bin/love"
     SETUP_APP "love" ""
 
@@ -37,6 +38,7 @@ if command -v SETUP_APP >/dev/null 2>&1; then
     fi
 
     command -v CAFFEINE >/dev/null 2>&1 && CAFFEINE on
+    SET_VAR "system" "foreground_process" "love"
     $GPTOKEYB "love" &
     ./bin/love . "${SCREEN_RESOLUTION}" > "$APP_DIR/.game/2048 Plus.log" 2>&1
     kill -9 "$(pidof gptokeyb2.armhf)" 2>/dev/null || true
