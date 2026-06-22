@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.4]
+
+### Added
+- Continue last played game: Added an option to directly continue the last active game session from the main menu.
+
+### Changed
+- Game selection overlay: Widened the game selection overlay to fully cover and hide the main menu footer element when open.
+
+### Fixed
+- muOS overlays: Properly initialize the stage overlay system and register the active foreground process to show volume and brightness indicators on muOS.
+
 ## [4.0.3]
 
 ### Fixed
