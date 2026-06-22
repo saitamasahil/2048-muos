@@ -4716,7 +4716,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
     end
 
     -- 3. Panel geometry
-    local panel_pad_x = math.floor(24 * scale)
+    local panel_pad_x = math.floor(16 * scale)
     local panel_pad_y = math.floor(16 * scale)
     local card_gap    = math.floor(12 * scale)
     local card_h_arc  = math.floor((_G.text_size == "large" and 124 or 120) * scale)
