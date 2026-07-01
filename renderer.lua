@@ -1648,8 +1648,10 @@ local function roundedRect(mode, x, y, w, h, r)
 end
 
 local function drawSelectionPill(x, y, w, h, cr)
-    local canvas_w = math.ceil(w * 2)
-    local canvas_h = math.ceil(h * 2)
+    local scale = _G.scale or 1
+    local pad = math.ceil(4 * scale)
+    local canvas_w = math.ceil((w + pad * 2) * 2)
+    local canvas_h = math.ceil((h + pad * 2) * 2)
     if not selection_canvas or selection_canvas:getWidth() < canvas_w or selection_canvas:getHeight() < canvas_h then
         local new_w = selection_canvas and math.max(selection_canvas:getWidth(), canvas_w) or canvas_w
         local new_h = selection_canvas and math.max(selection_canvas:getHeight(), canvas_h) or canvas_h
@@ -1671,7 +1673,7 @@ local function drawSelectionPill(x, y, w, h, cr)
     love.graphics.clear(0, 0, 0, 0)
     love.graphics.push("all")
     love.graphics.scale(2, 2)
-    love.graphics.translate(-x, -y)
+    love.graphics.translate(-x + pad, -y + pad)
 
     love.graphics.setColor(r, g, b, a)
     roundedRect("fill", x, y, w, h, cr)
@@ -1688,7 +1690,7 @@ local function drawSelectionPill(x, y, w, h, cr)
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setBlendMode("alpha", "premultiplied")
-    love.graphics.draw(selection_canvas, selection_quad, x, y, 0, 0.5, 0.5)
+    love.graphics.draw(selection_canvas, selection_quad, x - pad, y - pad, 0, 0.5, 0.5)
     love.graphics.setBlendMode("alpha", "alphamultiply")
 end
 
@@ -2577,8 +2579,9 @@ local function drawKeyBadge(text, x, y, w, h)
     end
 
     -- Canvas supersampling wrapper:
-    local canvas_w = math.ceil(w * 2)
-    local canvas_h = math.ceil(h * 2)
+    local pad = math.ceil(4 * scale)
+    local canvas_w = math.ceil((w + pad * 2) * 2)
+    local canvas_h = math.ceil((h + pad * 2) * 2)
     if not badge_canvas or badge_canvas:getWidth() < canvas_w or badge_canvas:getHeight() < canvas_h then
         local new_w = badge_canvas and math.max(badge_canvas:getWidth(), canvas_w) or canvas_w
         local new_h = badge_canvas and math.max(badge_canvas:getHeight(), canvas_h) or canvas_h
@@ -2599,7 +2602,7 @@ local function drawKeyBadge(text, x, y, w, h)
     love.graphics.clear(0, 0, 0, 0)
     love.graphics.push("all")
     love.graphics.scale(2, 2)
-    love.graphics.translate(-x, -y)
+    love.graphics.translate(-x + pad, -y + pad)
 
     draw()
 
@@ -2615,7 +2618,7 @@ local function drawKeyBadge(text, x, y, w, h)
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setBlendMode("alpha", "premultiplied")
-    love.graphics.draw(badge_canvas, badge_quad, x, y, 0, 0.5, 0.5)
+    love.graphics.draw(badge_canvas, badge_quad, x - pad, y - pad, 0, 0.5, 0.5)
     love.graphics.setBlendMode("alpha", "alphamultiply")
 end
 

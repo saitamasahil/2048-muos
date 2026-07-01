@@ -11,6 +11,9 @@
 - Unified Audio & Haptics settings: Grouped Sound Effects, Background Music, and Haptic Vibration together under a single "Audio & Haptics" settings sub-menu.
 - Tutorial Navigation: Simplified footer button actions to B Exit and Y Switch Theme, mapping page navigation exclusively to D-Pad.
 
+### Fixed
+- Outline Clipping: Added rendering canvas padding to prevent menu selection pills and footer button outlines from getting cut off at certain resolutions.
+
 ## [4.0.4]
 
 ### Added
