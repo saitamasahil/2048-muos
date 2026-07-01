@@ -313,6 +313,9 @@ function love.update(dt)
     -- Update timer system (drives splash animations)
     timer.update(dt)
 
+    -- Update BGM playback and playlist states
+    sound.update(dt)
+
     -- Handle visual transition delays to show key badge animations
     if transition_delay_timer > 0 then
         transition_delay_timer = transition_delay_timer - dt
@@ -508,6 +511,7 @@ function love.update(dt)
                     elseif sel == "Settings" then
                         _G.appState = "SETTINGS"
                         _G.settings_selection = 1
+                        _G.settings_page = "main"
                     elseif sel == "About" then
                         _G.appState = "ABOUT"
                     elseif sel == "Quit" or sel == "Exit the Game" then
@@ -796,70 +800,145 @@ function love.update(dt)
                 sound.playMenuMove()
             elseif event == input.events.CONFIRM then
                 local sel = options[_G.settings_selection or 1]
-                if sel:match("^Sound") then
-                    sound.playMenuSelect()
-                    sound.toggle()
-                elseif sel:match("^Text Size") then
-                    sound.playMenuSelect()
-                    _G.text_size = (_G.text_size == "large") and "normal" or "large"
-                    save.saveTextSize(_G.text_size)
-                    renderer.init()
-                    renderer.flashTextSize()
-                elseif sel:match("Animation Speed") then
-                    sound.playMenuSelect()
-                    if _G.animation_speed == "normal" then
-                        _G.animation_speed = "fast"
-                    elseif _G.animation_speed == "fast" then
-                        _G.animation_speed = "instant"
-                    elseif _G.animation_speed == "instant" then
-                        _G.animation_speed = "slow"
-                    else
-                        _G.animation_speed = "normal"
+                if _G.settings_page == "audio" then
+                    if sel:match("^Sound Effects") then
+                        sound.playMenuSelect()
+                        sound.toggle()
+                    elseif sel:match("^Music") then
+                        sound.playMenuSelect()
+                        sound.toggleBgm()
+                    elseif sel:match("^Vibration") then
+                        _G.vibration = not _G.vibration
+                        save.saveVibration(_G.vibration)
+                        sound.playMenuSelect()
+                        sound.vibrate(0.1)
+                    elseif sel == "Back" then
+                        sound.playMenuBack()
+                        if _G.screen_transitions then
+                            local w, h = love.graphics.getDimensions()
+                            if not old_screen_canvas then
+                                old_screen_canvas = love.graphics.newCanvas(w, h)
+                            end
+                            love.graphics.setCanvas({old_screen_canvas, stencil = true})
+                            love.graphics.clear()
+                            drawCurrentScreen()
+                            love.graphics.setCanvas()
+                            _G.screen_canvas_ready = false
+                        end
+                        queueTransitionAction(event, 0.08, function()
+                            _G.settings_page = "main"
+                            _G.settings_selection = 1
+                            renderer.resetMenuAnimation()
+                            if _G.screen_transitions then
+                                transition_direction = -1
+                                screen_transition_timer = screen_transition_duration
+                            end
+                        end)
                     end
-                    save.saveAnimationSpeed(_G.animation_speed)
-                elseif sel:match("^Transitions") then
-                    sound.playMenuSelect()
-                    _G.screen_transitions = not _G.screen_transitions
-                    save.saveScreenTransitions(_G.screen_transitions)
-                elseif sel:match("^Undo Limit") then
-                    sound.playMenuSelect()
-                    if _G.undo_mode == "classic" then
-                        _G.undo_mode = "unlimited"
-                    elseif _G.undo_mode == "unlimited" then
-                        _G.undo_mode = "disabled"
-                    else
-                        _G.undo_mode = "classic"
+                else
+                    if sel == "Audio & Haptics" then
+                        sound.playMenuSelect()
+                        if _G.screen_transitions then
+                            local w, h = love.graphics.getDimensions()
+                            if not old_screen_canvas then
+                                old_screen_canvas = love.graphics.newCanvas(w, h)
+                            end
+                            love.graphics.setCanvas({old_screen_canvas, stencil = true})
+                            love.graphics.clear()
+                            drawCurrentScreen()
+                            love.graphics.setCanvas()
+                            _G.screen_canvas_ready = false
+                        end
+                        queueTransitionAction(event, 0.08, function()
+                            _G.settings_page = "audio"
+                            _G.settings_selection = 1
+                            renderer.resetMenuAnimation()
+                            if _G.screen_transitions then
+                                transition_direction = 1
+                                screen_transition_timer = screen_transition_duration
+                            end
+                        end)
+                    elseif sel:match("^Text Size") then
+                        sound.playMenuSelect()
+                        _G.text_size = (_G.text_size == "large") and "normal" or "large"
+                        save.saveTextSize(_G.text_size)
+                        renderer.init()
+                        renderer.flashTextSize()
+                    elseif sel:match("Animation Speed") then
+                        sound.playMenuSelect()
+                        if _G.animation_speed == "normal" then
+                            _G.animation_speed = "fast"
+                        elseif _G.animation_speed == "fast" then
+                            _G.animation_speed = "instant"
+                        elseif _G.animation_speed == "instant" then
+                            _G.animation_speed = "slow"
+                        else
+                            _G.animation_speed = "normal"
+                        end
+                        save.saveAnimationSpeed(_G.animation_speed)
+                    elseif sel:match("^Transitions") then
+                        sound.playMenuSelect()
+                        _G.screen_transitions = not _G.screen_transitions
+                        save.saveScreenTransitions(_G.screen_transitions)
+                    elseif sel:match("^Undo Limit") then
+                        sound.playMenuSelect()
+                        if _G.undo_mode == "classic" then
+                            _G.undo_mode = "unlimited"
+                        elseif _G.undo_mode == "unlimited" then
+                            _G.undo_mode = "disabled"
+                        else
+                            _G.undo_mode = "classic"
+                        end
+                        save.saveUndoMode(_G.undo_mode)
+                    elseif sel:match("^Time Attack") then
+                        sound.playMenuSelect()
+                        if _G.time_attack_time == 30 then
+                            _G.time_attack_time = 60
+                        elseif _G.time_attack_time == 60 then
+                            _G.time_attack_time = 90
+                        else
+                            _G.time_attack_time = 30
+                        end
+                        save.saveTimeAttackTime(_G.time_attack_time)
+                    elseif sel:match("^CRT Shader") then
+                        _G.crt_filter = not _G.crt_filter
+                        save.saveCrtFilter(_G.crt_filter)
+                        sound.playMenuSelect()
+                    elseif sel == "Back" then
+                        sound.playMenuBack()
+                        queueTransitionAction(event, 0.08, function()
+                            _G.appState = "MENU"
+                        end)
                     end
-                    save.saveUndoMode(_G.undo_mode)
-                elseif sel:match("^Time Attack") then
-                    sound.playMenuSelect()
-                    if _G.time_attack_time == 30 then
-                        _G.time_attack_time = 60
-                    elseif _G.time_attack_time == 60 then
-                        _G.time_attack_time = 90
-                    else
-                        _G.time_attack_time = 30
+                end
+            elseif event == input.events.BACK then
+                sound.playMenuBack()
+                if _G.settings_page == "audio" then
+                    if _G.screen_transitions then
+                        local w, h = love.graphics.getDimensions()
+                        if not old_screen_canvas then
+                            old_screen_canvas = love.graphics.newCanvas(w, h)
+                        end
+                        love.graphics.setCanvas({old_screen_canvas, stencil = true})
+                        love.graphics.clear()
+                        drawCurrentScreen()
+                        love.graphics.setCanvas()
+                        _G.screen_canvas_ready = false
                     end
-                    save.saveTimeAttackTime(_G.time_attack_time)
-                elseif sel:match("^Vibration") then
-                    _G.vibration = not _G.vibration
-                    save.saveVibration(_G.vibration)
-                    sound.playMenuSelect()
-                elseif sel:match("^CRT Shader") then
-                    _G.crt_filter = not _G.crt_filter
-                    save.saveCrtFilter(_G.crt_filter)
-                    sound.playMenuSelect()
-                elseif sel == "Back" then
-                    sound.playMenuBack()
+                    queueTransitionAction(event, 0.08, function()
+                        _G.settings_page = "main"
+                        _G.settings_selection = 1
+                        renderer.resetMenuAnimation()
+                        if _G.screen_transitions then
+                            transition_direction = -1
+                            screen_transition_timer = screen_transition_duration
+                        end
+                    end)
+                else
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "MENU"
                     end)
                 end
-            elseif event == input.events.BACK then
-                sound.playMenuBack()
-                queueTransitionAction(event, 0.08, function()
-                    _G.appState = "MENU"
-                end)
             end
             return
         end
@@ -935,6 +1014,8 @@ function love.update(dt)
                 queueTransitionAction(event, 0.08, function()
                     game:cancelPause()
                 end)
+            elseif event == input.events.L1 or event == input.events.R1 then
+                sound.playNextBgm()
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
                     local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy" or game.mode == "goose")

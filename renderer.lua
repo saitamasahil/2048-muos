@@ -28,6 +28,7 @@ local tutorial_new_canvas = nil
 local achievements_old_canvas = nil
 local achievements_new_canvas = nil
 local logo_2048 = nil
+local font_bgm = nil
 
 local badge_canvas = nil
 local badge_quad = nil
@@ -1015,6 +1016,11 @@ local tile_colors, super_tile_color, dark_text, light_text, ui_text
 local bg_color, board_color, score_bg_color, score_label, score_value
 local overlay_win, overlay_lose, help_bg_color, help_key_color, help_key_text
 
+-- Now Playing BGM variables
+local now_playing_timer = 0
+local now_playing_track = nil
+local last_track_path = nil
+
 function renderer.applyTheme()
     local t = themes[_G.theme] or themes.light
     tile_colors = t.tile_colors
@@ -1600,6 +1606,7 @@ function renderer.init()
     font_message    = love.graphics.newFont(font_path, math.floor(28 * scale * text_scale))
     font_help_key   = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
     font_help_label = love.graphics.newFont(font_path, math.floor(16 * scale * text_scale))
+    font_bgm        = love.graphics.newFont(font_path, math.floor(13 * scale))
     logo_2048 = love.graphics.newImage("assets/logo_2048.png")
 
     -- Set arcade panel to start fully closed
@@ -2677,6 +2684,7 @@ function renderer.drawHelp(game)
     elseif game.state == Game.STATE_PAUSED then
         table.insert(actions, 1, {key = "A", label = "Restart"})
         table.insert(actions, 1, {key = "X", label = "Quit"})
+        table.insert(actions, 1, {key = "L1", label = "Skip Track"})
         table.insert(actions, 1, {key = "START", label = "Resume"})
     elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
         table.insert(actions, 1, {key = "A", label = "Confirm"})
@@ -2846,6 +2854,24 @@ function renderer.startThemeTransition(drawTarget)
 end
 
 function renderer.updateTransition(dt)
+    -- Update now playing BGM notifications
+    local sound = require("sound")
+    local current_track = sound.getCurrentTrack()
+    local path = current_track and current_track.path or nil
+    if path ~= last_track_path then
+        last_track_path = path
+        if current_track then
+            now_playing_track = current_track
+            now_playing_timer = 4.0
+        else
+            now_playing_track = nil
+            now_playing_timer = 0
+        end
+    end
+    if now_playing_timer > 0 then
+        now_playing_timer = math.max(0, now_playing_timer - dt)
+    end
+
     if transition_timer > 0 then
         transition_timer = math.max(0, transition_timer - dt)
     end
@@ -3645,6 +3671,15 @@ end
 
 function renderer.getSettingsOptions()
     local sound = require("sound")
+    if _G.settings_page == "audio" then
+        return {
+            "Sound Effects: " .. (sound.isEnabled() and "On" or "Off"),
+            "Music: " .. (sound.isBgmEnabled() and "On" or "Off"),
+            "Vibration: " .. (_G.vibration and "On" or "Off"),
+            "Back"
+        }
+    end
+
     local anim_speed_lbl = "Gameplay Animation Speed: " .. (_G.animation_speed:gsub("^%l", string.upper))
     local transitions_lbl = "Transitions: " .. (_G.screen_transitions and "On" or "Off")
     
@@ -3656,17 +3691,15 @@ function renderer.getSettingsOptions()
     end
     local undo_lbl = "Undo Limit (Classic/Huge): " .. undo_val
     local ta_lbl = "Time Attack Max Limit: " .. _G.time_attack_time .. "s"
-    local vib_lbl = "Vibration: " .. (_G.vibration and "On" or "Off")
     local crt_lbl = "CRT Shader: " .. (_G.crt_filter and "On" or "Off")
 
     return {
-        "Sound: " .. (sound.isEnabled() and "On" or "Off"),
+        "Audio & Haptics",
         "Text Size: " .. (_G.text_size == "large" and "Large" or "Normal"),
         anim_speed_lbl,
         transitions_lbl,
         undo_lbl,
         ta_lbl,
-        vib_lbl,
         crt_lbl,
         "Back"
     }
@@ -3694,30 +3727,40 @@ function renderer.drawSettings(selection, skip_transition)
     local start_y = math.max(math.floor(10 * scale), math.floor(math.floor(10 * scale) + (available_h - total_h) / 2))
 
     local f_title = font_main_menu_title or font_tile_large
-    local tw = f_title:getWidth("SETTINGS")
+    local title_text = _G.settings_page == "audio" and "AUDIO & HAPTICS" or "SETTINGS"
+    local tw = f_title:getWidth(title_text)
     local th = f_title:getHeight()
     local tx = (w - tw) / 2
     local ty = start_y + (header_h - th) / 2
 
     love.graphics.setColor(getTileColor(2048))
     love.graphics.setFont(f_title)
-    love.graphics.print("SETTINGS", tx, ty)
+    love.graphics.print(title_text, tx, ty)
 
     -- Menu options start position
     local menu_start_y = start_y + header_h + math.floor(12 * scale)
 
     -- Calculate maximum option width using the longest possible states of each option to prevent shifting/jittering
-    local max_options = {
-        "Sound: Off",
-        "Text Size: Normal",
-        "Gameplay Animation Speed: Instant",
-        "Transitions: Off",
-        "Undo Limit (Classic/Huge): Unlimited",
-        "Time Attack Max Limit: 90s",
-        "Vibration: Off",
-        "CRT Shader: Off",
-        "Back"
-    }
+    local max_options
+    if _G.settings_page == "audio" then
+        max_options = {
+            "Sound Effects: Off",
+            "Music: Off",
+            "Vibration: Off",
+            "Back"
+        }
+    else
+        max_options = {
+            "Audio & Haptics",
+            "Text Size: Normal",
+            "Gameplay Animation Speed: Instant",
+            "Transitions: Off",
+            "Undo Limit (Classic/Huge): Unlimited",
+            "Time Attack Max Limit: 90s",
+            "CRT Shader: Off",
+            "Back"
+        }
+    end
     local max_ow = 0
     for _, opt in ipairs(max_options) do
         local ow = font_message:getWidth(opt)
@@ -5635,6 +5678,113 @@ function renderer.drawThemeSelect(skip_transition)
 end
 
 
+local function drawBgmNowPlaying()
+    if now_playing_timer <= 0 or not now_playing_track then return end
+
+    local w, h = love.graphics.getDimensions()
+    local scale = _G.scale
+
+    -- Card dimensions (increased to prevent text spill)
+    local card_w = math.floor(230 * scale)
+    local card_h = math.floor(66 * scale)
+    local padding = math.floor(10 * scale)
+
+    -- Slide/Fade logic
+    local slide_progress = 1
+    local alpha = 1.0
+
+    if now_playing_timer > 3.6 then
+        slide_progress = (4.0 - now_playing_timer) / 0.4
+    elseif now_playing_timer < 0.4 then
+        slide_progress = now_playing_timer / 0.4
+        alpha = slide_progress
+    end
+
+    slide_progress = 1 - math.pow(1 - slide_progress, 3)
+
+    local target_x = w - card_w - padding
+    local start_x = w + 10 -- offscreen right
+    local x = start_x + (target_x - start_x) * slide_progress
+    -- Shift down to 65 to clear the scoreboard BEST box
+    local y = padding + math.floor(65 * scale)
+
+    -- Draw shadow
+    love.graphics.setColor(0, 0, 0, 0.12 * alpha)
+    love.graphics.rectangle("fill", x + math.floor(2 * scale), y + math.floor(2 * scale), card_w, card_h, math.floor(6 * scale), math.floor(6 * scale))
+
+    -- Draw container box using the theme's score box background color (with high opacity)
+    local bg = score_bg_color or board_color or {0.18, 0.18, 0.22}
+    love.graphics.setColor(bg[1], bg[2], bg[3], 0.94 * alpha)
+    love.graphics.rectangle("fill", x, y, card_w, card_h, math.floor(6 * scale), math.floor(6 * scale))
+
+    -- Add a subtle thin border using the theme's label color
+    local lbl = score_label or ui_text or {0.8, 0.8, 0.8}
+    love.graphics.setColor(lbl[1], lbl[2], lbl[3], 0.15 * alpha)
+    love.graphics.rectangle("line", x, y, card_w, card_h, math.floor(6 * scale), math.floor(6 * scale))
+
+    -- Draw animated equalizer visualizer (3 simple bouncing bars)
+    local viz_w = math.floor(14 * scale)
+    local viz_x = x + padding
+
+    -- Draw visualizer using the theme's value color (high-contrast highlight)
+    local val = score_value or ui_text or {1.0, 1.0, 1.0}
+    love.graphics.setColor(val[1], val[2], val[3], 0.85 * alpha)
+
+    local t = love.timer.getTime()
+    local bar1_h = math.floor((8 + math.sin(t * 15) * 5) * scale)
+    local bar2_h = math.floor((12 + math.sin(t * 22 + 1) * 7) * scale)
+    local bar3_h = math.floor((7 + math.sin(t * 18 + 2) * 4) * scale)
+
+    local bar_w = math.floor(3 * scale)
+    local bar_gap = math.floor(2 * scale)
+    local base_y = y + card_h - padding - math.floor(4 * scale)
+
+    -- Draw rounded visualizer bars
+    love.graphics.rectangle("fill", viz_x, base_y - bar1_h, bar_w, bar1_h, 1.5 * scale, 1.5 * scale)
+    love.graphics.rectangle("fill", viz_x + bar_w + bar_gap, base_y - bar2_h, bar_w, bar2_h, 1.5 * scale, 1.5 * scale)
+    love.graphics.rectangle("fill", viz_x + (bar_w + bar_gap) * 2, base_y - bar3_h, bar_w, bar3_h, 1.5 * scale, 1.5 * scale)
+
+    -- Draw Text labels (Song Title and Artist Name)
+    local text_x = viz_x + viz_w + math.floor(8 * scale)
+    local text_y = y + padding - math.floor(2 * scale)
+
+    local active_font = font_bgm or font_help_label
+
+    -- "Now Playing" prefix label
+    love.graphics.setFont(active_font)
+    love.graphics.setColor(lbl[1], lbl[2], lbl[3], 0.70 * alpha)
+    love.graphics.print("NOW PLAYING", text_x, text_y)
+
+    -- Song Title
+    local title_y = text_y + active_font:getHeight() + math.floor(2 * scale)
+    love.graphics.setFont(active_font)
+    love.graphics.setColor(val[1], val[2], val[3], 1.0 * alpha)
+    local title_text = now_playing_track.title
+    local max_txt_w = card_w - (text_x - x) - padding
+    if active_font:getWidth(title_text) > max_txt_w then
+        while #title_text > 4 and active_font:getWidth(title_text .. "...") > max_txt_w do
+            title_text = title_text:sub(1, #title_text - 1)
+        end
+        title_text = title_text .. "..."
+    end
+    love.graphics.print(title_text, text_x, title_y)
+
+    -- Artist Name
+    local artist_y = title_y + active_font:getHeight() + math.floor(2 * scale)
+    love.graphics.setFont(active_font)
+    love.graphics.setColor(val[1], val[2], val[3], 0.70 * alpha)
+    local artist_text = now_playing_track.artist
+    if active_font:getWidth(artist_text) > max_txt_w then
+        while #artist_text > 4 and active_font:getWidth(artist_text .. "...") > max_txt_w do
+            artist_text = artist_text:sub(1, #artist_text - 1)
+        end
+        artist_text = artist_text .. "..."
+    end
+    love.graphics.print(artist_text, text_x, artist_y)
+
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 -- ============================================================================
 -- Main draw function
 -- ============================================================================
@@ -5665,6 +5815,7 @@ function renderer.draw(game, skip_transition)
     end
 
     drawToast()
+    drawBgmNowPlaying()
 end
 
 -- ============================================================================
@@ -6215,17 +6366,34 @@ function renderer.drawAbout(skip_transition)
     local vw = font_label:getWidth(version_text)
     love.graphics.print(version_text, (w - vw) / 2, padding + font_title:getHeight() - math.floor(2 * scale))
 
-    local start_y = padding + font_title:getHeight() + font_label:getHeight() + math.floor(8 * scale)
+    local start_y = padding + font_title:getHeight() + font_label:getHeight() - math.floor(4 * scale)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
 
-    local text = "Developed by saitamasahil\n" ..
-                 "A feature-packed implementation of the classic 2048 puzzle game\n\n" ..
-                 "Original concept by Gabriele Cirulli\n" ..
-                 "Built using the LÖVE Framework\n\n" ..
-                 "If you enjoy the game, consider supporting!"
+    local section_gap = math.floor(8 * scale)
+    local cur_y = start_y
 
-    love.graphics.printf(text, 0, start_y, w, "center")
+    -- Section 1: Developer
+    local s1 = "Developed by saitamasahil\nA feature-packed implementation of the classic 2048 puzzle game"
+    love.graphics.printf(s1, 0, cur_y, w, "center")
+    local _, lines1 = font_help_label:getWrap(s1, w)
+    cur_y = cur_y + #lines1 * font_help_label:getHeight() + section_gap
+
+    -- Section 2: Framework
+    local s2 = "Original concept by Gabriele Cirulli\nBuilt using the LÖVE Framework"
+    love.graphics.printf(s2, 0, cur_y, w, "center")
+    local _, lines2 = font_help_label:getWrap(s2, w)
+    cur_y = cur_y + #lines2 * font_help_label:getHeight() + section_gap
+
+    -- Section 3: Music credits
+    local s3 = "Music: AudioCoffee, Ghostrifter, Purrple Cat,\nRoa, Sakura Girl, Tokyo Music Walker via Chosic"
+    love.graphics.printf(s3, 0, cur_y, w, "center")
+    local _, lines3 = font_help_label:getWrap(s3, w)
+    cur_y = cur_y + #lines3 * font_help_label:getHeight() + section_gap
+
+    -- Section 4: Support Callout
+    local s4 = "If you enjoy the game, consider supporting!"
+    love.graphics.printf(s4, 0, cur_y, w, "center")
 
     if not qr_image then
         local success, img = pcall(love.graphics.newImage, "assets/kofi_qr.png")
@@ -6234,14 +6402,16 @@ function renderer.drawAbout(skip_transition)
 
     if qr_image then
         local iw, ih = qr_image:getDimensions()
-        local qr_size = math.floor(120 * scale)
+        local qr_size = math.floor(100 * scale)
         local qr_scale = qr_size / math.max(iw, ih)
         local scaled_w = iw * qr_scale
         local scaled_h = ih * qr_scale
 
-        -- Calculate position
-        local _, wrapped = font_help_label:getWrap(text, w)
-        local qr_y = start_y + #wrapped * font_help_label:getHeight() + math.floor(16 * scale)
+        -- Calculate position relative to the footer badge (bottom-up layout)
+        local badge_h = math.floor(28 * scale)
+        local badge_y = h - badge_h - math.floor(15 * scale)
+        local caption_y = badge_y - font_help_label:getHeight() - math.floor(4 * scale)
+        local qr_y = caption_y - scaled_h - math.floor(6 * scale)
         local qr_x = (w - scaled_w) / 2
 
         -- Draw white background behind QR
@@ -6256,7 +6426,7 @@ function renderer.drawAbout(skip_transition)
         -- Caption
         love.graphics.setFont(font_help_label)
         love.graphics.setColor(ui_text)
-        love.graphics.printf("Scan to support on Ko-fi", 0, qr_y + scaled_h + math.floor(6 * scale), w, "center")
+        love.graphics.printf("Scan to support on Ko-fi", 0, caption_y, w, "center")
     end
 
     -- Footer bar for About

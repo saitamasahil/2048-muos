@@ -11,6 +11,12 @@ local menuSelectSource = nil
 local menuBackSource = nil
 local toastSource = nil
 
+local bgmEnabled = true
+local bgmPlaylist = {}
+local currentBgmIdx = 0
+local currentBgmSource = nil
+local bgmStartDelay = 1.2
+
 local activeJoystick = nil
 local joystickInitialized = false
 
@@ -226,6 +232,122 @@ function sound.init()
         toastSource = love.audio.newSource(toastSoundData)
         toastSource:setVolume(0.40)
     end
+
+    enabled = save.loadSound()
+    bgmEnabled = save.loadMusic()
+    sound.initPlaylist()
+end
+
+function sound.initPlaylist()
+    bgmPlaylist = {}
+    currentBgmIdx = 0
+    currentBgmSource = nil
+
+    if not love.filesystem.getInfo("assets/music") then
+        return
+    end
+
+    local files = love.filesystem.getDirectoryItems("assets/music")
+    for _, file in ipairs(files) do
+        if file:match("%.mp3$") or file:match("%.ogg$") then
+            local title, artist
+            local stem = file:match("^(.+)%.[^.]+$") or file
+            local t_part, a_part = stem:match("^([^-]+)%s*-%s*(.+)$")
+            if t_part and a_part then
+                title = t_part:gsub("^%s*(.-)%s*$", "%1")
+                artist = a_part:gsub("^%s*(.-)%s*$", "%1")
+            else
+                title = stem
+                artist = "Unknown Artist"
+            end
+
+            table.insert(bgmPlaylist, {
+                path = "assets/music/" .. file,
+                title = title,
+                artist = artist
+            })
+        end
+    end
+
+    if #bgmPlaylist > 1 then
+        for i = #bgmPlaylist, 2, -1 do
+            local j = love.math.random(1, i)
+            bgmPlaylist[i], bgmPlaylist[j] = bgmPlaylist[j], bgmPlaylist[i]
+        end
+    end
+end
+
+function sound.playNextBgm()
+    if #bgmPlaylist == 0 then return end
+
+    if currentBgmSource then
+        currentBgmSource:stop()
+        currentBgmSource = nil
+    end
+
+    currentBgmIdx = currentBgmIdx + 1
+    if currentBgmIdx > #bgmPlaylist then
+        currentBgmIdx = 1
+    end
+
+    local track = bgmPlaylist[currentBgmIdx]
+    local success, source = pcall(love.audio.newSource, track.path, "stream")
+    if success and source then
+        currentBgmSource = source
+        currentBgmSource:setVolume(0.55)
+        currentBgmSource:play()
+    else
+        print("Failed to load music track: " .. tostring(track.path))
+    end
+end
+
+function sound.update(dt)
+    if not bgmEnabled or _G.appState ~= "GAME" then
+        if currentBgmSource and currentBgmSource:isPlaying() then
+            currentBgmSource:stop()
+        end
+        bgmStartDelay = 1.2
+        return
+    end
+
+    if bgmStartDelay > 0 then
+        bgmStartDelay = bgmStartDelay - dt
+        return
+    end
+
+    if #bgmPlaylist == 0 then return end
+
+    if not currentBgmSource or not currentBgmSource:isPlaying() then
+        sound.playNextBgm()
+    end
+end
+
+function sound.isBgmEnabled()
+    return bgmEnabled
+end
+
+function sound.toggleBgm()
+    bgmEnabled = not bgmEnabled
+    save.saveMusic(bgmEnabled)
+    if not bgmEnabled then
+        if currentBgmSource then
+            currentBgmSource:stop()
+        end
+    else
+        -- Only start playing immediately if we are currently in the gameplay screen
+        if _G.appState == "GAME" then
+            if not currentBgmSource or not currentBgmSource:isPlaying() then
+                sound.playNextBgm()
+            end
+        end
+    end
+end
+
+function sound.getCurrentTrack()
+    if not bgmEnabled or #bgmPlaylist == 0 or currentBgmIdx == 0 then
+        return nil
+    end
+    return bgmPlaylist[currentBgmIdx]
 end
 
 function sound.isEnabled()
