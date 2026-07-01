@@ -3580,20 +3580,11 @@ function renderer.drawTutorial(page, skip_transition, static_only)
     local item_gap = math.floor(10 * scale)
     local label_gap = math.floor(4 * scale)
 
-    -- Build action list — consistent controls:
-    -- B = Back (page 1: Exit), A = Next (last page: Done)
-    local actions = {}
-    if page < total_pages then
-        table.insert(actions, 1, {key = "A", label = "Next"})
-    else
-        table.insert(actions, 1, {key = "A", label = "Done"})
-    end
-    table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-    if page > 1 then
-        table.insert(actions, 1, {key = "B", label = "Back"})
-    else
-        table.insert(actions, 1, {key = "B", label = "Exit"})
-    end
+    -- Build action list: B to exit, Y to switch theme
+    local actions = {
+        {key = "B", label = "Exit"},
+        {key = "Y", label = "Switch Theme"}
+    }
 
     -- Page counter on the left
     love.graphics.setFont(font_help_label)

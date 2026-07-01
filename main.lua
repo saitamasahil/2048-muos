@@ -594,24 +594,11 @@ function love.update(dt)
         elseif _G.appState == "TUTORIAL" then
             local cur_page = _G.tutorial_page or 1
             if event == input.events.BACK then
-                -- B always goes back; exits on first page
-                if cur_page > 1 then
-                    sound.playMenuMove()
-                    if _G.screen_transitions then
-                        renderer.captureOldTutorialSlide(cur_page)
-                        _G.tutorial_slide_dir = -1
-                        _G.tutorial_slide_timer = 0.20
-                        _G.tutorial_slide_ready = false
-                    end
-                    _G.tutorial_page = cur_page - 1
-                else
-                    sound.playMenuBack()
-                    queueTransitionAction(event, 0.08, function()
-                        _G.appState = "MENU"
-                    end)
-                end
-            elseif event == input.events.CONFIRM or event == input.events.RIGHT then
-                -- A / Right always goes next; exits on last page
+                sound.playMenuBack()
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                end)
+            elseif event == input.events.RIGHT then
                 if cur_page < 8 then
                     sound.playMenuMove()
                     if _G.screen_transitions then
@@ -621,13 +608,10 @@ function love.update(dt)
                         _G.tutorial_slide_ready = false
                     end
                     _G.tutorial_page = cur_page + 1
-                else
-                    queueTransitionAction(event, 0.08, function()
-                        _G.appState = "MENU"
-                    end)
                 end
             elseif event == input.events.LEFT then
                 if cur_page > 1 then
+                    sound.playMenuMove()
                     if _G.screen_transitions then
                         renderer.captureOldTutorialSlide(cur_page)
                         _G.tutorial_slide_dir = -1
