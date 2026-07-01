@@ -16,6 +16,7 @@ local bgmPlaylist = {}
 local currentBgmIdx = 0
 local currentBgmSource = nil
 local bgmStartDelay = 1.2
+local duckTimer = 0
 
 local activeJoystick = nil
 local joystickInitialized = false
@@ -307,12 +308,34 @@ function sound.update(dt)
             currentBgmSource:stop()
         end
         bgmStartDelay = 1.2
+        duckTimer = 0
         return
     end
 
     if bgmStartDelay > 0 then
         bgmStartDelay = bgmStartDelay - dt
         return
+    end
+
+    -- Update ducking timer
+    if duckTimer > 0 then
+        duckTimer = math.max(0, duckTimer - dt)
+    end
+
+    -- Update BGM volume smoothly if BGM is active
+    if currentBgmSource and currentBgmSource:isPlaying() then
+        local currentVol = currentBgmSource:getVolume()
+        local targetVol = 0.55
+        if duckTimer > 0 then
+            targetVol = 0.12 -- Ducked BGM volume during SFX chimes
+        end
+        if math.abs(currentVol - targetVol) > 0.01 then
+            local speed = (targetVol < currentVol) and 4 or 2 -- Fade out faster than fade in
+            local newVol = currentVol + (targetVol - currentVol) * math.min(1.0, speed * dt)
+            currentBgmSource:setVolume(newVol)
+        else
+            currentBgmSource:setVolume(targetVol)
+        end
     end
 
     if #bgmPlaylist == 0 then return end
@@ -363,6 +386,7 @@ function sound.playAchievement()
     if enabled and achSource then
         achSource:seek(0)
         achSource:play()
+        duckTimer = 1.5 -- Duck BGM for achievement sound
     end
     sound.vibrate(0.15)
 end
@@ -384,6 +408,7 @@ function sound.playVictory()
     if enabled and victorySource then
         victorySource:seek(0)
         victorySource:play()
+        duckTimer = 2.0 -- Duck BGM for victory sound
     end
     sound.vibrate(0.4)
 end
@@ -392,6 +417,7 @@ function sound.playGameOver()
     if enabled and gameOverSource then
         gameOverSource:seek(0)
         gameOverSource:play()
+        duckTimer = 2.5 -- Duck BGM for game over sound
     end
     sound.vibrate(0.5)
 end
