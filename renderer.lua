@@ -5086,7 +5086,7 @@ function renderer.drawPlaySelectMenu(play_select_selection, arcade_selection, sk
         },
         {
             name        = "Huge Mode (5x5)",
-            desc        = "5×5 board. Achievements are disabled.",
+            desc        = "Achievements disabled except its own.",
             icon        = "huge",
             bestScore   = save.loadHighScore("huge"),
             available   = true,
