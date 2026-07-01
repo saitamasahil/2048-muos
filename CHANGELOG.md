@@ -9,6 +9,7 @@
 
 ### Changed
 - Unified Audio & Haptics settings: Grouped Sound Effects, Background Music, and Haptic Vibration together under a single "Audio & Haptics" settings sub-menu.
+- Tutorial Navigation: Simplified footer button actions to B Exit and Y Switch Theme, mapping page navigation exclusively to D-Pad.
 
 ## [4.0.4]
 
