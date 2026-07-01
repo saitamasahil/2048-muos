@@ -1,5 +1,15 @@
 # Changelog
 
+## [5.0.0]
+
+### Added
+- Background Music: lo-fi background tracks from multiple artists.
+- Now Playing Visualizer Overlay: A sliding notification card showing current track title, artist, and animated visualizer bars when a song starts playing.
+- Pause Menu Integration: Skip music tracks directly by pressing L1 or R1 during pause state.
+
+### Changed
+- Unified Audio & Haptics settings: Grouped Sound Effects, Background Music, and Haptic Vibration together under a single "Audio & Haptics" settings sub-menu.
+
 ## [4.0.4]
 
 ### Added
