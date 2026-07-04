@@ -3666,10 +3666,19 @@ end
 function renderer.getSettingsOptions()
     local sound = require("sound")
     if _G.settings_page == "audio" then
+        local lofi_status = ""
+        if sound.isDownloadingBgm() then
+            lofi_status = "Downloading (" .. sound.getBgmDownloadProgress() .. ")"
+        elseif sound.isBgmDownloaded() then
+            lofi_status = "Delete (Free Space)"
+        else
+            lofi_status = "Download (66MB)"
+        end
         return {
             "Sound Effects: " .. (sound.isEnabled() and "On" or "Off"),
             "Music: " .. (sound.isBgmEnabled() and "On" or "Off"),
             "Vibration: " .. (_G.vibration and "On" or "Off"),
+            "Lofi Music: " .. lofi_status,
             "Back"
         }
     end
@@ -3741,6 +3750,7 @@ function renderer.drawSettings(selection, skip_transition)
             "Sound Effects: Off",
             "Music: Off",
             "Vibration: Off",
+            "Lofi Music: Downloading (10/10)",
             "Back"
         }
     else
