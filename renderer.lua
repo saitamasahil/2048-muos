@@ -3132,6 +3132,7 @@ end
 function renderer.drawHelp(game)
     if love.system.getOS() == "Web" then return end
 
+    local sound = require("sound")
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
     local padding = math.floor(10 * scale)
@@ -3217,7 +3218,9 @@ function renderer.drawHelp(game)
         elseif game.state == Game.STATE_PAUSED then
             table.insert(actions, 1, {key = "A", label = "Restart"})
             table.insert(actions, 1, {key = "X", label = "Quit"})
-            table.insert(actions, 1, {key = "L1", label = "Skip Track"})
+            if sound.isBgmEnabled() then
+                table.insert(actions, 1, {key = "L1", label = "Skip Track"})
+            end
             table.insert(actions, 1, {key = "START", label = "Resume"})
         elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
             table.insert(actions, 1, {key = "A", label = "Confirm"})

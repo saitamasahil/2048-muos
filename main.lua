@@ -1026,7 +1026,9 @@ function love.update(dt)
                     game:cancelPause()
                 end)
             elseif event == input.events.L1 or event == input.events.R1 then
-                sound.playNextBgm()
+                if sound.isBgmEnabled() then
+                    sound.playNextBgm()
+                end
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
                     local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy" or game.mode == "goose")
