@@ -976,8 +976,164 @@ local themes = {
         help_bg_color    = {hex("#d2e4df")},
         help_key_color   = {hex("#1a6c5a")},
         help_key_text    = {hex("#ffffff")},
+    },
+    quantum = {
+        -- Quantum Cyber: Deep cyber navy, glowing electric cyan and blue.
+        tile_colors = {
+            [0]    = {hex("#05162b")},
+            [2]    = {hex("#ffffff")},
+            [4]    = {hex("#e0f7fa")},
+            [8]    = {hex("#80deea")},
+            [16]   = {hex("#26c6da")},
+            [32]   = {hex("#00bcd4")},
+            [64]   = {hex("#00acc1")},
+            [128]  = {hex("#00838f")},
+            [256]  = {hex("#006064")},
+            [512]  = {hex("#004d40")},
+            [1024] = {hex("#009688")},
+            [2048] = {hex("#00ffea")},
+        },
+        super_tile_color = {hex("#00ffea")},
+        dark_text        = {hex("#011c3a")},
+        light_text       = {hex("#e0ffff")},
+        ui_text          = {hex("#00b0ff")},
+        bg_color         = {hex("#020813")},
+        board_color      = {hex("#051b3b")},
+        score_bg_color   = {hex("#051b3b")},
+        score_label      = {hex("#00b0ff")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#00b0ff")},
+        overlay_lose     = {hex("#051b3b")},
+        help_bg_color    = {hex("#051b3b")},
+        help_key_color   = {hex("#00ffea")},
+        help_key_text    = {hex("#020813")},
+    },
+    hyperdrive = {
+        -- Hyperdrive Space: Dark indigo cosmos with neon magenta and white warp highlights.
+        tile_colors = {
+            [0]    = {hex("#140b24")},
+            [2]    = {hex("#f3e5f5")},
+            [4]    = {hex("#e1bee7")},
+            [8]    = {hex("#ce93d8")},
+            [16]   = {hex("#ba68c8")},
+            [32]   = {hex("#ab47bc")},
+            [64]   = {hex("#9c27b0")},
+            [128]  = {hex("#8e24aa")},
+            [256]  = {hex("#7b1fa2")},
+            [512]  = {hex("#6a1b9a")},
+            [1024] = {hex("#4a148c")},
+            [2048] = {hex("#ff007f")},
+        },
+        super_tile_color = {hex("#ff007f")},
+        dark_text        = {hex("#1d003b")},
+        light_text       = {hex("#f5e6ff")},
+        ui_text          = {hex("#ba68c8")},
+        bg_color         = {hex("#090212")},
+        board_color      = {hex("#22123b")},
+        score_bg_color   = {hex("#22123b")},
+        score_label      = {hex("#ba68c8")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#ff007f")},
+        overlay_lose     = {hex("#22123b")},
+        help_bg_color    = {hex("#22123b")},
+        help_key_color   = {hex("#ff007f")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    retrogold = {
+        -- Retro Gold: Rich amber yellows and deep gold textures on dark carbon.
+        tile_colors = {
+            [0]    = {hex("#24211b")},
+            [2]    = {hex("#fffdf0")},
+            [4]    = {hex("#fff9c4")},
+            [8]    = {hex("#fff59d")},
+            [16]   = {hex("#fff176")},
+            [32]   = {hex("#ffee58")},
+            [64]   = {hex("#ffeb3b")},
+            [128]  = {hex("#fdd835")},
+            [256]  = {hex("#fbc02d")},
+            [512]  = {hex("#f9a825")},
+            [1024] = {hex("#f57f17")},
+            [2048] = {hex("#ffd700")},
+        },
+        super_tile_color = {hex("#ffd700")},
+        dark_text        = {hex("#3e2723")},
+        light_text       = {hex("#fffde7")},
+        ui_text          = {hex("#f57f17")},
+        bg_color         = {hex("#141310")},
+        board_color      = {hex("#332e24")},
+        score_bg_color   = {hex("#332e24")},
+        score_label      = {hex("#fbc02d")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#ffd700")},
+        overlay_lose     = {hex("#332e24")},
+        help_bg_color    = {hex("#332e24")},
+        help_key_color   = {hex("#ffd700")},
+        help_key_text    = {hex("#141310")},
+    },
+    spectrum = {
+        -- Spectrum: Neon rainbow colors on clean dark charcoal backdrop.
+        tile_colors = {
+            [0]    = {hex("#26262b")},
+            [2]    = {hex("#f87171")},   -- red
+            [4]    = {hex("#fb923c")},   -- orange
+            [8]    = {hex("#fbbf24")},   -- yellow
+            [16]   = {hex("#34d399")},   -- emerald
+            [32]   = {hex("#2dd4bf")},   -- teal
+            [64]   = {hex("#38bdf8")},   -- sky blue
+            [128]  = {hex("#60a5fa")},   -- blue
+            [256]  = {hex("#818cf8")},   -- indigo
+            [512]  = {hex("#a78bfa")},   -- violet
+            [1024] = {hex("#f472b6")},   -- pink
+            [2048] = {hex("#ec4899")},   -- hot pink
+        },
+        super_tile_color = {hex("#ec4899")},
+        dark_text        = {hex("#111116")},
+        light_text       = {hex("#f3f4f6")},
+        ui_text          = {hex("#a78bfa")},
+        bg_color         = {hex("#121214")},
+        board_color      = {hex("#26262c")},
+        score_bg_color   = {hex("#26262c")},
+        score_label      = {hex("#a78bfa")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#ec4899")},
+        overlay_lose     = {hex("#26262c")},
+        help_bg_color    = {hex("#26262c")},
+        help_key_color   = {hex("#38bdf8")},
+        help_key_text    = {hex("#121214")},
+    },
+    steel = {
+        -- Steel Metallic: Polished industrial gray-blue tones.
+        tile_colors = {
+            [0]    = {hex("#cfd8dc")},
+            [2]    = {hex("#eceff1")},
+            [4]    = {hex("#b0bec5")},
+            [8]    = {hex("#90a4ae")},
+            [16]   = {hex("#78909c")},
+            [32]   = {hex("#607d8b")},
+            [64]   = {hex("#546e7a")},
+            [128]  = {hex("#455a64")},
+            [256]  = {hex("#37474f")},
+            [512]  = {hex("#263238")},
+            [1024] = {hex("#1a242f")},
+            [2048] = {hex("#0d1218")},
+        },
+        super_tile_color = {hex("#0d1218")},
+        dark_text        = {hex("#263238")},
+        light_text       = {hex("#eceff1")},
+        ui_text          = {hex("#37474f")},
+        bg_color         = {hex("#e0e0e0")},
+        board_color      = {hex("#9e9e9e")},
+        score_bg_color   = {hex("#9e9e9e")},
+        score_label      = {hex("#37474f")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#37474f")},
+        overlay_lose     = {hex("#9e9e9e")},
+        help_bg_color    = {hex("#9e9e9e")},
+        help_key_color   = {hex("#455a64")},
+        help_key_text    = {hex("#ffffff")},
     }
 }
+
 
 -- Returns all theme names defined in the themes table, excluding always-unlocked ones.
 -- Used by cheats to dynamically unlock everything without a hardcoded list.
@@ -1484,8 +1640,356 @@ function renderer.drawDynamicBackground(themeName)
         end
 
         love.graphics.pop()
+
+    elseif themeName == "vaporwave" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Draw Vaporwave Sunset at the center horizon
+        local horizon_y = h / 2 - 10 * scale
+        local sun_r = 70 * scale
+        local sun_x = w / 2
+
+        -- Draw a glowing sun
+        for r = sun_r, 1 * scale, -2 * scale do
+            local f = r / sun_r
+            -- Shift from hot pink at top to orange at horizon
+            love.graphics.setColor(0.95, 0.15 + (1 - f) * 0.3, 0.5 + (1 - f) * 0.3, 0.08 * (1.0 - f * 0.3))
+            love.graphics.circle("fill", sun_x, horizon_y, r)
+        end
+
+        -- Horizontal cuts in the sun (vaporwave aesthetics)
+        love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3], 1)
+        for i = 1, 6 do
+            local cut_y = horizon_y - (i * 9 * scale)
+            local cut_h = (1.5 + i * 0.8) * scale
+            love.graphics.rectangle("fill", sun_x - sun_r - 5 * scale, cut_y, (sun_r * 2) + 10 * scale, cut_h)
+        end
+
+        -- Draw 3D Perspective Grid
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        -- Vertical perspective grid lines
+        for i = -10, 10 do
+            love.graphics.setColor(0.9, 0.2, 0.6, 0.12)
+            local dx = i * 45 * scale
+            love.graphics.line(w / 2, horizon_y, w / 2 + dx * 2, h)
+        end
+
+        -- Scrolling Horizontal perspective lines
+        local scroll = (t * 22 * scale)
+        for i = 1, 10 do
+            -- Space lines exponentially
+            local line_y = horizon_y + math.pow(1.28, i) * 6 * scale
+            -- Offset by scroll and modulo
+            line_y = line_y + (scroll % (math.pow(1.28, i) * 2 * scale))
+            if line_y < h then
+                local fade = 1.0 - ((h - line_y) / (h - horizon_y))
+                love.graphics.setColor(0.06, 0.71, 0.83, 0.18 * fade)
+                love.graphics.line(0, line_y, w, line_y)
+            end
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "cyberpunk" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Flickering horizontal scanlines
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        local count = 16
+        for i = 1, count do
+            local sy = ((t * 40 * scale + i * (h / count)) % h)
+            local alpha = 0.03 + 0.02 * math.sin(t * 6.0 + i)
+            love.graphics.setColor(0.0, 1.0, 0.9, alpha)
+            love.graphics.line(0, sy, w, sy)
+        end
+
+        -- Subtle cyber grid
+        local grid = 60 * scale
+        love.graphics.setColor(0.95, 0.05, 0.5, 0.04)
+        for x = 0, w, grid do
+            love.graphics.line(x, 0, x, h)
+        end
+        for y = 0, h, grid do
+            love.graphics.line(0, y, w, y)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "ocean" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Rising bubbles
+        love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+        for i = 1, 15 do
+            local start_x = w * ((i * 0.72) % 1.0)
+            local speed = 12 + (i % 5) * 6
+            local y_cycle = h + 30 * scale
+            local y = h + 15 * scale - ((t * speed + i * 29.3) % y_cycle)
+            local x = start_x + math.sin(t * 0.7 + i) * 12 * scale
+            local radius = (2.0 + (i % 3) * 1.5) * scale
+            local alpha = 0.12 * (1.0 - (h - y) / h)
+            
+            love.graphics.setColor(0.55, 0.85, 1.0, alpha)
+            love.graphics.circle("line", x, y, radius)
+            -- Small reflection dot inside bubble
+            love.graphics.setColor(1.0, 1.0, 1.0, alpha * 0.5)
+            love.graphics.circle("fill", x - radius * 0.3, y - radius * 0.3, radius * 0.15)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "forest" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Falling drifting leaves
+        for i = 1, 12 do
+            local start_x = w * ((i * 0.65) % 1.0) - w * 0.2
+            local speed_y = 10 + (i % 4) * 4
+            local speed_x = speed_y * 0.6
+            local y_cycle = h + 40 * scale
+            local y = -20 * scale + ((t * speed_y + i * 43.1) % y_cycle)
+            local x = start_x + (t * speed_x) % (w * 1.4) + math.sin(t * 0.8 + i) * 15 * scale
+            local size = (4.0 + (i % 3) * 2.0) * scale
+            local alpha = 0.26 * (1.0 - y / h)
+            
+            if i % 3 == 0 then
+                -- Golden autumn leaf
+                love.graphics.setColor(0.85, 0.45, 0.15, alpha)
+            elseif i % 3 == 1 then
+                -- Rich dark green leaf
+                love.graphics.setColor(0.12, 0.45, 0.22, alpha)
+            else
+                -- Bright fresh spring leaf
+                love.graphics.setColor(0.40, 0.72, 0.15, alpha)
+            end
+
+            love.graphics.push()
+            love.graphics.translate(x, y)
+            love.graphics.rotate(t * 0.4 + i)
+            love.graphics.ellipse("fill", 0, 0, size, size * 0.4)
+            love.graphics.pop()
+
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "volcano" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Rising ash and embers
+        for i = 1, 20 do
+            local start_x = w * ((i * 0.58) % 1.0)
+            local speed = 18 + (i % 5) * 8
+            local y_cycle = h + 30 * scale
+            local y = h + 15 * scale - ((t * speed + i * 37.1) % y_cycle)
+            local x = start_x + math.sin(t * 1.1 + i) * 18 * scale
+            local size = (1.5 + (i % 3) * 0.8) * scale
+            local alpha = 0.25 * (1.0 - y / h)
+            
+            love.graphics.setColor(1.0, 0.4, 0.0, alpha)
+            love.graphics.circle("fill", x, y, size)
+        end
+
+        -- Bubbling magma pools at the bottom
+        for pool = 1, 4 do
+            local px = w * (pool / 5) + math.sin(t * 0.4 + pool) * 20 * scale
+            local py = h + 15 * scale
+            local radius = (60 + 20 * math.sin(t * 0.7 + pool * 1.3)) * scale
+            local pulse = 0.5 + 0.5 * math.sin(t * 0.6 + pool)
+            love.graphics.setColor(0.9, 0.15, 0.0, 0.04 + pulse * 0.03)
+            love.graphics.circle("fill", px, py, radius)
+        end
+
+
+        love.graphics.pop()
+
+    elseif themeName == "dracula" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Drifting mist (large transparent shapes)
+        love.graphics.setColor(0.35, 0.05, 0.5, 0.04)
+        local mx1 = w * 0.25 + math.sin(t * 0.1) * 80 * scale
+        local my1 = h * 0.35 + math.cos(t * 0.08) * 40 * scale
+        love.graphics.circle("fill", mx1, my1, 220 * scale)
+        
+        local mx2 = w * 0.75 + math.cos(t * 0.07) * 70 * scale
+        local my2 = h * 0.65 + math.sin(t * 0.09) * 30 * scale
+        love.graphics.circle("fill", mx2, my2, 190 * scale)
+
+        -- Flying bats
+        for i = 1, 8 do
+            local cycle = 8.0 + i * 1.5
+            local progress = ((t + i * 3.7) % cycle) / cycle
+            local bx = w * 1.2 - progress * (w * 1.4)
+            local by = h * 0.15 + (i % 4) * 55 * scale + math.sin(t * 2.0 + i) * 15 * scale
+            local wing_span = (8 + (i % 3) * 3) * scale
+            local flap = math.sin(t * 12 + i) * (wing_span * 0.4)
+            local alpha = 0.18 * (1.0 - progress)
+
+            love.graphics.setColor(0.0, 0.0, 0.0, alpha)
+            love.graphics.line(bx, by, bx - wing_span / 2, by - flap)
+            love.graphics.line(bx, by, bx + wing_span / 2, by - flap)
+            love.graphics.line(bx - wing_span / 2, by - flap, bx - wing_span * 0.8, by)
+            love.graphics.line(bx + wing_span / 2, by - flap, bx + wing_span * 0.8, by)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "retro" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Floating pixel stars (8-bit style)
+        for i = 1, 10 do
+            local sx = ((i * 137.5) % 1.0) * w
+            local sy = ((i * 47.3 + t * 12) % h)
+            local scale_factor = (1 + (i % 3)) * scale
+            local alpha = 0.05 + 0.04 * math.sin(t * 2.5 + i)
+            
+            love.graphics.setColor(1.0, 1.0, 1.0, alpha)
+            love.graphics.rectangle("fill", sx - scale_factor, sy, scale_factor * 2 + 1, 1)
+            love.graphics.rectangle("fill", sx, sy - scale_factor, 1, scale_factor * 2 + 1)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "candy" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Rising sweet bubbles
+        for i = 1, 12 do
+            local start_x = w * ((i * 0.69) % 1.0)
+            local speed = 15 + (i % 4) * 5
+            local y_cycle = h + 40 * scale
+            local y = h + 20 * scale - ((t * speed + i * 53.7) % y_cycle)
+            local x = start_x + math.sin(t * 0.6 + i) * 10 * scale
+            local size = (3.0 + (i % 3) * 1.5) * scale
+            local alpha = 0.07 * (1.0 - y / h)
+            
+            if i % 2 == 0 then
+                love.graphics.setColor(1.0, 0.7, 0.8, alpha) -- pink
+            else
+                love.graphics.setColor(1.0, 0.9, 0.6, alpha) -- yellow
+            end
+            love.graphics.circle("fill", x, y, size)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "quantum" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Quantum foam (drifting scaling dots)
+        for i = 1, 35 do
+            local golden = 0.6180339887
+            local qx = ((i * golden) % 1.0) * w
+            local qy = ((i * golden * 1.7) % 1.0) * h
+            local speed = 0.8 + (i % 5) * 0.4
+            local size = (1.5 + (i % 4) * 1.2) * scale
+            local pulse = math.sin(t * speed + i * 2.1) * 0.5 + 0.5
+            local alpha = pulse * 0.12
+
+            love.graphics.setColor(0.0, 0.94, 1.0, alpha)
+            love.graphics.circle("fill", qx + math.cos(t * 0.3 + i) * 10 * scale, qy + math.sin(t * 0.4 + i) * 8 * scale, size * (0.8 + pulse * 0.4))
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "hyperdrive" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- 3D Starfield warp speed effect
+        love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+        local center_x = w / 2
+        local center_y = h / 2
+
+        for i = 1, 50 do
+            local golden = 0.6180339887
+            local angle = ((i * golden) % 1.0) * math.pi * 2
+            local cycle = 3.5
+            local t_offset = (t * 1.1 + i * 0.23) % cycle
+            local progress = t_offset / cycle
+
+            local distance = progress * (w * 0.7)
+            local sx = center_x + math.cos(angle) * distance
+            local sy = center_y + math.sin(angle) * distance
+
+            local trail_len = (2 + progress * 24) * scale
+            local tx = sx - math.cos(angle) * trail_len
+            local ty = sy - math.sin(angle) * trail_len
+
+            local alpha = progress * 0.65
+            love.graphics.setColor(1.0, 1.0, 1.0, alpha)
+            love.graphics.line(sx, sy, tx, ty)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "retrogold" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Shimmering gold flakes
+        for i = 1, 24 do
+            local gx = ((i * 179.3) % 1.0) * w
+            local rise_speed = 10 + (i % 6) * 5
+            local y_cycle = h + 30 * scale
+            local gy = h + 15 * scale - ((t * rise_speed + i * 47.9) % y_cycle)
+            local size = (1.5 + (i % 3) * 1.0) * scale
+            local sparkle = math.sin(t * 4.0 + i) * 0.5 + 0.5
+            local alpha = sparkle * (0.35 * (1.0 - gy / h))
+
+            love.graphics.setColor(1.0, 0.85, 0.2, alpha)
+            love.graphics.push()
+            love.graphics.translate(gx + math.sin(t * 0.7 + i) * 10 * scale, gy)
+            love.graphics.rotate(t * 1.5 + i)
+            love.graphics.rectangle("fill", -size, -size, size * 2, size * 2)
+            love.graphics.pop()
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "spectrum" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Undulating horizontal rainbow ribbons
+        love.graphics.setLineWidth(math.max(1, math.floor(2 * scale)))
+        local count = 6
+        for i = 1, count do
+            local ribbon_y = h * (0.2 + i * 0.12)
+            local segments = 24
+            local alpha = 0.05 + 0.02 * math.sin(t * 0.4 + i)
+            
+            local hues = {
+                {1.0, 0.3, 0.3}, {1.0, 0.6, 0.2}, {1.0, 0.85, 0.2},
+                {0.2, 0.8, 0.5}, {0.2, 0.6, 1.0}, {0.7, 0.4, 1.0}
+            }
+            local color = hues[i]
+            love.graphics.setColor(color[1], color[2], color[3], alpha)
+
+            for seg = 0, segments - 1 do
+                local x1 = w * (seg / segments)
+                local x2 = w * ((seg + 1) / segments)
+                local y1 = ribbon_y + math.sin(t * 0.8 + seg * 0.35 + i) * 15 * scale
+                local y2 = ribbon_y + math.sin(t * 0.8 + (seg + 1) * 0.35 + i) * 15 * scale
+                love.graphics.line(x1, y1, x2, y2)
+            end
+        end
+
+        love.graphics.pop()
     end
 end
+
 
 function renderer.clearBackground()
     love.graphics.setColor(bg_color)
@@ -3443,8 +3947,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 25 themes total!"
+                "achievements. 30 themes total!"
             },
+
             tiles = {
                 {2, 0, 0, 0},
                 {4, 0, 0, 0},
@@ -5957,7 +6462,12 @@ local achievementsList = {
     { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme" },
     { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme" },
     { id = "ach_nomercy_512", name = "No Escape", desc = "Create a 512 tile in No Mercy Mode", reward = "Inferno Theme" },
-    { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme" }
+    { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme" },
+    { id = "ach_merge_8192", name = "The Chosen One", desc = "Create an 8192 tile", reward = "Quantum Theme" },
+    { id = "ach_score_250k", name = "Infinity Legend", desc = "Reach 250,000 points", reward = "Hyperdrive Theme" },
+    { id = "ach_speedrun_2048", name = "Speed Demon", desc = "Create a 2048 tile in under 5 minutes", reward = "Retro Gold Theme" },
+    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme" },
+    { id = "ach_tactician", name = "Tactician", desc = "Use both Undo and Swap in a single Plus Mode game", reward = "Steel Theme" }
 }
 
 function renderer.getAchievementsCount()

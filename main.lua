@@ -146,6 +146,11 @@ function love.load(args)
     if _G.achievements.ach_huge_2048 then table.insert(_G.unlocked_themes, "nebula") end
     if _G.achievements.ach_nomercy_512 then table.insert(_G.unlocked_themes, "inferno") end
     if _G.achievements.ach_goose_2048 then table.insert(_G.unlocked_themes, "honk") end
+    if _G.achievements.ach_merge_8192 then table.insert(_G.unlocked_themes, "quantum") end
+    if _G.achievements.ach_score_250k then table.insert(_G.unlocked_themes, "hyperdrive") end
+    if _G.achievements.ach_speedrun_2048 then table.insert(_G.unlocked_themes, "retrogold") end
+    if _G.achievements.ach_hardcore_2048 then table.insert(_G.unlocked_themes, "spectrum") end
+    if _G.achievements.ach_tactician then table.insert(_G.unlocked_themes, "steel") end
 
     function _G.unlockAchievement(id)
         if not _G.achievements[id] then
@@ -175,7 +180,12 @@ function love.load(args)
                 ach_timeattack_2048 = "aurora",
                 ach_huge_2048 = "nebula",
                 ach_nomercy_512 = "inferno",
-                ach_goose_2048 = "honk"
+                ach_goose_2048 = "honk",
+                ach_merge_8192 = "quantum",
+                ach_score_250k = "hyperdrive",
+                ach_speedrun_2048 = "retrogold",
+                ach_hardcore_2048 = "spectrum",
+                ach_tactician = "steel"
             }
             if theme_map[id] then
                 local already = false
@@ -210,12 +220,18 @@ function love.load(args)
                 ach_timeattack_2048 = "Aurora",
                 ach_huge_2048 = "Spacious Giant",
                 ach_nomercy_512 = "No Escape",
-                ach_goose_2048 = "Honk Honk!"
+                ach_goose_2048 = "Honk Honk!",
+                ach_merge_8192 = "The Chosen One",
+                ach_score_250k = "Infinity Legend",
+                ach_speedrun_2048 = "Speed Demon",
+                ach_hardcore_2048 = "Hardcore Gamer",
+                ach_tactician = "Tactician"
             }
             renderer.showToast("Unlocked: " .. (names[id] or id) .. "!", nil, true)
             sound.playAchievement()
         end
     end
+
 
     -- Load theme from dedicated file
     local savedTheme = save.loadTheme()
@@ -676,8 +692,9 @@ function love.update(dt)
                     sound.playMenuMove()
                 end
             elseif event == input.events.DOWN and _G.achievements_tab == 1 then
-                -- 18 achievements total, allow scrolling only if items overflow visible area
+                -- 28 achievements total, allow scrolling only if items overflow visible area
                 local w, h = love.graphics.getDimensions()
+
                 local scale = _G.scale
                 local item_h = math.floor(85 * scale)
                 local header_h = math.floor(115 * scale)

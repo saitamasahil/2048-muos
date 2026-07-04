@@ -18,7 +18,7 @@ This project is inspired by and references the popular open-source [2048 Android
   - **Huge Mode (5x5)**: A spacious 5×5 grid for a more relaxed play style.
   - **No Mercy**: Hardcore mode — no undos, no powerups, two tiles spawn every move.
   - **Goose Mode**: A chaotic mode where a silly Goose tile waddles around the board, blocking random cells.
-- **Background Music**: Playlist of lo-fi tracks that play during matches, complete with a "Now Playing" HUD pop-up.
+- **Background Music**: Playlist of lo-fi tracks that play during matches, complete with a non-distracting cross-fade track info reveal in the footer.
 - **Procedural Sound Effects**: Retro sound effects generated dynamically with zero file size overhead.
 - **Unified Settings Menu**: Grouped text size toggles, transition animations, animation speeds, and gameplay limits under a clean dashboard:
   - **Audio & Haptics**: Grouped toggle options for sound effects, background music, and vibration.
@@ -28,9 +28,9 @@ This project is inspired by and references the popular open-source [2048 Android
   - **Time Attack Max Limit**: Adjust the Time Attack starting and maximum threshold ceiling (30s, 60s, 90s).
   - **CRT Shader**: Toggle retro scanlines and curvature filters.
 - **Advanced Undo History Stack**: Refactored the gameplay engine to support rolling backward history logs all the way up to 100 consecutive turns.
-- **Achievements & Unlockable Themes**: Track your progress by unlocking 23 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 25 themes total!
+- **Achievements & Unlockable Themes**: Track your progress by unlocking 28 unique achievements, ranging from reaching high tiles to mastering arcade modes. Completing achievements rewards you with beautifully crafted custom themes — 30 themes total!
 - **Statistics Dashboard**: Tracks real-time statistics including highest score, highest tile reached, games started per mode, total play time, moves, merges, undos, and power-up usage persistently.
-- **Dynamic Animated Backgrounds**: Premium themes (Aurora, Nebula, Inferno, Honk, Matrix, Glitch) feature layered, animated background effects like aurora curtains, twinkling starfields, rising embers, water ripples, falling green digital rain, and cyberpunk glitch effects.
+- **Dynamic Animated Backgrounds**: Premium themes (Aurora, Nebula, Inferno, Honk, Matrix, Glitch, Quantum, Hyperdrive, Retro Gold, Spectrum, Vaporwave, Dracula, Ocean, Forest, Volcano, Candy) feature layered, animated background effects like scrolling 3D Vaporwave grids, flying Dracula bats, starfield warp speed, falling green digital rain, aurora curtains, twinkling starfields, rising embers, and retro pixel sparkles.
 - **Themes**: Instantly toggle between unlocked themes with a beautifully animated reveal. Your theme preference is saved automatically!
 - **Auto-Save & Resume**: Your progress, board state, and score are saved automatically after every move. Close the game anytime and pick up right where you left off.
 - **Interactive Pause Menu**: A built-in pause overlay makes it easy to safely quit the app or restart a new game cleanly.
