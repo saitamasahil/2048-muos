@@ -2660,58 +2660,101 @@ function renderer.drawHelp(game)
     -- Action buttons (right side) ---
     local right_x = bar_x + bar_w - math.floor(10 * scale)
 
+    -- Determine cross-fade alphas for BGM info and normal help prompts
+    local is_active_gameplay = (game.state ~= Game.STATE_WON and game.state ~= Game.STATE_LOST and game.state ~= Game.STATE_PAUSED and not (game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2))
+    
+    local help_alpha = 1.0
+    local bgm_alpha = 0.0
+
+    if is_active_gameplay and now_playing_timer > 0 then
+        if now_playing_timer > 3.8 then
+            help_alpha = (now_playing_timer - 3.8) / 0.2
+            bgm_alpha = 0.0
+        elseif now_playing_timer > 3.6 then
+            help_alpha = 0.0
+            bgm_alpha = (3.8 - now_playing_timer) / 0.2
+        elseif now_playing_timer > 0.4 then
+            help_alpha = 0.0
+            bgm_alpha = 1.0
+        elseif now_playing_timer > 0.2 then
+            help_alpha = 0.0
+            bgm_alpha = (now_playing_timer - 0.2) / 0.2
+        else
+            help_alpha = (0.2 - now_playing_timer) / 0.2
+            bgm_alpha = 0.0
+        end
+    end
+
     -- Determine which actions to show based on game state
     local actions = {}
 
-    if game.state == Game.STATE_WON then
-        table.insert(actions, 1, {key = "A", label = "Continue"})
-        table.insert(actions, 1, {key = "X", label = "Quit"})
-        table.insert(actions, 1, {key = "SELECT", label = "Restart"})
-        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
-            if game.mode == "plus" and game.powerups.undo > 0 then
-                table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
-            elseif game.mode ~= "plus" then
-                table.insert(actions, 1, {key = "B", label = "Undo"})
+    if help_alpha > 0 then
+        if game.state == Game.STATE_WON then
+            table.insert(actions, 1, {key = "A", label = "Continue"})
+            table.insert(actions, 1, {key = "X", label = "Quit"})
+            table.insert(actions, 1, {key = "SELECT", label = "Restart"})
+            if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
+                if game.mode == "plus" and game.powerups.undo > 0 then
+                    table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
+                elseif game.mode ~= "plus" then
+                    table.insert(actions, 1, {key = "B", label = "Undo"})
+                end
             end
-        end
-    elseif game.state == Game.STATE_LOST then
-        table.insert(actions, 1, {key = "A", label = "New Game"})
-        table.insert(actions, 1, {key = "X", label = "Quit"})
-        if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
-            if game.mode == "plus" and game.powerups.undo > 0 then
-                table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
-            elseif game.mode ~= "plus" then
-                table.insert(actions, 1, {key = "B", label = "Undo"})
+        elseif game.state == Game.STATE_LOST then
+            table.insert(actions, 1, {key = "A", label = "New Game"})
+            table.insert(actions, 1, {key = "X", label = "Quit"})
+            if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
+                if game.mode == "plus" and game.powerups.undo > 0 then
+                    table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
+                elseif game.mode ~= "plus" then
+                    table.insert(actions, 1, {key = "B", label = "Undo"})
+                end
             end
-        end
-    elseif game.state == Game.STATE_PAUSED then
-        table.insert(actions, 1, {key = "A", label = "Restart"})
-        table.insert(actions, 1, {key = "X", label = "Quit"})
-        table.insert(actions, 1, {key = "L1", label = "Skip Track"})
-        table.insert(actions, 1, {key = "START", label = "Resume"})
-    elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
-        table.insert(actions, 1, {key = "A", label = "Confirm"})
-        table.insert(actions, 1, {key = "B", label = "Cancel"})
-    else
-        if game.mode == "plus" then
-            table.insert(actions, 1, {key = "START", label = "Pause"})
-            table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
-            table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
-            table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
-        elseif game.mode == "timeattack" or game.mode == "nomercy" or game.mode == "goose" then
-            -- Time Attack / No Mercy / Goose: no undo, no powerups — keep it clean
-            table.insert(actions, 1, {key = "START", label = "Pause"})
-            table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+        elseif game.state == Game.STATE_PAUSED then
+            table.insert(actions, 1, {key = "A", label = "Restart"})
+            table.insert(actions, 1, {key = "X", label = "Quit"})
+            table.insert(actions, 1, {key = "L1", label = "Skip Track"})
+            table.insert(actions, 1, {key = "START", label = "Resume"})
+        elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
+            table.insert(actions, 1, {key = "A", label = "Confirm"})
+            table.insert(actions, 1, {key = "B", label = "Cancel"})
         else
-            table.insert(actions, 1, {key = "START", label = "Pause"})
-            table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
-            if game.canUndo then
-                table.insert(actions, 1, {key = "B", label = "Undo"})
+            if game.mode == "plus" then
+                table.insert(actions, 1, {key = "START", label = "Pause"})
+                table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
+                table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
+                table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
+            elseif game.mode == "timeattack" or game.mode == "nomercy" or game.mode == "goose" then
+                -- Time Attack / No Mercy / Goose: no undo, no powerups — keep it clean
+                table.insert(actions, 1, {key = "START", label = "Pause"})
+                table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+            else
+                table.insert(actions, 1, {key = "START", label = "Pause"})
+                table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+                if game.canUndo then
+                    table.insert(actions, 1, {key = "B", label = "Undo"})
+                end
             end
         end
     end
 
-    -- Draw actions right-to-left
+    -- Draw actions right-to-left with help_alpha transparency
+    local orig_help_key_color = help_key_color
+    local orig_help_key_text = help_key_text
+    local orig_ui_text = ui_text
+
+    if help_alpha < 1.0 then
+        if type(orig_help_key_color) == "table" then
+            help_key_color = {orig_help_key_color[1], orig_help_key_color[2], orig_help_key_color[3], (orig_help_key_color[4] or 1.0) * help_alpha}
+        end
+        if type(orig_help_key_text) == "table" then
+            help_key_text = {orig_help_key_text[1], orig_help_key_text[2], orig_help_key_text[3], (orig_help_key_text[4] or 1.0) * help_alpha}
+        end
+        if type(orig_ui_text) == "table" then
+            ui_text = {orig_ui_text[1], orig_ui_text[2], orig_ui_text[3], (orig_ui_text[4] or 1.0) * help_alpha}
+        end
+    end
+
     for _, action in ipairs(actions) do
         -- Label
         love.graphics.setFont(font_help_label)
@@ -2728,6 +2771,51 @@ function renderer.drawHelp(game)
         drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
 
         right_x = right_x - item_gap
+    end
+
+    -- Restore original file-scope colors
+    help_key_color = orig_help_key_color
+    help_key_text = orig_help_key_text
+    ui_text = orig_ui_text
+
+    -- Draw BGM notification in the footer with bgm_alpha transparency
+    if bgm_alpha > 0 and now_playing_track then
+        local bgm_right_x = bar_x + bar_w - math.floor(10 * scale)
+        love.graphics.setFont(font_help_label)
+        local display_text = now_playing_track.title .. " - " .. now_playing_track.artist
+        local text_w = font_help_label:getWidth(display_text)
+        
+        local viz_w = math.floor(14 * scale)
+        local total_w = text_w + viz_w + math.floor(8 * scale)
+        local start_x = bgm_right_x - total_w
+        
+        -- Draw animated visualizer
+        if type(help_key_color) == "table" then
+            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], (help_key_color[4] or 1.0) * bgm_alpha)
+        else
+            love.graphics.setColor(1.0, 1.0, 1.0, bgm_alpha)
+        end
+        
+        local t = love.timer.getTime()
+        local bar1_h = math.floor((6 + math.sin(t * 15) * 4) * scale)
+        local bar2_h = math.floor((10 + math.sin(t * 22 + 1) * 6) * scale)
+        local bar3_h = math.floor((5 + math.sin(t * 18 + 2) * 3) * scale)
+        local bar_w = math.floor(3 * scale)
+        local bar_gap = math.floor(2 * scale)
+        local base_y = badge_y + badge_h - (badge_h - 12 * scale) / 2
+        
+        love.graphics.rectangle("fill", start_x, base_y - bar1_h, bar_w, bar1_h, 1 * scale, 1 * scale)
+        love.graphics.rectangle("fill", start_x + bar_w + bar_gap, base_y - bar2_h, bar_w, bar2_h, 1 * scale, 1 * scale)
+        love.graphics.rectangle("fill", start_x + (bar_w + bar_gap) * 2, base_y - bar3_h, bar_w, bar3_h, 1 * scale, 1 * scale)
+        
+        -- Draw text label
+        if type(ui_text) == "table" then
+            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], (ui_text[4] or 1.0) * bgm_alpha)
+        else
+            love.graphics.setColor(1.0, 1.0, 1.0, bgm_alpha)
+        end
+        local text_x = start_x + viz_w + math.floor(8 * scale)
+        love.graphics.print(display_text, text_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
     end
 end
 
@@ -2814,7 +2902,29 @@ function renderer.drawOverlay(game)
 
         local tw = font_message:getWidth(msg)
         local th = font_message:getHeight()
-        love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+        if game.state == Game.STATE_PAUSED then
+            local sound = require("sound")
+            local track = sound.getCurrentTrack()
+            if track then
+                local track_lbl = track.title .. " - " .. track.artist
+                love.graphics.setFont(font_help_label)
+                local tw_track = font_help_label:getWidth(track_lbl)
+                
+                -- Draw "Paused" slightly higher to balance the box layout
+                love.graphics.setFont(font_message)
+                love.graphics.setColor(light_text)
+                love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2 - math.floor(12 * scale))
+                
+                -- Draw track details centered below
+                love.graphics.setFont(font_help_label)
+                love.graphics.setColor(0.65, 0.65, 0.65, 0.9)
+                love.graphics.print(track_lbl, bx + (bs - tw_track) / 2, by + (bs - th) / 2 + th - math.floor(6 * scale))
+            else
+                love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+            end
+        else
+            love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+        end
     end
 end
 
@@ -5819,7 +5929,6 @@ function renderer.draw(game, skip_transition)
     end
 
     drawToast()
-    drawBgmNowPlaying()
 end
 
 -- ============================================================================
