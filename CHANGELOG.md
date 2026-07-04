@@ -4,12 +4,10 @@
 
 ### Added
 - Background Music: lo-fi background tracks from multiple artists.
-- Now Playing Footer Notification: A cross-fade track info reveal in the footer showing current track title, artist, and animated visualizer bars when a song starts playing, plus pause screen song title display.
+- Now Playing Footer Notification: A cross-fade track info reveal in the footer showing current track title, artist, and animated visualizer bars when a song starts playing.
 - Pause Menu Integration: Skip music tracks directly by pressing L1 or R1 during pause state.
-- High-Tier Achievements: Added 5 new challenge achievements (8192 tile, 250k score, speedrun, hardcore, and swap/undo combo).
-- Premium Dynamic Themes: Introduced 5 new themes (Quantum, Hyperdrive, Retro Gold, Spectrum, Steel).
-
-
+- High-Tier Achievements: Added 5 new challenge achievements.
+- Premium Dynamic Themes: Introduced 5 new themes.
 
 ### Changed
 - Unified Audio & Haptics settings: Grouped Sound Effects, Background Music, and Haptic Vibration together under a single "Audio & Haptics" settings sub-menu.
