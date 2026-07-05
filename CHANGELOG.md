@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.0.1]
+- Offline BGM Integration: Music tracks are now bundled directly in the game package.
+- BGM Downloader Removed: Removed the download and delete option from settings.
+- BGM Default State: Enabled background music by default.
+
 ## [5.0.0]
 
 ### Added
