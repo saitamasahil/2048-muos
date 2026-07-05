@@ -4,6 +4,7 @@
 - Offline BGM Integration: Music tracks are now bundled directly in the game package.
 - BGM Downloader Removed: Removed the download and delete option from settings.
 - BGM Default State: Enabled background music by default.
+- Tactician Achievement: Increased requirement to 5 Undos and 5 Swaps in a single Plus Mode game.
 
 ## [5.0.0]
 
