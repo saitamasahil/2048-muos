@@ -69,7 +69,6 @@ if [ -d "$PROJECT_ROOT/assets" ]; then
         for item in "$PROJECT_ROOT/assets/"*; do
             bname="$(basename "$item")"
             [ "$bname" = "glyph" ] && continue
-            [ "$bname" = "music" ] && continue
             cp -r "$item" "$WORKDIR/$APP_NAME/.game/assets/" 2>/dev/null || true
         done
     )
