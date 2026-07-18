@@ -6433,34 +6433,43 @@ end
 -- Achievements Screen
 -- ============================================================================
 local achievementsList = {
-    { id = "ach_first_game", name = "First Steps", desc = "Play your first game", reward = "Ocean Theme" },
+    -- Score Milestones
     { id = "ach_score_1k", name = "Getting Started", desc = "Reach 1,000 points", reward = "Forest Theme" },
     { id = "ach_score_2k", name = "Gaining Momentum", desc = "Reach 2,000 points", reward = "Volcano Theme" },
     { id = "ach_score_5k", name = "Rising Star", desc = "Reach 5,000 points", reward = "Sunset Theme" },
     { id = "ach_score_7k", name = "High Scorer", desc = "Reach 7,500 points", reward = "Abyss Theme" },
-    { id = "ach_merge_512", name = "Half Way There", desc = "Create a 512 tile", reward = "Candy Theme" },
-    { id = "ach_merge_1024", name = "Almost There", desc = "Create a 1024 tile", reward = "Midnight Theme" },
-    { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile in Classic Mode", reward = "OLED Dark Theme" },
     { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme" },
-    { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme" },
-    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode", reward = "Retro Theme" },
-    { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme" },
-    { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme" },
-    { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Glitch Theme" },
-    { id = "ach_secret_menu", name = "Secret Discovery", desc = "Access the Secret Menu for the first time", reward = "Matrix Theme" },
     { id = "ach_score_25k", name = "Aesthetic", desc = "Reach 25,000 points", reward = "Vaporwave Theme" },
     { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme" },
     { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme" },
-    { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme" },
+    { id = "ach_score_250k", name = "Infinity Legend", desc = "Reach 250,000 points", reward = "Hyperdrive Theme" },
+
+    -- Tile Merges
+    { id = "ach_merge_512", name = "Half Way There", desc = "Create a 512 tile", reward = "Candy Theme" },
+    { id = "ach_merge_1024", name = "Almost There", desc = "Create a 1024 tile", reward = "Midnight Theme" },
+    { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile in Classic Mode", reward = "OLED Dark Theme" },
+    { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Glitch Theme" },
+    { id = "ach_merge_8192", name = "The Chosen One", desc = "Create an 8192 tile", reward = "Quantum Theme" },
+
+    -- Plus Mode Milestones
+    { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme" },
+    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode", reward = "Retro Theme" },
+    { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme" },
+    { id = "ach_tactician", name = "Tactician", desc = "Use 5 Undos and 5 Swaps in a single Plus Mode game", reward = "Steel Theme" },
+
+    -- Alternative Modes
     { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme" },
     { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme" },
     { id = "ach_nomercy_512", name = "No Escape", desc = "Create a 512 tile in No Mercy Mode", reward = "Inferno Theme" },
     { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme" },
-    { id = "ach_merge_8192", name = "The Chosen One", desc = "Create an 8192 tile", reward = "Quantum Theme" },
-    { id = "ach_score_250k", name = "Infinity Legend", desc = "Reach 250,000 points", reward = "Hyperdrive Theme" },
+
+    -- Special Challenges & Secrets
+    { id = "ach_first_game", name = "First Steps", desc = "Play your first game", reward = "Ocean Theme" },
+    { id = "ach_secret_menu", name = "Secret Discovery", desc = "Access the Secret Menu for the first time", reward = "Matrix Theme" },
+    { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme" },
+    { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme" },
     { id = "ach_speedrun_2048", name = "Speed Demon", desc = "Create a 2048 tile in under 5 minutes", reward = "Retro Gold Theme" },
-    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme" },
-    { id = "ach_tactician", name = "Tactician", desc = "Use 5 Undos and 5 Swaps in a single Plus Mode game", reward = "Steel Theme" }
+    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme" }
 }
 
 function renderer.getAchievementsCount()
