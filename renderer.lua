@@ -1822,23 +1822,81 @@ function renderer.drawDynamicBackground(themeName)
         local my2 = h * 0.65 + math.sin(t * 0.09) * 30 * scale
         love.graphics.circle("fill", mx2, my2, 190 * scale)
 
-        -- Flying bats
-        for i = 1, 8 do
-            local cycle = 8.0 + i * 1.5
-            local progress = ((t + i * 3.7) % cycle) / cycle
-            local bx = w * 1.2 - progress * (w * 1.4)
-            local by = h * 0.15 + (i % 4) * 55 * scale + math.sin(t * 2.0 + i) * 15 * scale
-            local wing_span = (8 + (i % 3) * 3) * scale
-            local flap = math.sin(t * 12 + i) * (wing_span * 0.4)
-            local alpha = 0.18 * (1.0 - progress)
-
-            love.graphics.setColor(0.0, 0.0, 0.0, alpha)
-            love.graphics.line(bx, by, bx - wing_span / 2, by - flap)
-            love.graphics.line(bx, by, bx + wing_span / 2, by - flap)
-            love.graphics.line(bx - wing_span / 2, by - flap, bx - wing_span * 0.8, by)
-            love.graphics.line(bx + wing_span / 2, by - flap, bx + wing_span * 0.8, by)
+        -- Castlevania Style Swarms of Grouped Bats
+        -- Swarm 1: 5 bats
+        local cycle1 = 12.0
+        local prog1 = (t % cycle1) / cycle1
+        local s1_x = w * 1.3 - prog1 * (w * 1.6)
+        local s1_y = h * 0.28 + math.sin(t * 0.6) * 35 * scale
+        local alpha1 = 0.45 * (1.0 - prog1)
+        
+        for i = 1, 5 do
+            local ox = math.sin(i * 1.9) * 45 * scale
+            local oy = math.cos(i * 2.7) * 30 * scale
+            local wave_x = math.sin(t * 1.8 + i) * 8 * scale
+            local wave_y = math.cos(t * 2.2 + i * 1.5) * 6 * scale
+            local bx = s1_x + ox + wave_x
+            local by = s1_y + oy + wave_y
+            
+            local wing_span = (20 + (i % 3) * 6) * scale
+            local flap = math.sin(t * 16 + i * 2) * (wing_span * 0.30)
+            
+            love.graphics.setColor(0.0, 0.0, 0.0, alpha1)
+            love.graphics.polygon("fill", 
+                bx, by - 5 * scale,
+                bx - 2 * scale, by - 8 * scale,
+                bx - 3 * scale, by - 3 * scale,
+                bx - 6 * scale, by - 4 * scale - flap * 0.3,
+                bx - wing_span / 2, by - flap,
+                bx - wing_span * 0.32, by - flap * 0.4 + 2 * scale,
+                bx - wing_span * 0.16, by - flap * 0.2 + 3 * scale,
+                bx, by + 4 * scale,
+                bx + wing_span * 0.16, by - flap * 0.2 + 3 * scale,
+                bx + wing_span * 0.32, by - flap * 0.4 + 2 * scale,
+                bx + wing_span / 2, by - flap,
+                bx + 6 * scale, by - 4 * scale - flap * 0.3,
+                bx + 3 * scale, by - 3 * scale,
+                bx + 2 * scale, by - 8 * scale
+            )
         end
-
+        
+        -- Swarm 2: 4 bats ( delayed and flying from Left to Right )
+        local cycle2 = 16.0
+        local prog2 = ((t + 8.0) % cycle2) / cycle2
+        local s2_x = -w * 0.3 + prog2 * (w * 1.6)
+        local s2_y = h * 0.55 + math.cos(t * 0.4) * 45 * scale
+        local alpha2 = 0.42 * (1.0 - prog2)
+        
+        for i = 1, 4 do
+            local ox = math.sin(i * 2.2 + 1) * 35 * scale
+            local oy = math.cos(i * 3.1 + 2) * 25 * scale
+            local wave_x = math.sin(t * 1.4 + i * 2) * 6 * scale
+            local wave_y = math.cos(t * 1.9 + i) * 5 * scale
+            local bx = s2_x + ox + wave_x
+            local by = s2_y + oy + wave_y
+            
+            local wing_span = (18 + (i % 2) * 6) * scale
+            local flap = math.sin(t * 14 + i * 3) * (wing_span * 0.30)
+            
+            love.graphics.setColor(0.0, 0.0, 0.0, alpha2)
+            love.graphics.polygon("fill", 
+                bx, by - 5 * scale,
+                bx - 2 * scale, by - 8 * scale,
+                bx - 3 * scale, by - 3 * scale,
+                bx - 6 * scale, by - 4 * scale - flap * 0.3,
+                bx - wing_span / 2, by - flap,
+                bx - wing_span * 0.32, by - flap * 0.4 + 2 * scale,
+                bx - wing_span * 0.16, by - flap * 0.2 + 3 * scale,
+                bx, by + 4 * scale,
+                bx + wing_span * 0.16, by - flap * 0.2 + 3 * scale,
+                bx + wing_span * 0.32, by - flap * 0.4 + 2 * scale,
+                bx + wing_span / 2, by - flap,
+                bx + 6 * scale, by - 4 * scale - flap * 0.3,
+                bx + 3 * scale, by - 3 * scale,
+                bx + 2 * scale, by - 8 * scale
+            )
+        end
+        
         love.graphics.pop()
 
     elseif themeName == "retro" then
