@@ -2,6 +2,7 @@
 
 ## [5.0.2]
 - Reordered achievements list by category
+- Updated Dracula theme
 
 ## [5.0.1]
 - Offline BGM Integration: Music tracks are now bundled directly in the game package.
