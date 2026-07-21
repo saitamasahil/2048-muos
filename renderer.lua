@@ -2715,13 +2715,16 @@ end
 local function roundedRect(mode, x, y, w, h, r)
     if _G.theme == "matrix" then
         r = r or 0
+        local lw = love.graphics.getLineWidth()
         if mode == "fill" then
             local cr, cg, cb, ca = love.graphics.getColor()
             love.graphics.setColor(0, 0, 0, ca * 0.8)
             love.graphics.rectangle("fill", x, y, w, h, r, r)
             love.graphics.setColor(cr, cg, cb, ca)
+            love.graphics.setLineWidth(lw)
             love.graphics.rectangle("line", x, y, w, h, r, r)
         else
+            love.graphics.setLineWidth(lw)
             love.graphics.rectangle("line", x, y, w, h, r, r)
         end
         return
@@ -5099,10 +5102,10 @@ function renderer.drawMainMenu(selection, skip_transition)
     local start_y = math.max(math.floor(12 * scale), math.floor((available_h - total_h) * 0.35))
 
     -- Draw beautifully stylized header
-    local tile_size = header_h - math.floor(10 * scale)
+    local tile_size = math.floor(header_h - math.floor(10 * scale))
     if tile_size > 0 then
-        local tile_x = (w - tile_size) / 2
-        local tile_y = start_y + (header_h - tile_size) / 2
+        local tile_x = math.floor((w - tile_size) / 2)
+        local tile_y = math.floor(start_y + (header_h - tile_size) / 2)
 
         local canvas_w = math.ceil(tile_size * 2)
         local canvas_h = math.ceil(tile_size * 2)
@@ -5124,6 +5127,7 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.push("all")
         love.graphics.scale(2, 2)
         love.graphics.translate(-tile_x, -tile_y)
+        love.graphics.setLineWidth(math.max(2, math.floor((_G.scale or 1) * 2)))
 
         -- Draw tile background (using 2048 tile color from active theme!)
         love.graphics.setColor(getTileColor(2048))
