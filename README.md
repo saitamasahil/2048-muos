@@ -16,6 +16,8 @@ This project is inspired by and references the popular open-source [2048 Android
 - **Stats & Settings**: Comprehensive player statistics tracking, 100-move undo stack, and customizable gameplay speed and limits.
 - **Quality of Life**: Auto-save & resume after every move, interactive pause menu, instant theme switching.
 
+*Note: Perhaps a well-known secret sequence of buttons might reveal something special...?*
+
 ## Installation on muOS
 
 1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048-muos/releases) page.
