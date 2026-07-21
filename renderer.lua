@@ -4474,6 +4474,21 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             }
         },
         {
+            title = "ARCADE MODES",
+            lines = {
+                "Time Attack: Merge 32+ tiles to gain extra time!",
+                "Huge Mode: Spacious 5x5 grid for relaxed play.",
+                "No Mercy: Hardcore — no undos, 2 tiles per move.",
+                "Goose Mode: A silly Goose tile blocks grid cells."
+            },
+            tiles = {
+                {0, 0, 0, 0},
+                {0, 32, 64, 0},
+                {0, 128, 256, 0},
+                {0, 0, 0, 0}
+            }
+        },
+        {
             title = "UNDO  [B]",
             lines = {
                 "Made a mistake? Press B to undo!",
@@ -4608,8 +4623,19 @@ function renderer.drawTutorial(page, skip_transition, static_only)
 
         -- Calculate message box height from lines
         local line_h = font_help_label:getHeight()
-        local num_lines = #slide_data.lines
-        local msg_box_h = msg_pad * 2 + num_lines * (line_h + math.floor(3 * scale))
+        local line_spacing = math.floor(2 * scale)
+        local paragraph_gap = math.floor(6 * scale)
+
+        local content_h = 0
+        for i, line in ipairs(slide_data.lines) do
+            local formatted_line = renderer.formatText(line)
+            if formatted_line == "" then
+                content_h = content_h + paragraph_gap
+            else
+                content_h = content_h + line_h + (i < #slide_data.lines and line_spacing or 0)
+            end
+        end
+        local msg_box_h = msg_pad * 2 + content_h
 
         -- Message box background
         local br, bg, bb, ba = 1, 1, 1, 1
@@ -4638,8 +4664,12 @@ function renderer.drawTutorial(page, skip_transition, static_only)
         local text_y = msg_y + msg_pad
         for _, line in ipairs(slide_data.lines) do
             local formatted_line = renderer.formatText(line)
-            love.graphics.print(formatted_line, msg_box_x + msg_pad, text_y)
-            text_y = text_y + line_h + math.floor(3 * scale)
+            if formatted_line == "" then
+                text_y = text_y + paragraph_gap
+            else
+                love.graphics.print(formatted_line, msg_box_x + msg_pad, text_y)
+                text_y = text_y + line_h + line_spacing
+            end
         end
 
         -- 3. Mini board
