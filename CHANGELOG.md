@@ -6,6 +6,7 @@
 - Added dedicated Arcade Modes slide to Tutorial
 - Improved line spacing and paragraph layout in Tutorial cards
 - Fixed uneven outline border width around 2048 logo in Matrix theme
+- Added animated theme name logo morph reveal in header when switching themes
 
 ## [5.0.1]
 - Offline BGM Integration: Music tracks are now bundled directly in the game package.
