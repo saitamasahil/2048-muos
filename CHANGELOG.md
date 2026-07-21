@@ -2,7 +2,9 @@
 
 ## [5.0.2]
 - Reordered achievements list by category
-- Updated Dracula theme
+- Completely overhauled and polished all dynamic background themes for a premium visual experience
+- Added dedicated Arcade Modes slide to Tutorial
+- Improved line spacing and paragraph layout in Tutorial cards
 
 ## [5.0.1]
 - Offline BGM Integration: Music tracks are now bundled directly in the game package.
