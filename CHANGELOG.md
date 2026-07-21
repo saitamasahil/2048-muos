@@ -2,6 +2,7 @@
 
 ## [5.0.3]
 - Redesigned Forest theme to a cleaner, minimalist aesthetic with elegant falling leaves and subtle ambient mist
+- Updated splash screen exit animation with a beautiful radiant ripple effect
 
 ## [5.0.2]
 - Reordered achievements list by category
