@@ -1177,7 +1177,43 @@ local now_playing_timer = 0
 local now_playing_track = nil
 local last_track_path = nil
 
-function renderer.applyTheme()
+local theme_display_names = {
+    light = "LIGHT",
+    dark = "DARK",
+    classic = "CLASSIC",
+    ocean = "OCEAN",
+    forest = "FOREST",
+    volcano = "VOLCANO",
+    quantum = "QUANTUM",
+    dracula = "DRACULA",
+    retrogold = "RETRO GOLD",
+    hyperdrive = "HYPERDRIVE",
+    honk = "HONK",
+    matrix = "MATRIX",
+    glitch = "GLITCH",
+    vaporwave = "VAPORWAVE",
+    cyberpunk = "CYBERPUNK",
+    spectrum = "SPECTRUM",
+    aurora = "AURORA",
+    sakura = "SAKURA",
+    matcha = "MATCHA",
+    nebula = "NEBULA",
+    inferno = "INFERNO"
+}
+
+function renderer.triggerThemeMorph(theme_id)
+    if not theme_id then return end
+    local name = theme_display_names[theme_id] or theme_id:upper()
+    if _G.theme_morph_timer and _G.theme_morph_timer > 0 and _G.theme_morph_name then
+        _G.theme_morph_prev_name = _G.theme_morph_name
+    else
+        _G.theme_morph_prev_name = "PLUS"
+    end
+    _G.theme_morph_name = name
+    _G.theme_morph_timer = 4.0
+end
+
+function renderer.applyTheme(skip_morph)
     local t = themes[_G.theme] or themes.light
     tile_colors = t.tile_colors
     super_tile_color = t.super_tile_color
@@ -1194,10 +1230,14 @@ function renderer.applyTheme()
     help_bg_color = t.help_bg_color
     help_key_color = t.help_key_color
     help_key_text = t.help_key_text
+
+    if not skip_morph and _G.theme then
+        renderer.triggerThemeMorph(_G.theme)
+    end
 end
 
--- Initialize theme immediately
-renderer.applyTheme()
+-- Initialize theme immediately (skip morph on startup)
+renderer.applyTheme(true)
 local matrix_cols = nil
 local matrix_last_t = nil
 
@@ -3320,6 +3360,75 @@ function renderer.drawHeader(game)
     -- Stacked title height: "2048" height + "PLUS" height - scaled vertical nesting offset
     local title_h = th + ph - math.floor(11 * scale)
 
+    local function drawSubTitle(x_base, y_plus)
+        local is_morphing = _G.theme_morph_timer and _G.theme_morph_timer > 0
+        if is_morphing then
+            local morph_name = _G.theme_morph_name or "PLUS"
+            local prev_name = _G.theme_morph_prev_name or "PLUS"
+
+            love.graphics.setFont(f_plus)
+            
+            -- Width & scale for target morph_name
+            local mw = f_plus:getWidth(morph_name)
+            local max_w = math.floor(130 * scale)
+            local scale_x = 1.0
+            if mw > max_w then scale_x = max_w / mw end
+
+            -- Width & scale for prev_name
+            local pw = f_plus:getWidth(prev_name)
+            local scale_prev_x = 1.0
+            if pw > max_w then scale_prev_x = max_w / pw end
+
+            local t_rem = _G.theme_morph_timer
+            local total_t = 4.0
+            local fade_t = 0.4
+
+            local r = ui_text[1] or 1
+            local g = ui_text[2] or 1
+            local b = ui_text[3] or 1
+            local a = ui_text[4] or 1
+
+            if t_rem > (total_t - fade_t) then
+                -- Phase 1: Smooth fade IN from prev_name to morph_name with cubic easing & slide
+                local raw_p = (total_t - t_rem) / fade_t -- 0 -> 1
+                local p = raw_p * raw_p * (3 - 2 * raw_p) -- smooth cubic ease
+
+                -- Prev name fading out & sliding up
+                love.graphics.setColor(r, g, b, a * (1 - p))
+                love.graphics.print(prev_name, x_base - pw * scale_prev_x - math.floor(2 * scale), y_plus - (p * 4 * scale), 0, scale_prev_x, scale_prev_x)
+
+                -- Target morph_name fading in & sliding up into place
+                love.graphics.setColor(r, g, b, a * p)
+                love.graphics.print(morph_name, x_base - mw * scale_x - math.floor(2 * scale), y_plus + ((1 - p) * 4 * scale), 0, scale_x, scale_x)
+
+            elseif t_rem < fade_t then
+                -- Phase 3: Smooth fade OUT from morph_name back to PLUS
+                local raw_p = t_rem / fade_t -- 1 -> 0
+                local p = raw_p * raw_p * (3 - 2 * raw_p) -- smooth cubic ease
+
+                local pw_plus = f_plus:getWidth("PLUS")
+
+                -- PLUS fading in & sliding up into place
+                love.graphics.setColor(r, g, b, a * (1 - p))
+                love.graphics.print("PLUS", x_base - pw_plus - math.floor(2 * scale), y_plus + (p * 4 * scale))
+
+                -- Target morph_name fading out & sliding up
+                love.graphics.setColor(r, g, b, a * p)
+                love.graphics.print(morph_name, x_base - mw * scale_x - math.floor(2 * scale), y_plus - ((1 - p) * 4 * scale), 0, scale_x, scale_x)
+
+            else
+                -- Phase 2: Steady hold of morph_name
+                love.graphics.setColor(r, g, b, a)
+                love.graphics.print(morph_name, x_base - mw * scale_x - math.floor(2 * scale), y_plus, 0, scale_x, scale_x)
+            end
+        else
+            love.graphics.setFont(f_plus)
+            love.graphics.setColor(ui_text)
+            local pw_norm = f_plus:getWidth("PLUS")
+            love.graphics.print("PLUS", x_base - pw_norm - math.floor(2 * scale), y_plus)
+        end
+    end
+
     if game and game.won then
         local eh = font_header_plus:getHeight()
         local total_h = title_h + eh - math.floor(2 * scale)
@@ -3330,16 +3439,16 @@ function renderer.drawHeader(game)
 
         -- Draw "2048"
         love.graphics.setFont(font_header_2048)
+        love.graphics.setColor(ui_text)
         love.graphics.print("2048", bx, y_2048)
 
-        -- Draw "PLUS" with "S" below "8" and "P" at half of "4"
-        local x_plus = bx + tw - pw - math.floor(2 * scale)
-        love.graphics.setFont(f_plus)
-        love.graphics.print("PLUS", x_plus, y_plus)
+        -- Draw "PLUS" (or morph theme name)
+        drawSubTitle(bx + tw, y_plus)
 
         -- Draw "Endless Mode" subtitle below "PLUS" with smaller font, shifted right and vertically closer
         local text = "Endless Mode"
         love.graphics.setFont(font_header_plus)
+        love.graphics.setColor(ui_text)
         
         local box_w = math.floor((_G.text_size == "large" and 115 or 105) * scale)
         local box_gap = math.floor(8 * scale)
@@ -3364,12 +3473,11 @@ function renderer.drawHeader(game)
 
         -- Draw "2048"
         love.graphics.setFont(font_header_2048)
+        love.graphics.setColor(ui_text)
         love.graphics.print("2048", bx, y_2048)
 
-        -- Draw "PLUS" with "S" below "8" and "P" at half of "4"
-        local x_plus = bx + tw - pw - math.floor(2 * scale)
-        love.graphics.setFont(f_plus)
-        love.graphics.print("PLUS", x_plus, y_plus)
+        -- Draw "PLUS" (or morph theme name)
+        drawSubTitle(bx + tw, y_plus)
     end
 end
 
@@ -4077,6 +4185,9 @@ function renderer.updateTransition(dt)
     end
     if now_playing_timer > 0 then
         now_playing_timer = math.max(0, now_playing_timer - dt)
+    end
+    if _G.theme_morph_timer and _G.theme_morph_timer > 0 then
+        _G.theme_morph_timer = math.max(0, _G.theme_morph_timer - dt)
     end
 
     if transition_timer > 0 then
