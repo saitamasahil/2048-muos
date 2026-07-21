@@ -1,5 +1,8 @@
 # Changelog
 
+## [5.0.3]
+- Redesigned Forest theme to a cleaner, minimalist aesthetic with elegant falling leaves and subtle ambient mist
+
 ## [5.0.2]
 - Reordered achievements list by category
 - Completely overhauled and polished all dynamic background themes for a premium visual experience
