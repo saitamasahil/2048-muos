@@ -1,5 +1,8 @@
 # Changelog
 
+## [5.0.4]
+- Fixed a crash when returning to Play Select menu after continuing an Arcade mode game directly from the main menu
+
 ## [5.0.3]
 - Redesigned Forest theme to a cleaner, minimalist aesthetic with elegant falling leaves and subtle ambient mist
 - Updated splash screen exit animation with a beautiful radiant ripple effect
