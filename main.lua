@@ -13,6 +13,7 @@ local sound    = require("sound")
 _G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", "SERVER_ACTIVE", etc.
 local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Theme Selection, 4: Achievements, 5: Tutorial, 6: Text, 7: About, 8: Quit
 _G.arcade_selection = 1
+_G.play_select_selection = 1
 
 local game
 
