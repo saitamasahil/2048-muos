@@ -665,17 +665,17 @@ function love.update(dt)
                 sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     local items = {
+                        {id="start_128",     cost=50,   name="128 High-Tile Booster"},
                         {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode"},
                         {id="powerup_swap",  cost=120,  name="Purchase Swap for Plus Mode"},
                         {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode"},
                         {id="extra_undo",    cost=200,  name="Extra Starting Undo (Plus)"},
                         {id="extra_swap",    cost=350,  name="Extra Starting Swap (Plus)"},
                         {id="extra_bomb",    cost=500,  name="Extra Starting Bomb (Plus)"},
-                        {id="coin_multiplier", cost=1500, name="2x Coin Multiplier"},
-                        {id="start_128",     cost=50,   name="128 High-Tile Booster"},
                         {id="anim_bounce",   cost=750,  name="Bounce Pop FX"},
                         {id="anim_glow",     cost=850,  name="Glow Pulse FX"},
                         {id="jukebox",       cost=1200, name="BGM Jukebox"},
+                        {id="coin_multiplier", cost=1500, name="2x Coin Multiplier"},
                         {id="theme_cosmic",  cost=2000, name="Cosmic Theme"},
                         {id="theme_cherry",  cost=2000, name="Cherry Theme"}
                     }
@@ -941,7 +941,7 @@ function love.update(dt)
                 local visible_area = h - header_h - footer_h
                 local total_items = (renderer.getAchievementsCount and renderer.getAchievementsCount()) or 22
                 local total_height = total_items * item_h
-                local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h) + 1)
+                local max_scroll = math.max(0, math.ceil((total_height - visible_area) / item_h))
                 local old_target = _G.achievements_scroll_target or 0
                 _G.achievements_scroll_target = math.min(max_scroll, old_target + 1)
                 if _G.achievements_scroll_target ~= old_target then

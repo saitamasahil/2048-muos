@@ -8542,17 +8542,17 @@ function renderer.drawStoreMenu(selection, skip_transition)
     local pu_swap  = _G.stats and (_G.stats.powerup_swap_count  or 0) or 0
     local pu_bomb  = _G.stats and (_G.stats.powerup_bomb_count  or 0) or 0
     local items = {
+        {id="start_128",     cost=50,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_count .. " owned)", consumable=true, ckey="start_128_count"},
         {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
         {id="powerup_swap",  cost=120,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
         {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
         {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
         {id="extra_swap",    cost=350,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
         {id="extra_bomb",    cost=500,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
-        {id="coin_multiplier",cost=1500,name="2x Coin Multiplier",   desc="Permanently double all earned Merge Coins"},
-        {id="start_128",     cost=50,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_count .. " owned)", consumable=true, ckey="start_128_count"},
         {id="anim_bounce",   cost=750,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
         {id="anim_glow",     cost=850,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
         {id="jukebox",       cost=1200, name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
+        {id="coin_multiplier",cost=1500,name="2x Coin Multiplier",   desc="Permanently double all earned Merge Coins"},
         {id="theme_cosmic",  cost=2000, name="Cosmic Theme",          desc="Unlock space theme"},
         {id="theme_cherry",  cost=2000, name="Cherry Theme",          desc="Unlock sakura theme"}
     }
