@@ -131,6 +131,7 @@ local toast_max_duration = 1.5
 local TOAST_DURATION = 1.5
 local toast_queue = {}
 local toast_particles = {}
+local toast_ach_id = nil
 local coin_toast_timer = 0
 local coin_toast_amount = 0
 local coin_toast_max_duration = 1.8
@@ -177,12 +178,14 @@ end
 
 function renderer.showToast(msg, custom_duration, is_achievement)
     local duration = custom_duration or TOAST_DURATION
+    local ach_id = type(is_achievement) == "string" and is_achievement or nil
     if toast_timer > 0 then
-        table.insert(toast_queue, {msg = msg, duration = duration, is_achievement = is_achievement})
+        table.insert(toast_queue, {msg = msg, duration = duration, is_achievement = is_achievement, ach_id = ach_id})
     else
         toast_message = msg
         toast_timer = duration
         toast_max_duration = duration
+        toast_ach_id = ach_id
         if is_achievement then
             spawnToastParticles()
         end
@@ -4505,6 +4508,7 @@ function renderer.updateTransition(dt)
                 toast_message = next_toast.msg
                 toast_timer = next_toast.duration
                 toast_max_duration = next_toast.duration
+                toast_ach_id = next_toast.ach_id
                 if next_toast.is_achievement then
                     spawnToastParticles()
                 end
@@ -4638,16 +4642,38 @@ local function drawToast()
     love.graphics.setFont(font_message)
 
     local tw = font_message:getWidth(toast_message)
-    local th = font_message:getHeight()
+    local font_h = font_message:getHeight()
     local padX = 20 * _G.scale
     local padY = 10 * _G.scale
     local max_text_w = w - (padX * 2) - (40 * _G.scale)
 
     local text_w, wrapped_lines = font_message:getWrap(toast_message, max_text_w)
-    local th = font_message:getHeight() * #wrapped_lines
+    local th = font_h * #wrapped_lines
 
-    local boxW = text_w + padX * 2
-    local boxH = th + padY * 2
+    local ach_img = nil
+    if toast_ach_id then
+        ach_img = achievement_icons and achievement_icons[toast_ach_id]
+        if ach_img == nil then
+            local ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. toast_ach_id .. ".png")
+            if not ok_ach then
+                ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. toast_ach_id:gsub("^ach_", "") .. ".png")
+            end
+            if ok_ach then
+                achievement_icons = achievement_icons or {}
+                achievement_icons[toast_ach_id] = loaded_img
+                ach_img = loaded_img
+            else
+                achievement_icons = achievement_icons or {}
+                achievement_icons[toast_ach_id] = false
+            end
+        end
+        if ach_img == false then ach_img = nil end
+    end
+
+    local icon_sz = math.floor(32 * _G.scale)
+    local icon_gap = math.floor(10 * _G.scale)
+    local boxW = text_w + padX * 2 + (ach_img and (icon_sz + icon_gap) or 0)
+    local boxH = math.max(th, ach_img and icon_sz or 0) + padY * 2
 
     -- Fade in/out
     local alpha = 1.0
@@ -4660,12 +4686,25 @@ local function drawToast()
     -- Slide down from the top banner
     local target_y = 10 * _G.scale
     local y = target_y - (1.0 - alpha) * 20 * _G.scale
+    local box_x = (w - boxW) / 2
 
     love.graphics.setColor(0.1, 0.1, 0.1, 0.85 * alpha)
-    roundedRect("fill", (w - boxW) / 2, y, boxW, boxH, 12 * _G.scale)
+    roundedRect("fill", box_x, y, boxW, boxH, 12 * _G.scale)
+
+    local content_x = box_x + padX
+    if ach_img then
+        local img_y = y + (boxH - icon_sz) / 2
+        local sw = icon_sz / ach_img:getWidth()
+        local sh = icon_sz / ach_img:getHeight()
+        love.graphics.setColor(1, 1, 1, alpha)
+        love.graphics.setShader(icon_shader)
+        love.graphics.draw(ach_img, content_x, img_y, 0, sw, sh)
+        love.graphics.setShader()
+        content_x = content_x + icon_sz + icon_gap
+    end
 
     love.graphics.setColor(1, 1, 1, alpha)
-    love.graphics.printf(toast_message, (w - text_w) / 2, y + padY, text_w, "center")
+    love.graphics.printf(toast_message, content_x, y + (boxH - th) / 2, text_w, "left")
 
     -- Draw particles in front of toast
     for _, p in ipairs(toast_particles) do
@@ -7827,7 +7866,21 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
                 local card_h = item_h - math.floor(10 * scale)
                 local icon_x = padding + math.floor(12 * scale)
                 local icon_y = current_y + (card_h - icon_s) / 2
-                local custom_ach_img = achievement_icons and achievement_icons[ach.id]
+                achievement_icons = achievement_icons or {}
+                local custom_ach_img = achievement_icons[ach.id]
+                if custom_ach_img == nil then
+                    local ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. ach.id .. ".png")
+                    if not ok_ach then
+                        ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. ach.id:gsub("^ach_", "") .. ".png")
+                    end
+                    if ok_ach then
+                        achievement_icons[ach.id] = loaded_img
+                        custom_ach_img = loaded_img
+                    else
+                        achievement_icons[ach.id] = false
+                    end
+                end
+
                 if custom_ach_img then
                     local base_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
                     local alpha = isUnlocked and 1.0 or 0.35

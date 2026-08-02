@@ -280,7 +280,7 @@ function love.load(args)
                     renderer.queueHeaderLogoMorph("+" .. tostring(coin_reward) .. " COINS")
                 end
             end
-            renderer.showToast("Unlocked: " .. (names[id] or id) .. "!", 2.2, true)
+            renderer.showToast("Unlocked: " .. (names[id] or id) .. "!", 2.2, id)
             sound.playAchievement()
         end
     end
