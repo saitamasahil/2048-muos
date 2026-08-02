@@ -11,7 +11,7 @@ This project is inspired by and references the popular open-source [2048 Android
 ## Features
 
 - **Game Modes**: Classic, Plus Mode (with Bomb, Swap, and Undo powerups), and 4 Arcade Modes (Time Attack, 5x5 Huge, No Mercy, Goose).
-- **Achievements & Themes**: 28 unlockable achievements and 30 custom themes, with select themes featuring dynamic animated backgrounds.
+- **Achievements & Themes**: 30 unlockable achievements and total 32 custom themes, with select themes featuring dynamic animated backgrounds.
 - **Audio & Visuals**: Embedded lo-fi BGM playlist with track info popups, procedural SFX, CRT shader, and smooth handheld-optimized animations.
 - **Stats & Settings**: Comprehensive player statistics tracking, 100-move undo stack, and customizable gameplay speed and limits.
 - **Quality of Life**: Auto-save & resume after every move, interactive pause menu, instant theme switching.

@@ -5011,7 +5011,7 @@ function renderer.drawTutorial(page, skip_transition, static_only)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 30 themes total!"
+                "achievements. 32 themes total!"
             },
 
             tiles = {
