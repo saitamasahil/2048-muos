@@ -276,11 +276,11 @@ function love.load(args)
                 _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
                 _G.stats.claimed_achievements[id] = true
                 save.saveStats(_G.stats)
-                if renderer and renderer.queueHeaderLogoMorph then
-                    renderer.queueHeaderLogoMorph("+" .. tostring(coin_reward) .. " COINS")
-                end
             end
             renderer.showToast("Unlocked: " .. (names[id] or id) .. "!", 2.2, id)
+            if coin_reward > 0 and renderer and renderer.queueHeaderLogoMorph then
+                renderer.queueHeaderLogoMorph("+" .. tostring(coin_reward) .. " COINS")
+            end
             sound.playAchievement()
         end
     end
