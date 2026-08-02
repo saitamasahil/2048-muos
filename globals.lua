@@ -3,9 +3,9 @@
 _G.timer = require("timer")
 
 local sem_ver = {
-    major = 5,
+    major = 6,
     minor = 0,
-    patch = 3,
+    patch = 0,
     extra = ""
 }
 
