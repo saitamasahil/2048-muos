@@ -8552,7 +8552,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
         {id="anim_bounce",   cost=750,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
         {id="anim_glow",     cost=850,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
         {id="jukebox",       cost=1200, name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
-        {id="coin_multiplier",cost=1500,name="2x Coin Multiplier",   desc="Permanently double all earned Merge Coins"},
+        {id="coin_multiplier",cost=1500,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
         {id="theme_cosmic",  cost=2000, name="Cosmic Theme",          desc="Unlock space theme"},
         {id="theme_cherry",  cost=2000, name="Cherry Theme",          desc="Unlock sakura theme"}
     }

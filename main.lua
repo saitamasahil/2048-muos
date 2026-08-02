@@ -694,7 +694,7 @@ function love.update(dt)
                             save.saveStats(_G.stats)
                             renderer.showToast("Purchased! " .. sel_item.name .. " (" .. _G.stats[stat_key] .. " owned)")
                         else
-                            renderer.showToast("Not enough Merge Coins!")
+                            renderer.showToast("Not enough Coins!")
                         end
                         return
                     end
@@ -707,7 +707,7 @@ function love.update(dt)
                             save.saveStats(_G.stats)
                             renderer.showToast("Purchased! 128 Boosters: " .. _G.stats.start_128_count)
                         else
-                            renderer.showToast("Not enough Merge Coins!")
+                            renderer.showToast("Not enough Coins!")
                         end
                         return
                     end
@@ -737,7 +737,7 @@ function love.update(dt)
                             end
                         end
                     else
-                        renderer.showToast("Not enough Merge Coins!")
+                        renderer.showToast("Not enough Coins!")
                     end
                 end)
             end
@@ -991,7 +991,7 @@ function love.update(dt)
                     _G.stats = _G.stats or {}
                     _G.stats.merge_coins = (_G.stats.merge_coins or 0) + 9999
                     save.saveStats(_G.stats)
-                    renderer.showToast("Added 9999 Merge Coins! Total: " .. _G.stats.merge_coins)
+                    renderer.showToast("Added 9999 Coins! Total: " .. _G.stats.merge_coins)
                 elseif _G.cheats_selection == 5 then
                     if _G.cheat_debug_layout == "None" or _G.cheat_debug_layout == nil then
                         _G.cheat_debug_layout = "Two 1024s"
