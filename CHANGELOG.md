@@ -1,7 +1,9 @@
 # Changelog
 
-## [5.0.4]
-- Fixed a crash when returning to Play Select menu after continuing an Arcade mode game directly from the main menu
+## [6.0.0]
+- Added In-Game Store: Spend Coins on powerup charges (Undo, Swap, Bomb), 128 Booster, 2x Coin Multiplier, Merge FX, and Themes
+- Added PNG icon support for Store items, Achievements, and Notification Toasts
+- Improved footer alignment and UI layout across all screens
 
 ## [5.0.3]
 - Redesigned Forest theme to a cleaner, minimalist aesthetic with elegant falling leaves and subtle ambient mist
