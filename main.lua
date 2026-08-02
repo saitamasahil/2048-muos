@@ -14,6 +14,7 @@ _G.appState = "MENU" -- "MENU", "GAME", "ARCADE_MENU", "SERVER_ACTIVE", etc.
 local menuSelection = 1 -- 1: Classic, 2: Plus, 3: Theme Selection, 4: Achievements, 5: Tutorial, 6: Text, 7: About, 8: Quit
 _G.arcade_selection = 1
 _G.play_select_selection = 1
+_G.store_selection = 1
 
 local game
 
@@ -121,37 +122,69 @@ function love.load(args)
             _G.achievements[k] = v
         end
     end
-    -- Rebuild unlocked themes based on loaded achievements
-    _G.unlocked_themes = {"light", "dark"}
-    if _G.achievements.ach_first_game then table.insert(_G.unlocked_themes, "ocean") end
-    if _G.achievements.ach_score_1k then table.insert(_G.unlocked_themes, "forest") end
-    if _G.achievements.ach_score_5k then table.insert(_G.unlocked_themes, "sunset") end
-    if _G.achievements.ach_merge_512 then table.insert(_G.unlocked_themes, "candy") end
-    if _G.achievements.ach_2048 then table.insert(_G.unlocked_themes, "oled") end
-    if _G.achievements.ach_score_10k then table.insert(_G.unlocked_themes, "neon") end
-    if _G.achievements.ach_demolition then table.insert(_G.unlocked_themes, "retro") end
-    if _G.achievements.ach_untouchable then table.insert(_G.unlocked_themes, "peach") end
-    if _G.achievements.ach_merge_1024 then table.insert(_G.unlocked_themes, "midnight") end
-    if _G.achievements.ach_score_2k then table.insert(_G.unlocked_themes, "volcano") end
-    if _G.achievements.ach_score_7k then table.insert(_G.unlocked_themes, "abyss") end
-    if _G.achievements.ach_first_bomb then table.insert(_G.unlocked_themes, "eclipse") end
+    function _G.rebuildUnlockedThemes()
+        if _G.cheat_unlock_all_themes then
+            _G.unlocked_themes = {"light", "dark"}
+            local all_names = renderer.getAllThemeNames()
+            for _, t in ipairs(all_names) do
+                local found = false
+                for _, existing in ipairs(_G.unlocked_themes) do
+                    if existing == t then found = true break end
+                end
+                if not found then table.insert(_G.unlocked_themes, t) end
+            end
+            return
+        end
 
-    if _G.achievements.ach_2048_plus then table.insert(_G.unlocked_themes, "cyberpunk") end
-    if _G.achievements.ach_4096 then table.insert(_G.unlocked_themes, "glitch") end
-    if _G.achievements.ach_score_25k then table.insert(_G.unlocked_themes, "vaporwave") end
-    if _G.achievements.ach_score_50k then table.insert(_G.unlocked_themes, "dracula") end
-    if _G.achievements.ach_score_100k then table.insert(_G.unlocked_themes, "gold") end
-    if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
-    if _G.achievements.ach_secret_menu then table.insert(_G.unlocked_themes, "matrix") end
-    if _G.achievements.ach_timeattack_2048 then table.insert(_G.unlocked_themes, "aurora") end
-    if _G.achievements.ach_huge_2048 then table.insert(_G.unlocked_themes, "nebula") end
-    if _G.achievements.ach_nomercy_512 then table.insert(_G.unlocked_themes, "inferno") end
-    if _G.achievements.ach_goose_2048 then table.insert(_G.unlocked_themes, "honk") end
-    if _G.achievements.ach_merge_8192 then table.insert(_G.unlocked_themes, "quantum") end
-    if _G.achievements.ach_score_250k then table.insert(_G.unlocked_themes, "hyperdrive") end
-    if _G.achievements.ach_speedrun_2048 then table.insert(_G.unlocked_themes, "retrogold") end
-    if _G.achievements.ach_hardcore_2048 then table.insert(_G.unlocked_themes, "spectrum") end
-    if _G.achievements.ach_tactician then table.insert(_G.unlocked_themes, "steel") end
+        _G.unlocked_themes = {"light", "dark"}
+        _G.achievements = _G.achievements or {}
+        if _G.achievements.ach_first_game then table.insert(_G.unlocked_themes, "ocean") end
+        if _G.achievements.ach_score_1k then table.insert(_G.unlocked_themes, "forest") end
+        if _G.achievements.ach_score_5k then table.insert(_G.unlocked_themes, "sunset") end
+        if _G.achievements.ach_merge_512 then table.insert(_G.unlocked_themes, "candy") end
+        if _G.achievements.ach_2048 then table.insert(_G.unlocked_themes, "oled") end
+        if _G.achievements.ach_score_10k then table.insert(_G.unlocked_themes, "neon") end
+        if _G.achievements.ach_demolition then table.insert(_G.unlocked_themes, "retro") end
+        if _G.achievements.ach_untouchable then table.insert(_G.unlocked_themes, "peach") end
+        if _G.achievements.ach_merge_1024 then table.insert(_G.unlocked_themes, "midnight") end
+        if _G.achievements.ach_score_2k then table.insert(_G.unlocked_themes, "volcano") end
+        if _G.achievements.ach_score_7k then table.insert(_G.unlocked_themes, "abyss") end
+        if _G.achievements.ach_first_bomb then table.insert(_G.unlocked_themes, "eclipse") end
+
+        if _G.achievements.ach_2048_plus then table.insert(_G.unlocked_themes, "cyberpunk") end
+        if _G.achievements.ach_4096 then table.insert(_G.unlocked_themes, "glitch") end
+        if _G.achievements.ach_score_25k then table.insert(_G.unlocked_themes, "vaporwave") end
+        if _G.achievements.ach_score_50k then table.insert(_G.unlocked_themes, "dracula") end
+        if _G.achievements.ach_score_100k then table.insert(_G.unlocked_themes, "gold") end
+        if _G.achievements.ach_untouchable_2048 then table.insert(_G.unlocked_themes, "matcha") end
+        if _G.achievements.ach_secret_menu then table.insert(_G.unlocked_themes, "matrix") end
+        if _G.achievements.ach_timeattack_2048 then table.insert(_G.unlocked_themes, "aurora") end
+        if _G.achievements.ach_huge_2048 then table.insert(_G.unlocked_themes, "nebula") end
+        if _G.achievements.ach_nomercy_512 then table.insert(_G.unlocked_themes, "inferno") end
+        if _G.achievements.ach_goose_2048 then table.insert(_G.unlocked_themes, "honk") end
+        if _G.achievements.ach_merge_8192 then table.insert(_G.unlocked_themes, "quantum") end
+        if _G.achievements.ach_score_250k then table.insert(_G.unlocked_themes, "hyperdrive") end
+        if _G.achievements.ach_speedrun_2048 then table.insert(_G.unlocked_themes, "retrogold") end
+        if _G.achievements.ach_hardcore_2048 then table.insert(_G.unlocked_themes, "spectrum") end
+        if _G.achievements.ach_tactician then table.insert(_G.unlocked_themes, "steel") end
+        if _G.stats and _G.stats.purchased_items then
+            if _G.stats.purchased_items["theme_cosmic"] then table.insert(_G.unlocked_themes, "cosmic") end
+            if _G.stats.purchased_items["theme_cherry"] or _G.stats.purchased_items["theme_cherry_blossom"] then table.insert(_G.unlocked_themes, "cherry") end
+        end
+    end
+    _G.rebuildUnlockedThemes()
+
+    function _G.saveCheatSettings()
+        if save and save.saveCheatOptions then
+            save.saveCheatOptions({
+                unlock_all_themes = _G.cheat_unlock_all_themes,
+                max_powerups = _G.cheat_max_powerups,
+                start_1024_classic = _G.cheat_start_1024_classic,
+                start_1024_plus = _G.cheat_start_1024_plus,
+                debug_layout = _G.cheat_debug_layout,
+            })
+        end
+    end
 
     function _G.unlockAchievement(id)
         if not _G.achievements[id] then
@@ -228,7 +261,26 @@ function love.load(args)
                 ach_hardcore_2048 = "Hardcore Gamer",
                 ach_tactician = "Tactician"
             }
-            renderer.showToast("Unlocked: " .. (names[id] or id) .. "!", nil, true)
+            local coin_reward = 0
+            if renderer and renderer.getAchievementsList then
+                for _, ach in ipairs(renderer.getAchievementsList()) do
+                    if ach.id == id then coin_reward = ach.coins or 0; break end
+                end
+            end
+            if coin_reward > 0 then
+                if _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["coin_multiplier"] then
+                    coin_reward = coin_reward * 2
+                end
+                _G.stats = _G.stats or {}
+                _G.stats.merge_coins = (_G.stats.merge_coins or 0) + coin_reward
+                _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
+                _G.stats.claimed_achievements[id] = true
+                save.saveStats(_G.stats)
+                if renderer and renderer.queueHeaderLogoMorph then
+                    renderer.queueHeaderLogoMorph("+" .. tostring(coin_reward) .. " COINS")
+                end
+            end
+            renderer.showToast("Unlocked: " .. (names[id] or id) .. "!", 2.2, true)
             sound.playAchievement()
         end
     end
@@ -241,6 +293,15 @@ function love.load(args)
     end
 
     _G.cheats_unlocked = save.loadCheats()
+    local cheat_opts = save.loadCheatOptions and save.loadCheatOptions() or {}
+    _G.cheat_unlock_all_themes = cheat_opts.unlock_all_themes or false
+    _G.cheat_max_powerups = cheat_opts.max_powerups or false
+    _G.cheat_start_1024_classic = cheat_opts.start_1024_classic or false
+    _G.cheat_start_1024_plus = cheat_opts.start_1024_plus or false
+    _G.cheat_debug_layout = cheat_opts.debug_layout or "None"
+    if _G.cheat_unlock_all_themes and _G.rebuildUnlockedThemes then
+        _G.rebuildUnlockedThemes()
+    end
     _G.text_size = save.loadTextSize() or "normal"
     _G.animation_speed = save.loadAnimationSpeed() or "normal"
     _G.screen_transitions = save.loadScreenTransitions()
@@ -248,9 +309,30 @@ function love.load(args)
     _G.time_attack_time = save.loadTimeAttackTime() or 60
     _G.vibration = save.loadVibration()
     _G.crt_filter = save.loadCrtFilter()
+    _G.merge_fx = save.loadMergeFX() or "default"
 
     -- Load and initialize global stats
     _G.stats = save.loadStats() or {}
+    _G.stats.merge_coins = _G.stats.merge_coins or 0
+    _G.stats.purchased_items = _G.stats.purchased_items or {}
+    _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
+
+    -- Retroactively award coins for already unlocked achievements
+    if renderer and renderer.getAchievementsList then
+        local all_achievements = renderer.getAchievementsList()
+        local awarded_retroactive = false
+        for _, ach in ipairs(all_achievements) do
+            if _G.achievements[ach.id] and not _G.stats.claimed_achievements[ach.id] then
+                _G.stats.merge_coins = _G.stats.merge_coins + (ach.coins or 0)
+                _G.stats.claimed_achievements[ach.id] = true
+                awarded_retroactive = true
+            end
+        end
+        if awarded_retroactive then
+            save.saveStats(_G.stats)
+        end
+    end
+
     local defaults = {
         games_played = 0,
         moves_made = 0,
@@ -433,6 +515,10 @@ function love.update(dt)
                     return function() renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, true, menuSelection) end
                 elseif _G.appState == "ARCADE_MENU" then
                     return function() renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, true, menuSelection) end
+                elseif _G.appState == "STORE" then
+                    return function() renderer.drawStoreMenu(_G.store_selection or 1, true) end
+                elseif _G.appState == "JUKEBOX" then
+                    return function() renderer.drawJukebox(_G.jukebox_selection or 1, true) end
                 end
                 return function() end
             end
@@ -460,10 +546,16 @@ function love.update(dt)
         if _G.appState == "MENU" then
             if not _G.cheats_unlocked then
                 local target = konami_sequence[konami_progress]
-                if love.system.getOS() == "Web" and target == "backspace" then
-                    target = "escape"
+                local matches = (event == target)
+                if target == "backspace" and (event == "escape" or event == "backspace" or event == input.events.BACK) then
+                    matches = true
+                elseif target == "return" and (event == "return" or event == "a" or event == input.events.CONFIRM) then
+                    matches = true
+                elseif target == "space" and (event == "space" or event == "x" or event == input.events.X or event == input.events.START) then
+                    matches = true
                 end
-                if event == target then
+
+                if matches then
                     konami_progress = konami_progress + 1
                     if konami_progress == 7 then
                         renderer.showToast("What you think this is a Konami game?")
@@ -534,6 +626,153 @@ function love.update(dt)
                     elseif sel == "Quit" or sel == "Exit the Game" then
                         love.event.quit()
                     end
+                end)
+            elseif event == input.events.L1 then
+                if _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["jukebox"] then
+                    sound.playMenuSelect()
+                    queueTransitionAction(event, 0.08, function()
+                        _G.appState = "JUKEBOX"
+                        _G.jukebox_selection = 1
+                        -- Reset visualizer state so no stale glow on entry
+                        _G.jukebox_viz_level = 0
+                        _G.jukebox_viz_stop_time = love.timer.getTime() - 10  -- already "stopped long ago"
+                        _G.jukebox_card_change_time = 0  -- no slide animation on open
+                    end)
+                end
+            elseif event == input.events.R1 then
+                sound.playMenuSelect()
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "STORE"
+                    _G.store_selection = 1
+                    _G.store_scroll = 0  -- always open at top
+                end)
+            end
+            return
+        elseif _G.appState == "STORE" then
+            local items_count = 13
+            if event == input.events.UP then
+                _G.store_selection = _G.store_selection > 1 and (_G.store_selection - 1) or items_count
+                sound.playMenuMove()
+            elseif event == input.events.DOWN then
+                _G.store_selection = _G.store_selection < items_count and (_G.store_selection + 1) or 1
+                sound.playMenuMove()
+            elseif event == input.events.BACK then
+                sound.playMenuSelect()
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
+                end)
+            elseif event == input.events.CONFIRM then
+                sound.playMenuSelect()
+                queueTransitionAction(event, 0.08, function()
+                    local items = {
+                        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode"},
+                        {id="powerup_swap",  cost=120,  name="Purchase Swap for Plus Mode"},
+                        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode"},
+                        {id="extra_undo",    cost=200,  name="Extra Starting Undo (Plus)"},
+                        {id="extra_swap",    cost=350,  name="Extra Starting Swap (Plus)"},
+                        {id="extra_bomb",    cost=500,  name="Extra Starting Bomb (Plus)"},
+                        {id="coin_multiplier", cost=1500, name="2x Coin Multiplier"},
+                        {id="start_128",     cost=50,   name="128 High-Tile Booster"},
+                        {id="anim_bounce",   cost=750,  name="Bounce Pop FX"},
+                        {id="anim_glow",     cost=850,  name="Glow Pulse FX"},
+                        {id="jukebox",       cost=1200, name="BGM Jukebox"},
+                        {id="theme_cosmic",  cost=2000, name="Cosmic Theme"},
+                        {id="theme_cherry",  cost=2000, name="Cherry Theme"}
+                    }
+                    local sel_item = items[_G.store_selection or 1]
+                    if not sel_item then return end
+
+                    -- Consumable powerup charges (max 99)
+                    if sel_item.id == "powerup_undo" or sel_item.id == "powerup_swap" or sel_item.id == "powerup_bomb" then
+                        local stat_key = sel_item.id .. "_count"
+                        local current = _G.stats[stat_key] or 0
+                        if current >= 99 then
+                            renderer.showToast("Max 99 charges reached!")
+                        elseif (_G.stats.merge_coins or 0) >= sel_item.cost then
+                            _G.stats.merge_coins = _G.stats.merge_coins - sel_item.cost
+                            _G.stats[stat_key] = current + 1
+                            save.saveStats(_G.stats)
+                            renderer.showToast("Purchased! " .. sel_item.name .. " (" .. _G.stats[stat_key] .. " owned)")
+                        else
+                            renderer.showToast("Not enough Merge Coins!")
+                        end
+                        return
+                    end
+
+                    -- 128 booster is a consumable: buy multiple, each gives 1 charge
+                    if sel_item.id == "start_128" then
+                        if (_G.stats.merge_coins or 0) >= sel_item.cost then
+                            _G.stats.merge_coins = _G.stats.merge_coins - sel_item.cost
+                            _G.stats.start_128_count = (_G.stats.start_128_count or 0) + 1
+                            save.saveStats(_G.stats)
+                            renderer.showToast("Purchased! 128 Boosters: " .. _G.stats.start_128_count)
+                        else
+                            renderer.showToast("Not enough Merge Coins!")
+                        end
+                        return
+                    end
+
+                    local is_already_purchased = _G.stats.purchased_items[sel_item.id] or (sel_item.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"])
+                    if is_already_purchased then
+                        renderer.showToast("Already purchased!")
+                    elseif (_G.stats.merge_coins or 0) >= sel_item.cost then
+                        _G.stats.merge_coins = _G.stats.merge_coins - sel_item.cost
+                        _G.stats.purchased_items[sel_item.id] = 1
+                        save.saveStats(_G.stats)
+                        renderer.showToast("Purchased " .. sel_item.name .. "!")
+                        if sel_item.id:match("^theme_") then
+                            local t_name = sel_item.id:gsub("theme_", "")
+                            table.insert(_G.unlocked_themes, t_name)
+                            if renderer and renderer.startThemeTransition then
+                                renderer.startThemeTransition(function()
+                                    _G.theme = t_name
+                                    if renderer and renderer.applyTheme then renderer.applyTheme() end
+                                    if save and save.saveTheme then save.saveTheme(_G.theme) end
+                                    return function() renderer.drawStoreMenu(_G.store_selection or 1, true) end
+                                end)
+                            else
+                                _G.theme = t_name
+                                if renderer and renderer.applyTheme then renderer.applyTheme() end
+                                if save and save.saveTheme then save.saveTheme(_G.theme) end
+                            end
+                        end
+                    else
+                        renderer.showToast("Not enough Merge Coins!")
+                    end
+                end)
+            end
+            return
+        elseif _G.appState == "JUKEBOX" then
+            local playlist = sound.getBgmPlaylist and sound.getBgmPlaylist() or {}
+            local total_tracks = math.max(1, #playlist)
+            _G.jukebox_selection = _G.jukebox_selection or 1
+
+            if event == input.events.UP then
+                _G.jukebox_selection = _G.jukebox_selection > 1 and (_G.jukebox_selection - 1) or total_tracks
+                sound.playMenuMove()
+            elseif event == input.events.DOWN then
+                _G.jukebox_selection = _G.jukebox_selection < total_tracks and (_G.jukebox_selection + 1) or 1
+                sound.playMenuMove()
+            elseif event == input.events.CONFIRM then
+                sound.playMenuSelect()
+                local curr_idx = sound.getCurrentBgmIndex and sound.getCurrentBgmIndex() or 0
+                if curr_idx == _G.jukebox_selection then
+                    -- Same track: toggle pause/play
+                    sound.toggleBgmPause()
+                else
+                    -- Different track: start it
+                    sound.playBgmIndex(_G.jukebox_selection)
+                end
+            elseif event == input.events.X then
+                sound.playMenuSelect()
+                sound.playNextBgm()
+                -- sync selection to now-playing track
+                local new_idx = sound.getCurrentBgmIndex and sound.getCurrentBgmIndex() or 1
+                _G.jukebox_selection = new_idx
+            elseif event == input.events.BACK then
+                sound.playMenuSelect()
+                queueTransitionAction(event, 0.08, function()
+                    _G.appState = "MENU"
                 end)
             end
             return
@@ -726,31 +965,33 @@ function love.update(dt)
             elseif event == input.events.CONFIRM then
                 sound.playMenuSelect()
                 if _G.cheats_selection == 1 then
-                    for _, t in ipairs(renderer.getAllThemeNames()) do
-                        local found = false
-                        for _, existing in ipairs(_G.unlocked_themes) do
-                            if existing == t then found = true break end
-                        end
-                        if not found then table.insert(_G.unlocked_themes, t) end
+                    _G.cheat_unlock_all_themes = not _G.cheat_unlock_all_themes
+                    _G.rebuildUnlockedThemes()
+                    if _G.cheat_unlock_all_themes then
+                        renderer.showToast("All Themes Unlocked!")
+                    else
+                        renderer.showToast("All Themes Cheat: OFF")
                     end
-                    renderer.showToast("All Themes Unlocked!")
+                    _G.saveCheatSettings()
                 elseif _G.cheats_selection == 2 then
                     _G.cheat_max_powerups = not _G.cheat_max_powerups
+                    _G.saveCheatSettings()
                     renderer.showToast("Max Powerups: " .. (_G.cheat_max_powerups and "ON" or "OFF"))
                 elseif _G.cheats_selection == 3 then
-                    _G.cheat_start_1024_classic = not _G.cheat_start_1024_classic
-                    if _G.cheat_start_1024_classic then
-                        renderer.showToast("Start with 1024 (Classic Mode) is ON. Start a new game to apply.")
+                    local both_on = _G.cheat_start_1024_classic and _G.cheat_start_1024_plus
+                    _G.cheat_start_1024_classic = not both_on
+                    _G.cheat_start_1024_plus = not both_on
+                    _G.saveCheatSettings()
+                    if not both_on then
+                        renderer.showToast("Start with 1024 (All Modes) is ON. Start a new game to apply.")
                     else
-                        renderer.showToast("Start with 1024 (Classic Mode) is OFF.")
+                        renderer.showToast("Start with 1024 (All Modes) is OFF.")
                     end
                 elseif _G.cheats_selection == 4 then
-                    _G.cheat_start_1024_plus = not _G.cheat_start_1024_plus
-                    if _G.cheat_start_1024_plus then
-                        renderer.showToast("Start with 1024 (Plus Mode) is ON. Start a new game to apply.")
-                    else
-                        renderer.showToast("Start with 1024 (Plus Mode) is OFF.")
-                    end
+                    _G.stats = _G.stats or {}
+                    _G.stats.merge_coins = (_G.stats.merge_coins or 0) + 9999
+                    save.saveStats(_G.stats)
+                    renderer.showToast("Added 9999 Merge Coins! Total: " .. _G.stats.merge_coins)
                 elseif _G.cheats_selection == 5 then
                     if _G.cheat_debug_layout == "None" or _G.cheat_debug_layout == nil then
                         _G.cheat_debug_layout = "Two 1024s"
@@ -759,6 +1000,7 @@ function love.update(dt)
                     else
                         _G.cheat_debug_layout = "None"
                     end
+                    _G.saveCheatSettings()
                     renderer.showToast("Debug Layout: " .. _G.cheat_debug_layout .. ". Start new game to apply.")
                 elseif _G.cheats_selection == 6 then
                     queueTransitionAction(event, 0.08, function()
@@ -906,6 +1148,24 @@ function love.update(dt)
                         _G.crt_filter = not _G.crt_filter
                         save.saveCrtFilter(_G.crt_filter)
                         sound.playMenuSelect()
+                    elseif sel:match("^Merge Visual FX") then
+                        sound.playMenuSelect()
+                        local bounce_unlocked = _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["anim_bounce"]
+                        local glow_unlocked = _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["anim_glow"]
+                        if not bounce_unlocked and not glow_unlocked then
+                            renderer.showToast("Unlock Bounce Pop or Glow Pulse in Store first!")
+                        else
+                            local options_list = {"default"}
+                            if bounce_unlocked then table.insert(options_list, "bounce") end
+                            if glow_unlocked then table.insert(options_list, "glow") end
+                            local curr_idx = 1
+                            for i, opt in ipairs(options_list) do
+                                if opt == _G.merge_fx then curr_idx = i break end
+                            end
+                            local next_idx = (curr_idx % #options_list) + 1
+                            _G.merge_fx = options_list[next_idx]
+                            save.saveMergeFX(_G.merge_fx)
+                        end
                     elseif sel == "Back" then
                         sound.playMenuBack()
                         queueTransitionAction(event, 0.08, function()
@@ -1001,20 +1261,25 @@ function love.update(dt)
                         game:undo()
                     end)
                 end
-            -- Pause menu (select or start button)
-            elseif event == input.events.SELECT or event == input.events.START then
+            -- Pause menu (START button)
+            elseif event == input.events.START then
                 queueTransitionAction(event, 0.08, function()
                     game:togglePause()
                 end)
+            -- Trigger footer coin notification (SELECT button)
+            elseif event == input.events.SELECT then
+                if renderer and renderer.triggerCoinFooterToast then
+                    renderer.triggerCoinFooterToast()
+                end
             end
         elseif game.state == Game.STATE_PAUSED then
-            if event == input.events.CONFIRM then
-                queueTransitionAction(event, 0.08, function()
-                    game:restart()
-                end)
-            elseif event == input.events.BACK or event == input.events.SELECT or event == input.events.START then
+            if event == input.events.START or event == input.events.BACK or event == input.events.SELECT then
                 queueTransitionAction(event, 0.08, function()
                     game:cancelPause()
+                end)
+            elseif event == input.events.CONFIRM then
+                queueTransitionAction(event, 0.08, function()
+                    game:restart()
                 end)
             elseif event == input.events.L1 or event == input.events.R1 then
                 if sound.isBgmEnabled() then
@@ -1162,6 +1427,10 @@ drawCurrentScreen = function()
         renderer.drawThemeSelect()
     elseif _G.appState == "SETTINGS" then
         renderer.drawSettings(_G.settings_selection or 1)
+    elseif _G.appState == "STORE" then
+        renderer.drawStoreMenu(_G.store_selection or 1)
+    elseif _G.appState == "JUKEBOX" then
+        renderer.drawJukebox(_G.jukebox_selection or 1)
     elseif _G.appState == "GAME" and game then
         renderer.draw(game)
     end

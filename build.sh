@@ -81,32 +81,19 @@ cp -r "$PROJECT_ROOT/bin" "$WORKDIR/$APP_NAME/.game/"
 # Create static directory for saves
 mkdir -p "$WORKDIR/$APP_NAME/.game/static"
 
-# --- Glyph handling (resolution-specific icons, same as Scrappy) ---
+# --- Glyph handling (muOS SVG glyph) ---
 mkdir -p "$WORKDIR/$APP_NAME/glyph"
-GLYPH_SRC=""
-if [ -f "$PROJECT_ROOT/assets/logo_monochrome.png" ]; then
-    GLYPH_SRC="$PROJECT_ROOT/assets/logo_monochrome.png"
-fi
-if [ -n "$GLYPH_SRC" ]; then
-    echo "Copying logo_monochrome.png to glyph directory..."
-    cp "$GLYPH_SRC" "$WORKDIR/$APP_NAME/glyph/"
-    # Copy resolution-specific pre-sized icons for proper muOS glyph display
-    GLYPH_ASSET_DIR="$PROJECT_ROOT/assets/glyph"
-    for res in 640x480 720x480 720x576 720x720 1024x768 1280x720 1920x1080; do
-        mkdir -p "$WORKDIR/$APP_NAME/glyph/$res"
-        if [ -f "$GLYPH_ASSET_DIR/$res.png" ]; then
-            cp "$GLYPH_ASSET_DIR/$res.png" "$WORKDIR/$APP_NAME/glyph/$res/logo_2048.png"
-        else
-            # Fallback to default icon if resolution-specific one not found
-            cp "$GLYPH_SRC" "$WORKDIR/$APP_NAME/glyph/$res/logo_2048.png"
-        fi
-    done
-    # Cleanup loose PNGs from glyph root (keep only the main one)
-    if [ -d "$WORKDIR/$APP_NAME/glyph/" ]; then
-        find "$WORKDIR/$APP_NAME/glyph/" -maxdepth 1 -name "*.png" ! -name "logo_2048.png" -delete
-    fi
+if [ -f "$PROJECT_ROOT/assets/logo/logo_2048.svg" ]; then
+    echo "Copying logo_2048.svg to glyph directory..."
+    cp "$PROJECT_ROOT/assets/logo/logo_2048.svg" "$WORKDIR/$APP_NAME/glyph/"
+elif [ -f "$PROJECT_ROOT/assets/glyph/logo_2048.svg" ]; then
+    echo "Copying logo_2048.svg to glyph directory..."
+    cp "$PROJECT_ROOT/assets/glyph/logo_2048.svg" "$WORKDIR/$APP_NAME/glyph/"
+elif [ -f "$PROJECT_ROOT/assets/logo_2048.svg" ]; then
+    echo "Copying logo_2048.svg to glyph directory..."
+    cp "$PROJECT_ROOT/assets/logo_2048.svg" "$WORKDIR/$APP_NAME/glyph/"
 else
-    echo "Warning: logo_2048.png not found in assets/"
+    echo "Warning: logo_2048.svg not found in assets/"
 fi
 
 # Create the .muxapp package

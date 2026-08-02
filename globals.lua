@@ -54,6 +54,7 @@ _G.screen_transitions = true
 _G.undo_mode = "classic"
 _G.time_attack_time = 60
 _G.vibration = true
+_G.merge_fx = "default"
 
 -- Achievements and Unlockables
 _G.achievements = {

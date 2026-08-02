@@ -58,7 +58,28 @@ function Game.new(mode)
 
     -- Plus Mode state
     local initial_powerups = _G.cheat_max_powerups and 99 or 1
-    self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
+    local extra_undo, extra_bomb, extra_swap = 0, 0, 0
+    if self.mode == "plus" and _G.stats then
+        local pi = _G.stats.purchased_items or {}
+        extra_undo = pi["extra_undo"] or 0
+        extra_bomb = pi["extra_bomb"] or 0
+        extra_swap = pi["extra_swap"] or 0
+        -- Consumable single-use charges (bought from store, depleted on use)
+        local cu = _G.stats.powerup_undo_count or 0
+        local cb = _G.stats.powerup_bomb_count or 0
+        local cs = _G.stats.powerup_swap_count or 0
+        extra_undo = extra_undo + cu
+        extra_bomb = extra_bomb + cb
+        extra_swap = extra_swap + cs
+        -- Consume the charges
+        if cu > 0 or cb > 0 or cs > 0 then
+            _G.stats.powerup_undo_count = 0
+            _G.stats.powerup_bomb_count = 0
+            _G.stats.powerup_swap_count = 0
+            if save and save.saveStats then save.saveStats(_G.stats) end
+        end
+    end
+    self.powerups = { undo = initial_powerups + extra_undo, bomb = initial_powerups + extra_bomb, swap = initial_powerups + extra_swap }
     self.milestonesReached = {}
     self.floatingNotifications = {}
     self.cursorX = 1
@@ -83,10 +104,13 @@ function Game.new(mode)
         self.animationDuration = 0.24
     end
 
+    self.max_score_for_coins = 0
+
     -- Try to load saved game state
     local savedState = save.loadState(self.mode)
     if savedState and savedState.gridState then
         self.score = savedState.score or 0
+        self.max_score_for_coins = savedState.max_score_for_coins or self.score
         self.state = savedState.state or Game.STATE_PLAYING
         self.won = savedState.won or false
         if self.state == Game.STATE_PAUSED then
@@ -195,6 +219,7 @@ function Game:saveGameState()
 
     local stateTable = {
         score = self.score,
+        max_score_for_coins = self.max_score_for_coins,
         state = self.state,
         won = self.won,
         canUndo = self.canUndo,
@@ -253,8 +278,7 @@ function Game:addStartTiles()
         starting_tiles = 1
     end
 
-    if self.mode == "classic" and _G.cheat_start_1024_classic then
-        _G.cheat_start_1024_classic = false
+    if _G.cheat_start_1024_classic or _G.cheat_start_1024_plus then
         if self.grid:cellsAvailable() then
             local cell = self.grid:randomAvailableCell()
             if cell then
@@ -264,15 +288,19 @@ function Game:addStartTiles()
                 starting_tiles = starting_tiles - 1
             end
         end
-    elseif self.mode == "plus" and _G.cheat_start_1024_plus then
-        _G.cheat_start_1024_plus = false
+    end
+
+    -- 128 High-Tile Booster: consumable, stored as stats.start_128_count
+    local booster_count = _G.stats and (_G.stats.start_128_count or 0) or 0
+    if booster_count > 0 then
         if self.grid:cellsAvailable() then
             local cell = self.grid:randomAvailableCell()
             if cell then
-                local tile = Tile.new(cell.x, cell.y, 1024)
+                local tile = Tile.new(cell.x, cell.y, 128)
                 tile.isNew = true
                 self.grid:insertTile(tile)
-                starting_tiles = starting_tiles - 1
+                _G.stats.start_128_count = booster_count - 1
+                if save and save.saveStats then save.saveStats(_G.stats) end
             end
         end
     end
@@ -397,6 +425,17 @@ function Game:move(direction)
 
                     -- Update score
                     self.score = self.score + merged.value
+                    if self.score > self.max_score_for_coins then
+                        local coins_to_add = math.floor(self.score / 100) - math.floor(self.max_score_for_coins / 100)
+                        if coins_to_add > 0 and _G.stats then
+                            if _G.stats.purchased_items and _G.stats.purchased_items["coin_multiplier"] then
+                                coins_to_add = coins_to_add * 2
+                            end
+                            _G.stats.merge_coins = (_G.stats.merge_coins or 0) + coins_to_add
+                            save.saveStats(_G.stats)
+                        end
+                        self.max_score_for_coins = self.score
+                    end
                     if self.score > self.highScore then
                         self.highScore = self.score
                         save.saveHighScore(self.highScore, self.mode)
@@ -821,6 +860,7 @@ end
 function Game:restart()
     self.grid:clear()
     self.score = 0
+    self.max_score_for_coins = 0
     self.state = Game.STATE_PLAYING
     self.won = false
     self.canUndo = false
@@ -1124,16 +1164,7 @@ function Game:update(dt)
 end
 
 function Game:addFloatingNotification(text, col, row)
-    if not self.floatingNotifications then
-        self.floatingNotifications = {}
-    end
-    table.insert(self.floatingNotifications, {
-        text = text,
-        col = col,
-        row = row,
-        timer = 1.0,
-        max_life = 1.0
-    })
+    -- Disabled on-board floating text to keep tiles 100% clean for power users
 end
 
 function Game:getAnimationProgress()
