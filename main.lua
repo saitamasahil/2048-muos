@@ -404,9 +404,12 @@ function love.update(dt)
     end
 
     -- Check for global exit combo (MENU + START)
-    if input.state[input.events.MENU] and input.state[input.events.START] then
-        love.event.quit()
-        return
+    -- Only trigger if MENU and BACK are distinct keys (avoids false quit when pressing Back on PC)
+    if input.events.MENU ~= input.events.BACK then
+        if input.state[input.events.MENU] and input.state[input.events.START] then
+            love.event.quit()
+            return
+        end
     end
 
     -- Update timer system (drives splash animations)
