@@ -133,7 +133,6 @@ local toast_queue = {}
 local toast_particles = {}
 local toast_ach_id = nil
 local coin_toast_timer = 0
-local coin_toast_amount = 0
 local coin_toast_max_duration = 1.8
 local coin_toast_text = ""
 local pending_logo_morph_text = nil
@@ -192,12 +191,7 @@ function renderer.showToast(msg, custom_duration, is_achievement)
     end
 end
 
-function renderer.showCoinToast(amount)
-    if amount and amount > 0 then
-        coin_toast_amount = amount
-        coin_toast_timer = coin_toast_max_duration
-    end
-end
+
 
 function renderer.getContrastTextColor(bg_col, desired_text_col, dark_fallback)
     if not bg_col then return desired_text_col end
