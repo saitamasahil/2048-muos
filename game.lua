@@ -17,6 +17,7 @@ Game.STATE_PAUSED   = 4 -- Confirming accidental restart
 Game.STATE_TARGETING_BOMB = 5
 Game.STATE_TARGETING_SWAP_1 = 6
 Game.STATE_TARGETING_SWAP_2 = 7
+Game.STATE_TARGETING_SHIELD = 8
 
 -- Direction constants: 0=up, 1=right, 2=down, 3=left
 Game.DIR_UP    = 0
@@ -290,16 +291,31 @@ function Game:addStartTiles()
         end
     end
 
-    -- 128 High-Tile Booster: consumable, stored as stats.start_128_count
-    local booster_count = _G.stats and (_G.stats.start_128_count or 0) or 0
-    if booster_count > 0 then
+    -- High-Tile Boosters: 512, 256, or 128 (consumable)
+    local b512 = _G.stats and (_G.stats.start_512_count or 0) or 0
+    local b256 = _G.stats and (_G.stats.start_256_count or 0) or 0
+    local b128 = _G.stats and (_G.stats.start_128_count or 0) or 0
+    local booster_val = 0
+    local booster_key = nil
+    if b512 > 0 then
+        booster_val = 512
+        booster_key = "start_512_count"
+    elseif b256 > 0 then
+        booster_val = 256
+        booster_key = "start_256_count"
+    elseif b128 > 0 then
+        booster_val = 128
+        booster_key = "start_128_count"
+    end
+
+    if booster_val > 0 and booster_key then
         if self.grid:cellsAvailable() then
             local cell = self.grid:randomAvailableCell()
             if cell then
-                local tile = Tile.new(cell.x, cell.y, 128)
+                local tile = Tile.new(cell.x, cell.y, booster_val)
                 tile.isNew = true
                 self.grid:insertTile(tile)
-                _G.stats.start_128_count = booster_count - 1
+                _G.stats[booster_key] = (_G.stats[booster_key] or 1) - 1
                 if save and save.saveStats then save.saveStats(_G.stats) end
             end
         end
@@ -426,12 +442,12 @@ function Game:move(direction)
                     -- Update score
                     self.score = self.score + merged.value
                     if self.score > self.max_score_for_coins then
-                        local coins_to_add = math.floor(self.score / 100) - math.floor(self.max_score_for_coins / 100)
+                        local coins_to_add = math.floor(self.score / 200) - math.floor(self.max_score_for_coins / 200)
                         if coins_to_add > 0 and _G.stats then
                             if _G.stats.purchased_items and _G.stats.purchased_items["coin_multiplier"] then
                                 coins_to_add = coins_to_add * 2
                             end
-                            _G.stats.merge_coins = (_G.stats.merge_coins or 0) + coins_to_add
+                            _G.stats.coins = (_G.stats.coins or 0) + coins_to_add
                             save.saveStats(_G.stats)
                         end
                         self.max_score_for_coins = self.score
@@ -1177,9 +1193,110 @@ function Game:isAnimating()
     return self.animationTimer > 0
 end
 
+function Game:startShieldTargeting()
+    local count = _G.stats and (_G.stats.second_chance_count or 0) or 0
+    if count <= 0 then
+        local sound = require("sound")
+        local renderer = require("renderer")
+        if renderer and renderer.showToast then
+            renderer.showToast("No Second Chance Shield! Buy in Store.")
+        end
+        return
+    end
+    self.prevShieldState = self.state
+    self.state = Game.STATE_TARGETING_SHIELD
+    self.shield_mode = "row"
+    self.shield_index = 1
+end
+
+function Game:moveShieldSelection(dir)
+    local sound = require("sound")
+    if dir == "up" then
+        self.shield_index = self.shield_index - 1
+        if self.shield_index < 1 then self.shield_index = self.size end
+        if sound and sound.playMenuMove then sound.playMenuMove() end
+    elseif dir == "down" then
+        self.shield_index = self.shield_index + 1
+        if self.shield_index > self.size then self.shield_index = 1 end
+        if sound and sound.playMenuMove then sound.playMenuMove() end
+    elseif dir == "left" or dir == "right" then
+        self.shield_mode = (self.shield_mode == "row") and "col" or "row"
+        self.shield_index = math.min(self.shield_index, self.size)
+        if sound and sound.playMenuMove then sound.playMenuMove() end
+    end
+end
+
+function Game:confirmShieldTarget()
+    if self.state ~= Game.STATE_TARGETING_SHIELD then return end
+    local count = _G.stats and (_G.stats.second_chance_count or 0) or 0
+    if count <= 0 then
+        self:cancelShieldTargeting()
+        return
+    end
+
+    local sound = require("sound")
+    local renderer = require("renderer")
+
+    -- Save undo snapshot
+    local pending = {
+        gridState = self.grid:saveState(),
+        score = self.score,
+        rng = love.math.getRandomState()
+    }
+    if _G.undo_mode == "unlimited" then
+        table.insert(self.undoHistory, pending)
+        if #self.undoHistory > 100 then table.remove(self.undoHistory, 1) end
+    else
+        self.previousState = pending
+    end
+
+    -- Clear chosen row or column
+    local cleared = 0
+    if self.shield_mode == "row" then
+        local y = self.shield_index
+        for x = 1, self.size do
+            if self.grid.cells[x] and self.grid.cells[x][y] then
+                self.grid.cells[x][y] = nil
+                cleared = cleared + 1
+            end
+        end
+    else
+        local x = self.shield_index
+        if self.grid.cells[x] then
+            for y = 1, self.size do
+                if self.grid.cells[x][y] then
+                    self.grid.cells[x][y] = nil
+                    cleared = cleared + 1
+                end
+            end
+        end
+    end
+
+    -- Deduct 1 charge
+    _G.stats.second_chance_count = math.max(0, count - 1)
+    if save and save.saveStats then save.saveStats(_G.stats) end
+
+    if sound and sound.playBomb then sound.playBomb() end
+    if renderer and renderer.showToast then
+        local lbl = (self.shield_mode == "row" and "Row " or "Column ") .. tostring(self.shield_index)
+        renderer.showToast("Shield Cleared " .. lbl .. "!")
+    end
+
+    -- Return to active gameplay
+    self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
+    self:saveGameState()
+end
+
+function Game:cancelShieldTargeting()
+    if self.state == Game.STATE_TARGETING_SHIELD then
+        self.state = self.prevShieldState or (self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING)
+    end
+end
+
 function Game:isPlaying()
     return self.state == Game.STATE_PLAYING or self.state == Game.STATE_ENDLESS or
-           self.state == Game.STATE_TARGETING_BOMB or self.state == Game.STATE_TARGETING_SWAP_1 or self.state == Game.STATE_TARGETING_SWAP_2
+           self.state == Game.STATE_TARGETING_BOMB or self.state == Game.STATE_TARGETING_SWAP_1 or
+           self.state == Game.STATE_TARGETING_SWAP_2 or self.state == Game.STATE_TARGETING_SHIELD
 end
 
 return Game

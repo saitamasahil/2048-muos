@@ -272,7 +272,7 @@ function love.load(args)
                     coin_reward = coin_reward * 2
                 end
                 _G.stats = _G.stats or {}
-                _G.stats.merge_coins = (_G.stats.merge_coins or 0) + coin_reward
+                _G.stats.coins = (_G.stats.coins or 0) + coin_reward
                 _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
                 _G.stats.claimed_achievements[id] = true
                 save.saveStats(_G.stats)
@@ -313,7 +313,11 @@ function love.load(args)
 
     -- Load and initialize global stats
     _G.stats = save.loadStats() or {}
-    _G.stats.merge_coins = _G.stats.merge_coins or 0
+    if _G.stats.merge_coins ~= nil then
+        _G.stats.coins = (_G.stats.coins or 0) + _G.stats.merge_coins
+        _G.stats.merge_coins = nil
+    end
+    _G.stats.coins = _G.stats.coins or 0
     _G.stats.purchased_items = _G.stats.purchased_items or {}
     _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
 
@@ -323,7 +327,7 @@ function love.load(args)
         local awarded_retroactive = false
         for _, ach in ipairs(all_achievements) do
             if _G.achievements[ach.id] and not _G.stats.claimed_achievements[ach.id] then
-                _G.stats.merge_coins = _G.stats.merge_coins + (ach.coins or 0)
+                _G.stats.coins = _G.stats.coins + (ach.coins or 0)
                 _G.stats.claimed_achievements[ach.id] = true
                 awarded_retroactive = true
             end
@@ -668,31 +672,37 @@ function love.update(dt)
                 sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     local items = {
-                        {id="start_128",     cost=50,   name="128 High-Tile Booster"},
-                        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode"},
-                        {id="powerup_swap",  cost=120,  name="Purchase Swap for Plus Mode"},
-                        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode"},
-                        {id="extra_undo",    cost=200,  name="Extra Starting Undo (Plus)"},
-                        {id="extra_swap",    cost=350,  name="Extra Starting Swap (Plus)"},
-                        {id="extra_bomb",    cost=500,  name="Extra Starting Bomb (Plus)"},
-                        {id="anim_bounce",   cost=750,  name="Bounce Pop FX"},
-                        {id="anim_glow",     cost=850,  name="Glow Pulse FX"},
-                        {id="jukebox",       cost=1200, name="BGM Jukebox"},
-                        {id="coin_multiplier", cost=1500, name="2x Coin Multiplier"},
-                        {id="theme_cosmic",  cost=2000, name="Cosmic Theme"},
-                        {id="theme_cherry",  cost=2000, name="Cherry Theme"}
+                        {id="start_128",     cost=60,   name="128 High-Tile Booster", consumable=true, ckey="start_128_count"},
+                        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode", consumable=true, ckey="powerup_undo_count"},
+                        {id="start_256",     cost=120,  name="256 High-Tile Booster", consumable=true, ckey="start_256_count"},
+                        {id="powerup_swap",  cost=130,  name="Purchase Swap for Plus Mode", consumable=true, ckey="powerup_swap_count"},
+                        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode", consumable=true, ckey="powerup_bomb_count"},
+                        {id="second_chance", cost=200,  name="Second Chance Shield", consumable=true, ckey="second_chance_count"},
+                        {id="start_512",     cost=250,  name="512 High-Tile Booster", consumable=true, ckey="start_512_count"},
+                        {id="extra_undo",    cost=300,  name="Extra Starting Undo (Plus)"},
+                        {id="extra_swap",    cost=450,  name="Extra Starting Swap (Plus)"},
+                        {id="anim_bounce",   cost=500,  name="Bounce Pop FX"},
+                        {id="extra_bomb",    cost=600,  name="Extra Starting Bomb (Plus)"},
+                        {id="anim_glow",     cost=650,  name="Glow Pulse FX"},
+                        {id="jukebox",       cost=900,  name="BGM Jukebox"},
+                        {id="theme_cosmic",  cost=1000, name="Cosmic Theme"},
+                        {id="theme_cherry",  cost=1000, name="Cherry Theme"},
+                        {id="coin_multiplier", cost=1200, name="2x Coin Multiplier"},
+                        {id="theme_gold_luxe", cost=1500, name="Gold Luxe Theme"},
+                        {id="theme_cyber_grid", cost=1800, name="Cyber Neon Grid Theme"},
+                        {id="theme_synthwave", cost=2000, name="Synthwave 80s Theme"}
                     }
                     local sel_item = items[_G.store_selection or 1]
                     if not sel_item then return end
 
-                    -- Consumable powerup charges (max 99)
-                    if sel_item.id == "powerup_undo" or sel_item.id == "powerup_swap" or sel_item.id == "powerup_bomb" then
-                        local stat_key = sel_item.id .. "_count"
+                    -- Consumables (boosters, powerup charges, shields)
+                    if sel_item.consumable then
+                        local stat_key = sel_item.ckey or (sel_item.id .. "_count")
                         local current = _G.stats[stat_key] or 0
                         if current >= 99 then
                             renderer.showToast("Max 99 charges reached!")
-                        elseif (_G.stats.merge_coins or 0) >= sel_item.cost then
-                            _G.stats.merge_coins = _G.stats.merge_coins - sel_item.cost
+                        elseif (_G.stats.coins or 0) >= sel_item.cost then
+                            _G.stats.coins = _G.stats.coins - sel_item.cost
                             _G.stats[stat_key] = current + 1
                             save.saveStats(_G.stats)
                             renderer.showToast("Purchased! " .. sel_item.name .. " (" .. _G.stats[stat_key] .. " owned)")
@@ -702,24 +712,11 @@ function love.update(dt)
                         return
                     end
 
-                    -- 128 booster is a consumable: buy multiple, each gives 1 charge
-                    if sel_item.id == "start_128" then
-                        if (_G.stats.merge_coins or 0) >= sel_item.cost then
-                            _G.stats.merge_coins = _G.stats.merge_coins - sel_item.cost
-                            _G.stats.start_128_count = (_G.stats.start_128_count or 0) + 1
-                            save.saveStats(_G.stats)
-                            renderer.showToast("Purchased! 128 Boosters: " .. _G.stats.start_128_count)
-                        else
-                            renderer.showToast("Not enough Coins!")
-                        end
-                        return
-                    end
-
                     local is_already_purchased = _G.stats.purchased_items[sel_item.id] or (sel_item.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"])
                     if is_already_purchased then
                         renderer.showToast("Already purchased!")
-                    elseif (_G.stats.merge_coins or 0) >= sel_item.cost then
-                        _G.stats.merge_coins = _G.stats.merge_coins - sel_item.cost
+                    elseif (_G.stats.coins or 0) >= sel_item.cost then
+                        _G.stats.coins = _G.stats.coins - sel_item.cost
                         _G.stats.purchased_items[sel_item.id] = 1
                         save.saveStats(_G.stats)
                         renderer.showToast("Purchased " .. sel_item.name .. "!")
@@ -992,9 +989,9 @@ function love.update(dt)
                     end
                 elseif _G.cheats_selection == 4 then
                     _G.stats = _G.stats or {}
-                    _G.stats.merge_coins = (_G.stats.merge_coins or 0) + 9999
+                    _G.stats.coins = (_G.stats.coins or 0) + 9999
                     save.saveStats(_G.stats)
-                    renderer.showToast("Added 9999 Coins! Total: " .. _G.stats.merge_coins)
+                    renderer.showToast("Added 9999 Coins! Total: " .. _G.stats.coins)
                 elseif _G.cheats_selection == 5 then
                     if _G.cheat_debug_layout == "None" or _G.cheat_debug_layout == nil then
                         _G.cheat_debug_layout = "Two 1024s"
@@ -1223,6 +1220,20 @@ function love.update(dt)
             elseif event == input.events.BACK then
                 game:cancelTargeting()
             end
+        elseif game.state == Game.STATE_TARGETING_SHIELD then
+            if event == input.events.UP then
+                game:moveShieldSelection("up")
+            elseif event == input.events.DOWN then
+                game:moveShieldSelection("down")
+            elseif event == input.events.LEFT then
+                game:moveShieldSelection("left")
+            elseif event == input.events.RIGHT then
+                game:moveShieldSelection("right")
+            elseif event == input.events.CONFIRM then
+                game:confirmShieldTarget()
+            elseif event == input.events.BACK then
+                game:cancelShieldTargeting()
+            end
         elseif game:isPlaying() then
             -- Directional moves
             if event == input.events.UP then
@@ -1250,6 +1261,10 @@ function love.update(dt)
                         game:startBombTargeting()
                     end)
                 end
+            elseif event == input.events.Y then
+                queueTransitionAction(event, 0.08, function()
+                    game:startShieldTargeting()
+                end)
             -- Undo
             elseif event == input.events.BACK then
                 if game.mode == "timeattack" or game.mode == "nomercy" or game.mode == "goose" then
@@ -1370,6 +1385,10 @@ function love.update(dt)
                         game:undo()
                     end)
                 end
+            elseif event == input.events.Y then
+                queueTransitionAction(event, 0.08, function()
+                    game:startShieldTargeting()
+                end)
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
                     local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy" or game.mode == "goose")

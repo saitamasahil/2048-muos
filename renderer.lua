@@ -1204,6 +1204,96 @@ local themes = {
         help_bg_color    = {hex("#fce4ec")},
         help_key_color   = {hex("#f06292")},
         help_key_text    = {hex("#ffffff")},
+    },
+    gold_luxe = {
+        tile_colors = {
+            [0]    = {hex("#1a150b")},
+            [2]    = {hex("#382e17")},
+            [4]    = {hex("#52421f")},
+            [8]    = {hex("#735d29")},
+            [16]   = {hex("#947833")},
+            [32]   = {hex("#b5933d")},
+            [64]   = {hex("#d4af37")},
+            [128]  = {hex("#e6bf43")},
+            [256]  = {hex("#f7cf4f")},
+            [512]  = {hex("#ffd700")},
+            [1024] = {hex("#ffe247")},
+            [2048] = {hex("#ffffff")},
+        },
+        super_tile_color = {hex("#ffd700")},
+        dark_text        = {hex("#141009")},
+        light_text       = {hex("#fffdf0")},
+        ui_text          = {hex("#ffd700")},
+        bg_color         = {hex("#0d0b07")},
+        board_color      = {hex("#231c0e")},
+        score_bg_color   = {hex("#231c0e")},
+        score_label      = {hex("#d4af37")},
+        score_value      = {hex("#ffd700")},
+        overlay_win      = {hex("#ffd700")},
+        overlay_lose     = {hex("#231c0e")},
+        help_bg_color    = {hex("#231c0e")},
+        help_key_color   = {hex("#ffd700")},
+        help_key_text    = {hex("#0d0b07")},
+    },
+    cyber_grid = {
+        tile_colors = {
+            [0]    = {hex("#0f0724")},
+            [2]    = {hex("#180c38")},
+            [4]    = {hex("#251052")},
+            [8]    = {hex("#38136e")},
+            [16]   = {hex("#52158f")},
+            [32]   = {hex("#00b3ff")},
+            [64]   = {hex("#00e1ff")},
+            [128]  = {hex("#ff007f")},
+            [256]  = {hex("#ff00b7")},
+            [512]  = {hex("#9d00ff")},
+            [1024] = {hex("#00ff66")},
+            [2048] = {hex("#ffffff")},
+        },
+        super_tile_color = {hex("#00f3ff")},
+        dark_text        = {hex("#060212")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#00f3ff")},
+        bg_color         = {hex("#060212")},
+        board_color      = {hex("#12082b")},
+        score_bg_color   = {hex("#12082b")},
+        score_label      = {hex("#ff007f")},
+        score_value      = {hex("#00f3ff")},
+        overlay_win      = {hex("#00f3ff")},
+        overlay_lose     = {hex("#12082b")},
+        help_bg_color    = {hex("#12082b")},
+        help_key_color   = {hex("#00f3ff")},
+        help_key_text    = {hex("#060212")},
+    },
+    synthwave = {
+        tile_colors = {
+            [0]    = {hex("#1d0a36")},
+            [2]    = {hex("#2c114d")},
+            [4]    = {hex("#42186e")},
+            [8]    = {hex("#5f1b8c")},
+            [16]   = {hex("#801b9e")},
+            [32]   = {hex("#a61bb0")},
+            [64]   = {hex("#cc1ac2")},
+            [128]  = {hex("#ff1293")},
+            [256]  = {hex("#ff3b65")},
+            [512]  = {hex("#ff6600")},
+            [1024] = {hex("#ffaa00")},
+            [2048] = {hex("#ffffff")},
+        },
+        super_tile_color = {hex("#ff1293")},
+        dark_text        = {hex("#120424")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#ff00a0")},
+        bg_color         = {hex("#0d041c")},
+        board_color      = {hex("#1e0b38")},
+        score_bg_color   = {hex("#1e0b38")},
+        score_label      = {hex("#ff5e00")},
+        score_value      = {hex("#ff00a0")},
+        overlay_win      = {hex("#ff00a0")},
+        overlay_lose     = {hex("#1e0b38")},
+        help_bg_color    = {hex("#1e0b38")},
+        help_key_color   = {hex("#ff5e00")},
+        help_key_text    = {hex("#ffffff")},
     }
 }
 themes.cherry_blossom = themes.cherry
@@ -1311,7 +1401,7 @@ end
 function renderer.triggerCoinFooterToast()
     -- Only trigger if not already showing (prevents re-animation on repeated SELECT presses)
     if coin_toast_timer and coin_toast_timer > 0.2 then return end
-    local total = (_G.stats and _G.stats.merge_coins) or 0
+    local total = (_G.stats and _G.stats.coins) or 0
     coin_toast_text = "Coins: " .. tostring(total)
     coin_toast_timer = 4.0
     coin_toast_max_duration = 4.0
@@ -2778,6 +2868,83 @@ function renderer.drawDynamicBackground(themeName)
         end
 
         love.graphics.pop()
+    elseif themeName == "gold_luxe" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Golden ambient aura glow
+        love.graphics.setColor(1.0, 0.84, 0.0, 0.08 + math.sin(t * 0.5) * 0.03)
+        love.graphics.circle("fill", w * 0.5, h * 0.3, 280 * scale)
+
+        -- Floating Luxe Gold Dust Sparks
+        for i = 1, 35 do
+            local golden = 0.6180339887
+            local seed = i * golden * 4.3
+            local speed = 18 * scale + ((i % 5) * 6 * scale)
+            local py = h - ((t * speed + seed * h) % (h + 30 * scale))
+            local px = (seed * w * 1.3 + math.sin(t * 0.9 + i * 2.1) * 15 * scale) % w
+            local twinkle = math.sin(t * 2.5 + i * 1.7) * 0.5 + 0.5
+            local sz = (1.0 + twinkle * 2.0) * scale
+
+            love.graphics.setColor(1.0, 0.85, 0.2, 0.25 + twinkle * 0.45)
+            love.graphics.circle("fill", px, py, sz)
+        end
+        love.graphics.pop()
+
+    elseif themeName == "cyber_grid" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- Cyan & Pink Cyber Grid Lines
+        love.graphics.setLineWidth(math.max(1, math.floor(scale)))
+        local grid_s = 40 * scale
+        local off_y = (t * 25 * scale) % grid_s
+
+        for y = 0, h + grid_s, grid_s do
+            local py = y + off_y
+            if py <= h then
+                local alpha = 0.05 + 0.04 * math.sin(t * 2.0 + py * 0.01)
+                love.graphics.setColor(0.0, 0.95, 1.0, alpha)
+                love.graphics.line(0, py, w, py)
+            end
+        end
+
+        for x = 0, w, grid_s do
+            love.graphics.setColor(1.0, 0.0, 0.5, 0.04)
+            love.graphics.line(x, 0, x, h)
+        end
+
+        love.graphics.pop()
+
+    elseif themeName == "synthwave" then
+        local t = love.timer.getTime()
+        love.graphics.push("all")
+
+        -- 80s Sunset Horizon Glow
+        local sun_y = h * 0.8
+        love.graphics.setColor(1.0, 0.1, 0.5, 0.12)
+        love.graphics.circle("fill", w * 0.5, sun_y, 180 * scale)
+        love.graphics.setColor(1.0, 0.4, 0.0, 0.22)
+        love.graphics.circle("fill", w * 0.5, sun_y, 120 * scale)
+
+        -- Sun horizontal slice lines
+        love.graphics.setColor(0.05, 0.02, 0.12, 0.8)
+        for i = 1, 6 do
+            local sy = sun_y - 20 * scale + i * 14 * scale
+            love.graphics.rectangle("fill", w * 0.5 - 130 * scale, sy, 260 * scale, (2 + i * 0.8) * scale)
+        end
+
+        -- Retro stars drifting
+        for i = 1, 25 do
+            local golden = 0.6180339887
+            local sx = ((i * golden * 1.5) % 1.0) * w
+            local sy = ((i * golden * 2.3) % 1.0) * (sun_y - 40 * scale)
+            local twinkle = math.sin(t * 2.0 + i * 1.5) * 0.5 + 0.5
+            love.graphics.setColor(1.0, 0.4, 0.8, twinkle * 0.5)
+            love.graphics.circle("fill", sx, sy, (1.0 + twinkle * 1.5) * scale)
+        end
+
+        love.graphics.pop()
     end
 end
 
@@ -4182,24 +4349,40 @@ function renderer.drawHelp(game)
                 table.insert(actions, 1, {key = "L1", label = "Skip Track"})
             end
             table.insert(actions, 1, {key = "START", label = "Resume"})
+        elseif game.state == Game.STATE_TARGETING_SHIELD then
+            table.insert(actions, 1, {key = "A", label = "Clear Target"})
+            table.insert(actions, 1, {key = "B", label = "Cancel"})
+            table.insert(actions, 1, {key = "DPAD", label = "Row/Col"})
         elseif game.state == Game.STATE_TARGETING_BOMB or game.state == Game.STATE_TARGETING_SWAP_1 or game.state == Game.STATE_TARGETING_SWAP_2 then
             table.insert(actions, 1, {key = "A", label = "Confirm"})
             table.insert(actions, 1, {key = "B", label = "Cancel"})
         else
+            local shield_cnt = _G.stats and (_G.stats.second_chance_count or 0) or 0
             if game.mode == "plus" then
                 table.insert(actions, 1, {key = "START", label = "Pause"})
                 table.insert(actions, 1, {key = "SELECT", label = "Coins"})
+                if shield_cnt > 0 then
+                    table.insert(actions, 1, {key = "Y", label = "Shield:" .. shield_cnt})
+                end
                 table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
                 table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
             elseif game.mode == "timeattack" or game.mode == "nomercy" or game.mode == "goose" then
                 table.insert(actions, 1, {key = "START", label = "Pause"})
                 table.insert(actions, 1, {key = "SELECT", label = "Coins"})
-                table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+                if shield_cnt > 0 then
+                    table.insert(actions, 1, {key = "Y", label = "Shield:" .. shield_cnt})
+                else
+                    table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+                end
             else
                 table.insert(actions, 1, {key = "START", label = "Pause"})
                 table.insert(actions, 1, {key = "SELECT", label = "Coins"})
-                table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+                if shield_cnt > 0 then
+                    table.insert(actions, 1, {key = "Y", label = "Shield:" .. shield_cnt})
+                else
+                    table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+                end
                 if game.canUndo then
                     table.insert(actions, 1, {key = "B", label = "Undo"})
                 end
@@ -4724,6 +4907,41 @@ end
 -- Draw targeting cursor
 -- ============================================================================
 function renderer.drawTargetingCursor(game)
+    if game.state == Game.STATE_TARGETING_SHIELD then
+        local bx, by = layout.board_x, layout.board_y
+        local cs = layout.cell_size
+        local cg = layout.cell_gap
+        local cr = layout.corner_radius
+        local scale = _G.scale
+
+        -- Darken the board slightly
+        love.graphics.setColor(0, 0, 0, 0.45)
+        roundedRect("fill", bx, by, layout.board_size, layout.board_size, cr * 2)
+
+        local time = love.timer.getTime()
+        local alpha = 0.6 + 0.4 * math.sin(time * 8)
+        local idx = math.max(1, math.min(game.size, game.shield_index or 1))
+
+        if game.shield_mode == "row" then
+            local ry = by + cg + (idx - 1) * (cs + cg)
+            local rw = layout.board_size - cg * 2
+            love.graphics.setColor(1.0, 0.84, 0.0, 0.35)
+            roundedRect("fill", bx + cg, ry, rw, cs, cr)
+            love.graphics.setColor(1.0, 0.9, 0.2, alpha)
+            love.graphics.setLineWidth(4 * scale)
+            roundedRect("line", bx + cg, ry, rw, cs, cr)
+        else
+            local rx = bx + cg + (idx - 1) * (cs + cg)
+            local rh = layout.board_size - cg * 2
+            love.graphics.setColor(1.0, 0.84, 0.0, 0.35)
+            roundedRect("fill", rx, by + cg, cs, rh, cr)
+            love.graphics.setColor(1.0, 0.9, 0.2, alpha)
+            love.graphics.setLineWidth(4 * scale)
+            roundedRect("line", rx, by + cg, cs, rh, cr)
+        end
+        return
+    end
+
     if game.state ~= Game.STATE_TARGETING_BOMB and
        game.state ~= Game.STATE_TARGETING_SWAP_1 and
        game.state ~= Game.STATE_TARGETING_SWAP_2 then
@@ -5807,7 +6025,7 @@ function renderer.drawMainMenu(selection, skip_transition)
         love.graphics.print("L1", cursor, l1_y + (icon_size - l1_h) / 2)
     end
 
-    local coins = _G.stats and _G.stats.merge_coins or 0
+    local coins = _G.stats and _G.stats.coins or 0
     if coins > 0 then
         local coin_text = tostring(coins)
         local c_w = font_help_label:getWidth(coin_text)
@@ -7597,42 +7815,42 @@ end
 -- ============================================================================
 local achievementsList = {
     -- Score Milestones
-    { id = "ach_score_1k", name = "Getting Started", desc = "Reach 1,000 points", reward = "Forest Theme", coins = 50 },
-    { id = "ach_score_2k", name = "Gaining Momentum", desc = "Reach 2,000 points", reward = "Volcano Theme", coins = 75 },
-    { id = "ach_score_5k", name = "Rising Star", desc = "Reach 5,000 points", reward = "Sunset Theme", coins = 100 },
-    { id = "ach_score_7k", name = "High Scorer", desc = "Reach 7,500 points", reward = "Abyss Theme", coins = 150 },
-    { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme", coins = 250 },
-    { id = "ach_score_25k", name = "Aesthetic", desc = "Reach 25,000 points", reward = "Vaporwave Theme", coins = 500 },
-    { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme", coins = 1000 },
-    { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme", coins = 2000 },
-    { id = "ach_score_250k", name = "Infinity Legend", desc = "Reach 250,000 points", reward = "Hyperdrive Theme", coins = 5000 },
+    { id = "ach_score_1k", name = "Getting Started", desc = "Reach 1,000 points", reward = "Forest Theme", coins = 20 },
+    { id = "ach_score_2k", name = "Gaining Momentum", desc = "Reach 2,000 points", reward = "Volcano Theme", coins = 35 },
+    { id = "ach_score_5k", name = "Rising Star", desc = "Reach 5,000 points", reward = "Sunset Theme", coins = 50 },
+    { id = "ach_score_7k", name = "High Scorer", desc = "Reach 7,500 points", reward = "Abyss Theme", coins = 75 },
+    { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme", coins = 100 },
+    { id = "ach_score_25k", name = "Aesthetic", desc = "Reach 25,000 points", reward = "Vaporwave Theme", coins = 200 },
+    { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme", coins = 350 },
+    { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme", coins = 600 },
+    { id = "ach_score_250k", name = "Infinity Legend", desc = "Reach 250,000 points", reward = "Hyperdrive Theme", coins = 1000 },
 
     -- Tile Merges
-    { id = "ach_merge_512", name = "Half Way There", desc = "Create a 512 tile", reward = "Candy Theme", coins = 100 },
-    { id = "ach_merge_1024", name = "Almost There", desc = "Create a 1024 tile", reward = "Midnight Theme", coins = 250 },
-    { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile in Classic Mode", reward = "OLED Dark Theme", coins = 1000 },
-    { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Glitch Theme", coins = 2000 },
-    { id = "ach_merge_8192", name = "The Chosen One", desc = "Create an 8192 tile", reward = "Quantum Theme", coins = 5000 },
+    { id = "ach_merge_512", name = "Half Way There", desc = "Create a 512 tile", reward = "Candy Theme", coins = 50 },
+    { id = "ach_merge_1024", name = "Almost There", desc = "Create a 1024 tile", reward = "Midnight Theme", coins = 100 },
+    { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile in Classic Mode", reward = "OLED Dark Theme", coins = 250 },
+    { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Glitch Theme", coins = 500 },
+    { id = "ach_merge_8192", name = "The Chosen One", desc = "Create an 8192 tile", reward = "Quantum Theme", coins = 1000 },
 
     -- Plus Mode Milestones
-    { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme", coins = 50 },
-    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode", reward = "Retro Theme", coins = 150 },
-    { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme", coins = 1000 },
-    { id = "ach_tactician", name = "Tactician", desc = "Use 5 Undos and 5 Swaps in a single Plus Mode game", reward = "Steel Theme", coins = 500 },
+    { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme", coins = 20 },
+    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode", reward = "Retro Theme", coins = 75 },
+    { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme", coins = 250 },
+    { id = "ach_tactician", name = "Tactician", desc = "Use 5 Undos and 5 Swaps in a single Plus Mode game", reward = "Steel Theme", coins = 150 },
 
     -- Alternative Modes
-    { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme", coins = 1000 },
-    { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme", coins = 1000 },
-    { id = "ach_nomercy_512", name = "No Escape", desc = "Create a 512 tile in No Mercy Mode", reward = "Inferno Theme", coins = 1000 },
-    { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme", coins = 1000 },
+    { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme", coins = 250 },
+    { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme", coins = 250 },
+    { id = "ach_nomercy_512", name = "No Escape", desc = "Create a 512 tile in No Mercy Mode", reward = "Inferno Theme", coins = 250 },
+    { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme", coins = 250 },
 
     -- Special Challenges & Secrets
-    { id = "ach_first_game", name = "First Steps", desc = "Play your first game", reward = "Ocean Theme", coins = 50 },
-    { id = "ach_secret_menu", name = "Secret Discovery", desc = "Access the Secret Menu for the first time", reward = "Matrix Theme", coins = 250 },
-    { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme", coins = 500 },
-    { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme", coins = 2000 },
-    { id = "ach_speedrun_2048", name = "Speed Demon", desc = "Create a 2048 tile in under 5 minutes", reward = "Retro Gold Theme", coins = 2000 },
-    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme", coins = 3000 }
+    { id = "ach_first_game", name = "First Steps", desc = "Play your first game", reward = "Ocean Theme", coins = 20 },
+    { id = "ach_secret_menu", name = "Secret Discovery", desc = "Access the Secret Menu for the first time", reward = "Matrix Theme", coins = 100 },
+    { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme", coins = 200 },
+    { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme", coins = 400 },
+    { id = "ach_speedrun_2048", name = "Speed Demon", desc = "Create a 2048 tile in under 5 minutes", reward = "Retro Gold Theme", coins = 400 },
+    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme", coins = 500 }
 }
 
 function renderer.getAchievementsList()
@@ -8449,14 +8667,41 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         love.graphics.setFont(font_help_key)
         love.graphics.setColor(base_col[1], base_col[2], base_col[3], alpha)
         love.graphics.printf("2x", cx - radius, cy - font_help_key:getHeight() / 2, radius * 2, "center")
-    elseif item_id == "start_128" then
-        -- Mini Tile container with "128"
+    elseif item_id == "start_128" or item_id == "start_256" or item_id == "start_512" then
+        -- Mini Tile container with tile number
+        local label = item_id:gsub("start_", "")
         local box_s = radius * 1.3
         love.graphics.setColor(base_col[1], base_col[2], base_col[3], alpha * 0.25)
         roundedRect("fill", cx - box_s / 2, cy - box_s / 2, box_s, box_s, math.floor(4 * scale))
         love.graphics.setColor(base_col[1], base_col[2], base_col[3], alpha)
         love.graphics.setFont(font_help_label)
-        love.graphics.printf("128", cx - radius, cy - font_help_label:getHeight() / 2, radius * 2, "center")
+        love.graphics.printf(label, cx - radius, cy - font_help_label:getHeight() / 2, radius * 2, "center")
+    elseif item_id == "second_chance" then
+        -- Shield shape with cross lines
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        local sr = radius * 0.55
+        love.graphics.polygon("line", cx, cy - sr, cx + sr, cy - sr * 0.4, cx + sr * 0.7, cy + sr * 0.7, cx, cy + sr, cx - sr * 0.7, cy + sr * 0.7, cx - sr, cy - sr * 0.4)
+        love.graphics.line(cx - sr * 0.4, cy, cx + sr * 0.4, cy)
+        love.graphics.line(cx, cy - sr * 0.4, cx, cy + sr * 0.4)
+    elseif item_id == "theme_gold_luxe" then
+        -- Luxe Gold Ring & Center Star
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        love.graphics.circle("line", cx, cy, radius * 0.55)
+        love.graphics.circle("fill", cx, cy, radius * 0.22)
+    elseif item_id == "theme_cyber_grid" then
+        -- Cyber Grid Box
+        local g_s = radius * 0.55
+        love.graphics.setLineWidth(math.max(1.5, math.floor(1.5 * scale)))
+        love.graphics.rectangle("line", cx - g_s, cy - g_s, g_s * 2, g_s * 2)
+        love.graphics.line(cx - g_s, cy, cx + g_s, cy)
+        love.graphics.line(cx, cy - g_s, cx, cy + g_s)
+    elseif item_id == "theme_synthwave" then
+        -- Synthwave Horizon Sun
+        local sr = radius * 0.55
+        love.graphics.setLineWidth(math.max(1.5, math.floor(1.5 * scale)))
+        love.graphics.circle("line", cx, cy, sr)
+        love.graphics.line(cx - sr, cy + sr * 0.2, cx + sr, cy + sr * 0.2)
+        love.graphics.line(cx - sr * 0.8, cy + sr * 0.5, cx + sr * 0.8, cy + sr * 0.5)
     elseif item_id == "anim_bounce" then
         -- Bouncing Spring Arrow
         love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
@@ -8499,7 +8744,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
     -- Available Coins Pill (Top Right)
     love.graphics.setFont(font_help_label)
-    local coins = _G.stats and _G.stats.merge_coins or 0
+    local coins = _G.stats and _G.stats.coins or 0
     local coin_str = tostring(coins)
     local cw = font_help_label:getWidth(coin_str)
     local font_h = font_help_label:getHeight()
@@ -8531,24 +8776,33 @@ function renderer.drawStoreMenu(selection, skip_transition)
     end
 
     -- Items List
-    local booster_count = _G.stats and (_G.stats.start_128_count or 0) or 0
+    local booster_128 = _G.stats and (_G.stats.start_128_count or 0) or 0
+    local booster_256 = _G.stats and (_G.stats.start_256_count or 0) or 0
+    local booster_512 = _G.stats and (_G.stats.start_512_count or 0) or 0
+    local shield_count = _G.stats and (_G.stats.second_chance_count or 0) or 0
     local pu_undo  = _G.stats and (_G.stats.powerup_undo_count  or 0) or 0
     local pu_swap  = _G.stats and (_G.stats.powerup_swap_count  or 0) or 0
     local pu_bomb  = _G.stats and (_G.stats.powerup_bomb_count  or 0) or 0
     local items = {
-        {id="start_128",     cost=50,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_count .. " owned)", consumable=true, ckey="start_128_count"},
+        {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
         {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
-        {id="powerup_swap",  cost=120,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
+        {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
+        {id="powerup_swap",  cost=130,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
         {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
-        {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
-        {id="extra_swap",    cost=350,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
-        {id="extra_bomb",    cost=500,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
-        {id="anim_bounce",   cost=750,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
-        {id="anim_glow",     cost=850,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
-        {id="jukebox",       cost=1200, name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
-        {id="coin_multiplier",cost=1500,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
-        {id="theme_cosmic",  cost=2000, name="Cosmic Theme",          desc="Unlock space theme"},
-        {id="theme_cherry",  cost=2000, name="Cherry Theme",          desc="Unlock sakura theme"}
+        {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
+        {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},
+        {id="extra_undo",    cost=300,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
+        {id="extra_swap",    cost=450,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
+        {id="anim_bounce",   cost=500,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
+        {id="extra_bomb",    cost=600,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
+        {id="anim_glow",     cost=650,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
+        {id="jukebox",       cost=900,  name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
+        {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
+        {id="theme_cherry",  cost=1000, name="Cherry Theme",          desc="Unlock sakura blossom theme"},
+        {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
+        {id="theme_gold_luxe",cost=1500,name="Gold Luxe Theme",       desc="Unlock ultra-luxurious gold theme"},
+        {id="theme_cyber_grid",cost=1800,name="Cyber Neon Grid Theme",desc="Unlock futuristic cyber grid theme"},
+        {id="theme_synthwave",cost=2000,name="Synthwave 80s Theme",   desc="Unlock retro 80s retrowave theme"}
     }
 
     local badge_h = math.floor(28 * scale)
