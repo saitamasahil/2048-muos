@@ -8728,6 +8728,46 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
     end
 end
 
+function renderer.getStoreItems()
+    local booster_128 = _G.stats and (_G.stats.start_128_count or 0) or 0
+    local booster_256 = _G.stats and (_G.stats.start_256_count or 0) or 0
+    local booster_512 = _G.stats and (_G.stats.start_512_count or 0) or 0
+    local shield_count = _G.stats and (_G.stats.second_chance_count or 0) or 0
+    local pu_undo  = _G.stats and (_G.stats.powerup_undo_count  or 0) or 0
+    local pu_swap  = _G.stats and (_G.stats.powerup_swap_count  or 0) or 0
+    local pu_bomb  = _G.stats and (_G.stats.powerup_bomb_count  or 0) or 0
+    return {
+        -- Boosters & Shields
+        {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
+        {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
+        {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},
+        {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
+
+        -- Plus Mode Powerups
+        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
+        {id="powerup_swap",  cost=130,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
+        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
+
+        -- Permanent Upgrades
+        {id="extra_undo",    cost=300,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
+        {id="extra_swap",    cost=450,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
+        {id="extra_bomb",    cost=600,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
+        {id="jukebox",       cost=900,  name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
+        {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
+
+        -- Visual FX
+        {id="anim_bounce",   cost=500,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
+        {id="anim_glow",     cost=650,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
+
+        -- Themes
+        {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
+        {id="theme_cherry",  cost=1000, name="Cherry Theme",          desc="Unlock sakura blossom theme"},
+        {id="theme_gold_luxe",cost=1500,name="Gold Luxe Theme",       desc="Unlock ultra-luxurious gold theme"},
+        {id="theme_cyber_grid",cost=1800,name="Cyber Neon Grid Theme",desc="Unlock futuristic cyber grid theme"},
+        {id="theme_synthwave",cost=2000,name="Synthwave 80s Theme",   desc="Unlock retro 80s retrowave theme"}
+    }
+end
+
 function renderer.drawStoreMenu(selection, skip_transition)
     renderer.clearBackground()
     local w, h = love.graphics.getDimensions()
@@ -8776,34 +8816,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     end
 
     -- Items List
-    local booster_128 = _G.stats and (_G.stats.start_128_count or 0) or 0
-    local booster_256 = _G.stats and (_G.stats.start_256_count or 0) or 0
-    local booster_512 = _G.stats and (_G.stats.start_512_count or 0) or 0
-    local shield_count = _G.stats and (_G.stats.second_chance_count or 0) or 0
-    local pu_undo  = _G.stats and (_G.stats.powerup_undo_count  or 0) or 0
-    local pu_swap  = _G.stats and (_G.stats.powerup_swap_count  or 0) or 0
-    local pu_bomb  = _G.stats and (_G.stats.powerup_bomb_count  or 0) or 0
-    local items = {
-        {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
-        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
-        {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
-        {id="powerup_swap",  cost=130,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
-        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
-        {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
-        {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},
-        {id="extra_undo",    cost=300,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
-        {id="extra_swap",    cost=450,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
-        {id="anim_bounce",   cost=500,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
-        {id="extra_bomb",    cost=600,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
-        {id="anim_glow",     cost=650,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
-        {id="jukebox",       cost=900,  name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
-        {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
-        {id="theme_cherry",  cost=1000, name="Cherry Theme",          desc="Unlock sakura blossom theme"},
-        {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
-        {id="theme_gold_luxe",cost=1500,name="Gold Luxe Theme",       desc="Unlock ultra-luxurious gold theme"},
-        {id="theme_cyber_grid",cost=1800,name="Cyber Neon Grid Theme",desc="Unlock futuristic cyber grid theme"},
-        {id="theme_synthwave",cost=2000,name="Synthwave 80s Theme",   desc="Unlock retro 80s retrowave theme"}
-    }
+    local items = renderer.getStoreItems()
 
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(7 * scale)

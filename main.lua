@@ -656,7 +656,8 @@ function love.update(dt)
             end
             return
         elseif _G.appState == "STORE" then
-            local items_count = 13
+            local items = renderer.getStoreItems()
+            local items_count = #items
             if event == input.events.UP then
                 _G.store_selection = _G.store_selection > 1 and (_G.store_selection - 1) or items_count
                 sound.playMenuMove()
@@ -671,27 +672,6 @@ function love.update(dt)
             elseif event == input.events.CONFIRM then
                 sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
-                    local items = {
-                        {id="start_128",     cost=60,   name="128 High-Tile Booster", consumable=true, ckey="start_128_count"},
-                        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode", consumable=true, ckey="powerup_undo_count"},
-                        {id="start_256",     cost=120,  name="256 High-Tile Booster", consumable=true, ckey="start_256_count"},
-                        {id="powerup_swap",  cost=130,  name="Purchase Swap for Plus Mode", consumable=true, ckey="powerup_swap_count"},
-                        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode", consumable=true, ckey="powerup_bomb_count"},
-                        {id="second_chance", cost=200,  name="Second Chance Shield", consumable=true, ckey="second_chance_count"},
-                        {id="start_512",     cost=250,  name="512 High-Tile Booster", consumable=true, ckey="start_512_count"},
-                        {id="extra_undo",    cost=300,  name="Extra Starting Undo (Plus)"},
-                        {id="extra_swap",    cost=450,  name="Extra Starting Swap (Plus)"},
-                        {id="anim_bounce",   cost=500,  name="Bounce Pop FX"},
-                        {id="extra_bomb",    cost=600,  name="Extra Starting Bomb (Plus)"},
-                        {id="anim_glow",     cost=650,  name="Glow Pulse FX"},
-                        {id="jukebox",       cost=900,  name="BGM Jukebox"},
-                        {id="theme_cosmic",  cost=1000, name="Cosmic Theme"},
-                        {id="theme_cherry",  cost=1000, name="Cherry Theme"},
-                        {id="coin_multiplier", cost=1200, name="2x Coin Multiplier"},
-                        {id="theme_gold_luxe", cost=1500, name="Gold Luxe Theme"},
-                        {id="theme_cyber_grid", cost=1800, name="Cyber Neon Grid Theme"},
-                        {id="theme_synthwave", cost=2000, name="Synthwave 80s Theme"}
-                    }
                     local sel_item = items[_G.store_selection or 1]
                     if not sel_item then return end
 
