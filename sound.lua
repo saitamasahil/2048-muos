@@ -17,7 +17,8 @@ local currentBgmIdx = 0
 local currentBgmSource = nil
 local bgmStartDelay = 1.2
 local duckTimer = 0
-
+local bgmStoppedBySystem = false
+local bgmPausedByUser = false
 
 local activeJoystick = nil
 local joystickInitialized = false
@@ -286,6 +287,9 @@ end
 function sound.playNextBgm()
     if #bgmPlaylist == 0 then return end
 
+    bgmStoppedBySystem = false
+    bgmPausedByUser = false
+
     if currentBgmIdx > 0 and currentBgmIdx <= #bgmPlaylist then
         _G.jukebox_prev_track = bgmPlaylist[currentBgmIdx]
     end
@@ -319,10 +323,11 @@ function sound.update(dt)
     -- Stop BGM if not in a state that allows it
     if not sound.isBgmEnabled() or (not in_game and not in_jukebox) then
         if currentBgmSource and currentBgmSource:isPlaying() then
-            currentBgmSource:stop()
+            currentBgmSource:pause()
         end
         bgmStartDelay = 1.2
         duckTimer = 0
+        bgmStoppedBySystem = true
         return
     end
 
@@ -354,11 +359,20 @@ function sound.update(dt)
 
     if #bgmPlaylist == 0 then return end
 
-    -- In JUKEBOX mode, only continue if already playing; never auto-start
-    if in_jukebox then return end
-
     if not currentBgmSource or not currentBgmSource:isPlaying() then
-        sound.playNextBgm()
+        if in_jukebox and (bgmStoppedBySystem or bgmPausedByUser) then
+            return
+        end
+        
+        if currentBgmSource and (bgmStoppedBySystem or bgmPausedByUser) then
+            bgmStoppedBySystem = false
+            bgmPausedByUser = false
+            currentBgmSource:play()
+        else
+            bgmStoppedBySystem = false
+            bgmPausedByUser = false
+            sound.playNextBgm()
+        end
     end
 end
 
@@ -371,7 +385,7 @@ function sound.toggleBgm()
     save.saveMusic(bgmEnabled)
     if not bgmEnabled then
         if currentBgmSource then
-            currentBgmSource:stop()
+            currentBgmSource:pause()
         end
     else
         -- Only start playing immediately if we are currently in the gameplay screen
@@ -437,8 +451,10 @@ function sound.toggleBgmPause()
     if not currentBgmSource then return end
     if currentBgmSource:isPlaying() then
         currentBgmSource:pause()
+        bgmPausedByUser = true
     else
         currentBgmSource:play()
+        bgmPausedByUser = false
     end
 end
 

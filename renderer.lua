@@ -30,6 +30,7 @@ local achievements_new_canvas = nil
 local logo_2048 = nil
 local store_icon = nil
 local coin_icon = nil
+local vinyl_record_img = nil
 local item_icons = {}
 local icon_shader = nil
 local font_bgm = nil
@@ -3119,6 +3120,9 @@ function renderer.init()
     local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
     if not ok_music then ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/jukebox.png") end
     if ok_music then music_icon = m_img end
+
+    local ok_vinyl, v_img = pcall(love.graphics.newImage, "assets/icon/vinyl_record.png")
+    if ok_vinyl then vinyl_record_img = v_img end
 
     -- Load store item icons & achievement icons
     item_icons = {}
@@ -9158,13 +9162,17 @@ function renderer.drawJukebox(selection, skip_transition)
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
     local t = love.timer.getTime()
+    local dt = love.timer.getDelta()
+
+    -- Global animation state for vinyl rotation and peak caps
+    if not _G.jukebox_peaks then _G.jukebox_peaks = {} end
 
     -- Title Header
     love.graphics.setFont(font_title)
     love.graphics.setColor(ui_text)
     local title = "Jukebox"
     local tw = font_title:getWidth(title)
-    local title_y = math.floor(16 * scale)
+    local title_y = math.floor(14 * scale)
     love.graphics.print(title, (w - tw) / 2, title_y)
 
     -- ── Sound state ─────────────────────────────────────────────────────────
@@ -9175,6 +9183,13 @@ function renderer.drawJukebox(selection, skip_transition)
     if sound_mod.getBgmProgress then pos, dur = sound_mod.getBgmProgress() end
     local is_actively_playing = sound_mod.isBgmPlaying and sound_mod.isBgmPlaying() or false
     local is_playing          = current_track ~= nil
+
+    -- Update vinyl rotation angle
+    if is_actively_playing then
+        _G.jukebox_disc_angle = (_G.jukebox_disc_angle or 0) + dt * 2.2
+    else
+        _G.jukebox_disc_angle = _G.jukebox_disc_angle or 0
+    end
 
     -- Viz energy level: fades out slowly (~0.9s) when paused/stopped
     if is_actively_playing then
@@ -9198,17 +9213,17 @@ function renderer.drawJukebox(selection, skip_transition)
     local current_track = sound_mod.getCurrentTrack and sound_mod.getCurrentTrack()
 
     -- ── Card: computed layout (no hardcoded px) ──────────────────────────────
-    local card_w  = w - math.floor(40 * scale)
-    local card_x  = math.floor(20 * scale)
-    local card_y  = title_y + font_title:getHeight() + math.floor(10 * scale)
+    local card_w  = w - math.floor(32 * scale)
+    local card_x  = math.floor(16 * scale)
+    local card_y  = title_y + font_title:getHeight() + math.floor(8 * scale)
     local pad_v   = math.floor(8  * scale)   -- vertical padding top/bottom
-    local pad_h   = math.floor(16 * scale)   -- horizontal padding sides
+    local pad_h   = math.floor(14 * scale)   -- horizontal padding sides
 
     -- Compute row positions from top downward
     local title_fh  = font_help_key:getHeight()
     local artist_fh = font_help_label:getHeight()
-    local pbar_h    = math.floor(3 * scale)
-    local max_bar_h = math.floor(28 * scale)
+    local pbar_h    = math.floor(4 * scale)
+    local max_bar_h = math.floor(26 * scale)
     local bar_gap   = math.floor(6 * scale)   -- gap between artist and EQ top
     local pb_gap    = math.floor(5 * scale)   -- gap between EQ bottom and pbar
     local tm_gap    = math.floor(3 * scale)   -- gap between pbar and time
@@ -9220,33 +9235,51 @@ function renderer.drawJukebox(selection, skip_transition)
     local y_time   = y_pbar + pbar_h + tm_gap
     local card_h   = y_time + artist_fh + pad_v   -- total card height
 
-    -- Card background
-    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.92 + 0.08 * (1 - progress))
+    -- Card background & Pulsing Beat Aura
+    local beat_pulse = is_actively_playing and (0.6 + 0.4 * math.abs(math.sin(t * 4.0))) or 0.2
+    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.94 + 0.06 * (1 - progress))
     roundedRect("fill", card_x, card_y, card_w, card_h, math.floor(10 * scale))
-    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], is_playing and (0.5 + 0.35 * (1 - progress)) or 0.22)
+    
+    -- Glowing outline border
+    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], is_playing and (0.4 + 0.35 * beat_pulse) or 0.2)
     love.graphics.setLineWidth(math.floor(1.5 * scale))
     roundedRect("line", card_x, card_y, card_w, card_h, math.floor(10 * scale))
 
     local base_text_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
 
-    -- ── ▶/⏸ icon (top-left, vertically centred on title row) ────────────────
-    local icon_h  = math.floor(title_fh * 0.75)
-    local icon_x  = card_x + math.floor(10 * scale)
-    local icon_cy = card_y + y_title + title_fh / 2
+    -- ── 💿 Spinning Vinyl Disc (top-left) ────────────────────────────────────
+    local disc_r  = math.floor(18 * scale)
+    local disc_cx = card_x + pad_h + disc_r
+    local disc_cy = card_y + y_title + title_fh / 2 + math.floor(8 * scale)
 
-    if is_playing and not is_actively_playing then
-        love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.85)
-        local bw = math.max(2, math.floor(3 * scale))
-        love.graphics.rectangle("fill", icon_x, icon_cy - icon_h/2, bw, icon_h)
-        love.graphics.rectangle("fill", icon_x + bw + math.floor(2*scale), icon_cy - icon_h/2, bw, icon_h)
-    elseif is_actively_playing then
-        local pulse = 0.7 + 0.3 * math.abs(math.sin(t * 2.5))
-        love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], pulse)
-        love.graphics.polygon("fill",
-            icon_x,                    icon_cy - icon_h/2,
-            icon_x + icon_h * 0.85,   icon_cy,
-            icon_x,                    icon_cy + icon_h/2)
+    love.graphics.push()
+    love.graphics.translate(disc_cx, disc_cy)
+    love.graphics.rotate(_G.jukebox_disc_angle or 0)
+    
+    if vinyl_record_img then
+        love.graphics.setColor(1, 1, 1, 1)
+        local iw, ih = vinyl_record_img:getDimensions()
+        local v_scale = (disc_r * 2) / iw
+        love.graphics.draw(vinyl_record_img, 0, 0, 0, v_scale, v_scale, iw/2, ih/2)
+    else
+        -- Fallback to drawing circles if image is missing
+        love.graphics.setColor(0.12, 0.12, 0.14, 0.95)
+        love.graphics.circle("fill", 0, 0, disc_r)
+        love.graphics.setColor(0.3, 0.3, 0.35, 0.6)
+        love.graphics.circle("line", 0, 0, disc_r)
+        love.graphics.setColor(0.2, 0.2, 0.24, 0.5)
+        love.graphics.circle("line", 0, 0, disc_r * 0.7)
+        love.graphics.circle("line", 0, 0, disc_r * 0.45)
+
+        love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.9)
+        love.graphics.circle("fill", 0, 0, disc_r * 0.35)
+        love.graphics.setColor(0.08, 0.08, 0.1, 0.95)
+        love.graphics.circle("fill", 0, 0, disc_r * 0.1)
+        love.graphics.setColor(1, 1, 1, 0.35)
+        love.graphics.line(-disc_r * 0.3, 0, disc_r * 0.3, 0)
     end
+    
+    love.graphics.pop()
 
     -- ── 1. Old track title & artist (slides UPWARDS and fades OUT) ───────────
     if prev_track and progress < 1.0 then
@@ -9297,27 +9330,92 @@ function renderer.drawJukebox(selection, skip_transition)
         card_x + math.floor((card_w - ta_w) / 2),
         card_y + y_artist + new_slide_y)
 
-    -- ── EQ Visualizer (centred, 24 bars, viz_level fade) ─────────────────────
-    local num_bars   = 24
-    local bw         = math.floor(4 * scale)
+    -- ── 🎚️ 32-Band Mirrored LED Spectrum Analyzer ─────────────────────────────
+    local num_bands  = 16 -- 16 calculated bands, mirrored left and right (32 total)
+    local bw         = math.floor(3 * scale)
     local bgap       = math.floor(2 * scale)
-    local total_eq_w = num_bars * bw + (num_bars - 1) * bgap
+    local total_eq_w = (num_bands * 2) * bw + ((num_bands * 2) - 1) * bgap
     local eq_bot     = card_y + y_eq_bot
     local eq_x       = card_x + math.floor((card_w - total_eq_w) / 2)
+    
+    local max_leds   = 8
+    local led_gap    = math.floor(1.5 * scale)
+    if led_gap < 1 then led_gap = 1 end
+    local led_h      = math.floor((max_bar_h - (max_leds - 1) * led_gap) / max_leds)
+    if led_h < 1 then led_h = 1 end
+    
+    if not _G.jukebox_energies then _G.jukebox_energies = {} end
 
-    for b = 1, num_bars do
-        local bx    = eq_x + (b - 1) * (bw + bgap)
-        local norm  = (b - 1) / (num_bars - 1)
-        local bass   = math.exp(-((norm-0.18)^2)/0.04) * (0.7 + 0.3*math.abs(math.sin(t*2.1 + b*0.5)))
-        local mid    = math.exp(-((norm-0.52)^2)/0.06) * (0.5 + 0.5*math.abs(math.sin(t*3.7 + b*1.1)))
-        local treble = math.exp(-((norm-0.82)^2)/0.03) * (0.35 + 0.65*math.abs(math.sin(t*5.3 + b*2.3)))
-        local jitter = 0.15 * math.abs(math.sin(t*7.1*(1+b*0.17)+b))
-        local energy = math.min(1.0, bass + mid + treble + jitter)
-        local eff    = energy * viz_level
-        local bh     = math.max(math.floor(2*scale), eff * max_bar_h)
-        local alpha  = eff > 0.01 and (0.3 + 0.6 * eff) or 0
-        love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], alpha)
-        roundedRect("fill", bx, eq_bot - bh, bw, bh, math.floor(2 * scale))
+    for b = 1, num_bands do
+        local norm  = (b - 1) / (num_bands - 1)
+        
+        -- Organic pseudo-random audio data synthesis with distinct frequency zones
+        local bass   = math.exp(-((norm-0.10)^2)/0.02) * (0.65 + 0.45*math.abs(math.sin(t*3.4 + b*0.6)))
+        local mid    = math.exp(-((norm-0.45)^2)/0.04) * (0.35 + 0.65*math.abs(math.sin(t*5.3 + b*1.4)))
+        local treble = math.exp(-((norm-0.85)^2)/0.03) * (0.25 + 0.85*math.abs(math.sin(t*9.1 + b*2.7)))
+        
+        -- High freq chaos injected based on beat syncing
+        local beat_sync = math.abs(math.sin(t * 3.8))
+        local jitter = 0.2 * math.abs(math.sin(t * 14.0 * (1 + b * 0.3))) * (norm > 0.4 and beat_sync or 1.0)
+        
+        local target_energy = math.min(1.0, bass + mid + treble + jitter)
+        
+        -- Smoothly interpolate energy for fluid, natural movement
+        local curr_energy = _G.jukebox_energies[b] or 0
+        if target_energy > curr_energy then
+            curr_energy = curr_energy + (target_energy - curr_energy) * dt * 22 -- snappy rise
+        else
+            curr_energy = curr_energy - (curr_energy - target_energy) * dt * 7  -- smooth fall
+        end
+        _G.jukebox_energies[b] = curr_energy
+        
+        local eff = curr_energy * viz_level
+        local lit_leds = math.max(0, math.floor(eff * max_leds))
+        if viz_level > 0.05 and lit_leds == 0 then lit_leds = 1 end -- Always pulse slightly if playing
+        
+        -- Gravity Peak Caps logic
+        local prev_peak = _G.jukebox_peaks[b] or 0
+        if lit_leds > prev_peak then
+            _G.jukebox_peaks[b] = lit_leds
+        else
+            _G.jukebox_peaks[b] = math.max(0, prev_peak - dt * 10) -- Drops by 10 LED units per second
+        end
+        local peak_cap = math.floor(_G.jukebox_peaks[b])
+        
+        -- Mirroring: Left side (bands 16 to 1) and Right side (bands 1 to 16)
+        local left_b  = num_bands - b + 1
+        local right_b = num_bands + b
+        
+        local left_bx  = eq_x + (left_b - 1) * (bw + bgap)
+        local right_bx = eq_x + (right_b - 1) * (bw + bgap)
+        
+        for _, bx in ipairs({left_bx, right_bx}) do
+            for i = 1, max_leds do
+                local led_y = eq_bot - (i * led_h + (i - 1) * led_gap)
+                local intensity = 0.12 -- Dim unlit state
+                
+                -- Dynamic premium LED coloring (Theme Base -> Yellow -> Red)
+                local r, g, bb = help_key_color[1], help_key_color[2], help_key_color[3]
+                if i > max_leds * 0.75 then
+                    r, g, bb = 1.0, 0.2, 0.25 -- Vibrant Red for peaks
+                elseif i > max_leds * 0.4 then
+                    r, g, bb = 1.0, 0.85, 0.15 -- Warm Yellow for mids
+                end
+                
+                if i <= lit_leds then
+                    intensity = 0.95 -- Fully lit up
+                end
+                
+                -- Draw the floating peak cap
+                if i == peak_cap and lit_leds < peak_cap then
+                    intensity = 1.0
+                    r, g, bb = 1.0, 1.0, 1.0 -- Bright white floating cap
+                end
+                
+                love.graphics.setColor(r, g, bb, intensity)
+                love.graphics.rectangle("fill", bx, led_y, bw, led_h)
+            end
+        end
     end
 
     -- ── Progress bar ─────────────────────────────────────────────────────────
@@ -9325,12 +9423,12 @@ function renderer.drawJukebox(selection, skip_transition)
     local pbar_x  = card_x + pad_h
     local pbar_y  = card_y + y_pbar
 
-    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.12)
+    love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.14)
     roundedRect("fill", pbar_x, pbar_y, pbar_w, pbar_h, math.floor(2 * scale))
     if is_playing and dur > 0 then
         local fill_pct = math.min(1.0, math.max(0.0, pos / dur))
         if fill_pct > 0 then
-            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.8)
+            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.85)
             roundedRect("fill", pbar_x, pbar_y, math.max(pbar_h, pbar_w * fill_pct), pbar_h, math.floor(2 * scale))
             love.graphics.setColor(help_key_color)
             love.graphics.circle("fill", pbar_x + pbar_w * fill_pct, pbar_y + pbar_h / 2, math.floor(4 * scale))
@@ -9389,21 +9487,32 @@ function renderer.drawJukebox(selection, skip_transition)
             roundedRect("fill", card_x, ry, card_w, row_h - math.floor(4 * scale), math.floor(6 * scale))
         end
 
-        -- Playing indicator triangle — centred exactly like the text
+        -- Playing indicator: Mini 3-bar dancing equalizer for active track!
         local row_inner_h = row_h - math.floor(4 * scale)
         local label_fh    = font_help_label:getHeight()
         local text_y      = ry + math.floor((row_inner_h - label_fh) / 2)
-        local tri_h       = label_fh   -- same height as font for perfect alignment
-        local tri_w       = math.floor(tri_h * 0.7)
-        local tri_x       = card_x + math.floor(10 * scale)
-        local tri_y       = text_y     -- top of triangle = top of text
+        local icon_x      = card_x + math.floor(10 * scale)
 
         if is_curr then
-            love.graphics.setColor(help_key_color)
-            love.graphics.polygon("fill",
-                tri_x,           tri_y,
-                tri_x + tri_w,   tri_y + tri_h / 2,
-                tri_x,           tri_y + tri_h)
+            if is_actively_playing then
+                -- 3 mini animated equalizer bars
+                local mbw = math.floor(2.5 * scale)
+                local mbg = math.floor(1.5 * scale)
+                love.graphics.setColor(help_key_color)
+                for mb = 1, 3 do
+                    local mbh = math.floor((4 + math.abs(math.sin(t * 7 + mb * 1.5 + track_idx)) * 8) * scale)
+                    love.graphics.rectangle("fill", icon_x + (mb - 1) * (mbw + mbg), text_y + label_fh - mbh, mbw, mbh)
+                end
+            else
+                -- Paused icon triangle
+                local tri_h = label_fh
+                local tri_w = math.floor(tri_h * 0.7)
+                love.graphics.setColor(help_key_color)
+                love.graphics.polygon("fill",
+                    icon_x,           text_y,
+                    icon_x + tri_w,   text_y + tri_h / 2,
+                    icon_x,           text_y + tri_h)
+            end
         end
 
         local text_x = card_x + math.floor(26 * scale)
