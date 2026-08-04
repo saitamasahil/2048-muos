@@ -1342,33 +1342,34 @@ local now_playing_timer = 0
 local now_playing_track = nil
 local last_track_path = nil
 
-local theme_display_names = {
-    light = "LIGHT",
-    dark = "DARK",
-    classic = "CLASSIC",
-    ocean = "OCEAN",
-    forest = "FOREST",
-    volcano = "VOLCANO",
-    quantum = "QUANTUM",
-    dracula = "DRACULA",
-    retrogold = "RETRO GOLD",
-    hyperdrive = "HYPERDRIVE",
-    honk = "HONK",
-    matrix = "MATRIX",
-    glitch = "GLITCH",
-    vaporwave = "VAPORWAVE",
-    cyberpunk = "CYBERPUNK",
-    spectrum = "SPECTRUM",
-    aurora = "AURORA",
-    sakura = "SAKURA",
-    matcha = "MATCHA",
-    nebula = "NEBULA",
-    inferno = "INFERNO"
+local theme_display_overrides = {
+    cherry = "Cherry",
+    cherry_blossom = "Cherry",
+    gameboy = "Game Boy",
+    gold_luxe = "Gold Luxe",
+    cyber_grid = "Cyber Grid",
+    synthwave = "Synthwave",
+    retrogold = "Retro Gold",
+    hyperdrive = "Hyperdrive",
+    vaporwave = "Vaporwave",
+    cyberpunk = "Cyberpunk",
 }
+
+function renderer.getThemeDisplayName(theme_id, uppercase)
+    if not theme_id then return "" end
+    local raw_t = (theme_id == "cherry_blossom") and "cherry" or theme_id
+    local name = theme_display_overrides[raw_t]
+    if not name then
+        name = raw_t:gsub("_", " "):gsub("(%a)(%w*)", function(first, rest)
+            return first:upper() .. rest:lower()
+        end)
+    end
+    return uppercase and name:upper() or name
+end
 
 function renderer.triggerThemeMorph(theme_id)
     if not theme_id then return end
-    local name = theme_display_names[theme_id] or theme_id:upper()
+    local name = renderer.getThemeDisplayName(theme_id, true)
     if _G.theme_morph_timer and _G.theme_morph_timer > 0 and _G.theme_morph_name then
         _G.theme_morph_prev_name = _G.theme_morph_name
     else
@@ -5220,7 +5221,7 @@ function renderer.drawTutorial(page, skip_transition, static_only)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 32 themes total!"
+                "achievements. 35 themes total!"
             },
 
             tiles = {
@@ -5544,19 +5545,7 @@ end
 -- Main Menu
 -- ============================================================================
 function renderer.getMainMenuOptions()
-    local theme_display_names = {
-        cherry = "Cherry",
-        cherry_blossom = "Cherry",
-        cosmic = "Cosmic",
-        dark = "Dark",
-        steel = "Steel",
-        pastel = "Pastel",
-        forest = "Forest",
-        ocean = "Ocean",
-        sunset = "Sunset",
-        cyberpunk = "Cyberpunk",
-    }
-    local theme_name = theme_display_names[_G.theme] or _G.theme:gsub("_", " "):gsub("^%l", string.upper)
+    local theme_name = renderer.getThemeDisplayName(_G.theme, false)
     local options = {}
     if save.hasLastActiveGame() then
         table.insert(options, "Continue")
@@ -7510,8 +7499,7 @@ function renderer.drawThemeSelect(skip_transition)
 
     -- Subtitle showing Theme Name (index/total)
     local cur_t = type(_G.theme) == "string" and _G.theme or "light"
-    local raw_t = cur_t == "cherry_blossom" and "cherry" or cur_t
-    local theme_disp = raw_t:gsub("_", " "):gsub("(%a)(%w*)", function(first, rest) return first:upper() .. rest:lower() end)
+    local theme_disp = renderer.getThemeDisplayName(cur_t, false)
     local current_idx = 1
     for i, t in ipairs(_G.unlocked_themes) do
         if t == _G.theme or (t == "cherry" and _G.theme == "cherry_blossom") or (t == "cherry_blossom" and _G.theme == "cherry") then current_idx = i break end

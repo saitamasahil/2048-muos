@@ -168,8 +168,17 @@ function love.load(args)
         if _G.achievements.ach_hardcore_2048 then table.insert(_G.unlocked_themes, "spectrum") end
         if _G.achievements.ach_tactician then table.insert(_G.unlocked_themes, "steel") end
         if _G.stats and _G.stats.purchased_items then
-            if _G.stats.purchased_items["theme_cosmic"] then table.insert(_G.unlocked_themes, "cosmic") end
-            if _G.stats.purchased_items["theme_cherry"] or _G.stats.purchased_items["theme_cherry_blossom"] then table.insert(_G.unlocked_themes, "cherry") end
+            for item_id, purchased in pairs(_G.stats.purchased_items) do
+                if purchased and purchased ~= 0 and item_id:match("^theme_") then
+                    local t_name = item_id:gsub("^theme_", "")
+                    if t_name == "cherry_blossom" then t_name = "cherry" end
+                    local found = false
+                    for _, existing in ipairs(_G.unlocked_themes) do
+                        if existing == t_name then found = true break end
+                    end
+                    if not found then table.insert(_G.unlocked_themes, t_name) end
+                end
+            end
         end
     end
     _G.rebuildUnlockedThemes()
@@ -709,8 +718,8 @@ function love.update(dt)
                             renderer.showToast("Purchased " .. sel_item.name .. "!")
                         end
                         if sel_item.id:match("^theme_") then
-                            local t_name = sel_item.id:gsub("theme_", "")
-                            table.insert(_G.unlocked_themes, t_name)
+                            local t_name = sel_item.id:gsub("^theme_", "")
+                            if _G.rebuildUnlockedThemes then _G.rebuildUnlockedThemes() end
                             if renderer and renderer.startThemeTransition then
                                 renderer.startThemeTransition(function()
                                     _G.theme = t_name
