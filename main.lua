@@ -695,7 +695,7 @@ function love.update(dt)
                     local is_already_purchased = _G.stats.purchased_items[sel_item.id] or (sel_item.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"])
                     if is_already_purchased then
                         if sel_item.id == "secret_key" then
-                            renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A")
+                            renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START")
                         else
                             renderer.showToast("Already purchased!")
                         end
@@ -704,7 +704,7 @@ function love.update(dt)
                         _G.stats.purchased_items[sel_item.id] = 1
                         save.saveStats(_G.stats)
                         if sel_item.id == "secret_key" then
-                            renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A")
+                            renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START")
                         else
                             renderer.showToast("Purchased " .. sel_item.name .. "!")
                         end

@@ -8756,7 +8756,7 @@ function renderer.getStoreItems()
         {id="extra_bomb",    cost=600,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
         {id="jukebox",       cost=900,  name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
         {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
-        {id="secret_key",    cost=3000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A" or "Unlock master code to access Secret Menu"},
+        {id="secret_key",    cost=3000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START" or "Unlock master code to access Secret Menu"},
 
         -- Visual FX
         {id="anim_bounce",   cost=500,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
