@@ -178,6 +178,24 @@ end
 function renderer.showToast(msg, custom_duration, is_achievement)
     local duration = custom_duration or TOAST_DURATION
     local ach_id = type(is_achievement) == "string" and is_achievement or nil
+
+    if not is_achievement then
+        -- For non-achievement toasts (like store bulk purchases), update active message & clear pending purchase queue
+        if toast_timer > 0 and not toast_ach_id then
+            toast_message = msg
+            toast_timer = duration
+            toast_max_duration = duration
+            local new_queue = {}
+            for _, item in ipairs(toast_queue) do
+                if item.is_achievement then
+                    table.insert(new_queue, item)
+                end
+            end
+            toast_queue = new_queue
+            return
+        end
+    end
+
     if toast_timer > 0 then
         table.insert(toast_queue, {msg = msg, duration = duration, is_achievement = is_achievement, ach_id = ach_id})
     else
