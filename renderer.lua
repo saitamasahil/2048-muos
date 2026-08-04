@@ -3413,51 +3413,80 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     end
 
     -- Scale for spawn / merge / bomb animation
-    local tileScale = 1
+    local tileScaleX = 1
+    local tileScaleY = 1
     if tile.isBombing then
-        tileScale = 1 - popProgress
+        tileScaleX = 1 - popProgress
+        tileScaleY = 1 - popProgress
     elseif tile.isNew and popProgress < 1 then
-        tileScale = popProgress
+        tileScaleX = popProgress
+        tileScaleY = popProgress
     elseif tile.isMerged and popProgress < 1 then
         if _G.merge_fx == "bounce" then
             local p = popProgress
-            if p < 0.5 then
-                tileScale = 1.0 + 0.35 * math.sin((p / 0.5) * (math.pi / 2))
+            -- Dynamic Squash & Stretch Elastic Jelly Physics:
+            -- Phase 1 (0..0.30): Explosive Vertical Stretch (X=1.12, Y=1.52)
+            -- Phase 2 (0.30..0.65): Impact Horizontal Squash (X=1.40, Y=0.78)
+            -- Phase 3 (0.65..0.85): Rebound Stretch (X=0.92, Y=1.15)
+            -- Phase 4 (0.85..1.00): Smooth Settle (X=1.00, Y=1.00)
+            if p < 0.30 then
+                local t = p / 0.30
+                local s = math.sin(t * math.pi * 0.5)
+                tileScaleX = 1.0 + 0.12 * s
+                tileScaleY = 1.0 + 0.52 * s
+            elseif p < 0.65 then
+                local t = (p - 0.30) / 0.35
+                local s = math.sin(t * math.pi * 0.5)
+                tileScaleX = 1.12 + 0.28 * s
+                tileScaleY = 1.52 - 0.74 * s
+            elseif p < 0.85 then
+                local t = (p - 0.65) / 0.20
+                local s = math.sin(t * math.pi * 0.5)
+                tileScaleX = 1.40 - 0.48 * s
+                tileScaleY = 0.78 + 0.37 * s
             else
-                tileScale = 1.35 - 0.35 * math.sin(((p - 0.5) / 0.5) * (math.pi / 2))
+                local t = (p - 0.88) / 0.12
+                local s = math.sin(t * math.pi * 0.5)
+                tileScaleX = 0.92 + 0.08 * s
+                tileScaleY = 1.15 - 0.15 * s
             end
         elseif _G.merge_fx == "glow" then
             if popProgress < 0.5 then
-                tileScale = 1 + 0.20 * (popProgress / 0.5)
+                tileScaleX = 1 + 0.20 * (popProgress / 0.5)
+                tileScaleY = tileScaleX
             else
-                tileScale = 1.20 - 0.20 * ((popProgress - 0.5) / 0.5)
+                tileScaleX = 1.20 - 0.20 * ((popProgress - 0.5) / 0.5)
+                tileScaleY = tileScaleX
             end
         else
             if popProgress < 0.5 then
-                tileScale = 1 + 0.25 * (popProgress / 0.5)
+                tileScaleX = 1 + 0.25 * (popProgress / 0.5)
+                tileScaleY = tileScaleX
             else
-                tileScale = 1.25 - 0.25 * ((popProgress - 0.5) / 0.5)
+                tileScaleX = 1.25 - 0.25 * ((popProgress - 0.5) / 0.5)
+                tileScaleY = tileScaleX
             end
         end
     end
 
     local cx = tx + cs / 2
     local cy = ty + cs / 2
-    local scaledSize = cs * tileScale
-    local sx = cx - scaledSize / 2
-    local sy = cy - scaledSize / 2
+    local scaledW = cs * tileScaleX
+    local scaledH = cs * tileScaleY
+    local sx = cx - scaledW / 2
+    local sy = cy - scaledH / 2
 
     -- Tile background
     if tile.value == "goose" then
         love.graphics.setColor(0.15, 0.55, 0.75, 1)
-        roundedRect("fill", sx, sy, scaledSize, scaledSize, cr * tileScale)
-        drawGooseTile(cx, cy, cs, scale * tileScale, true)
+        roundedRect("fill", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
+        drawGooseTile(cx, cy, cs, scale * ((tileScaleX + tileScaleY) / 2), true)
         return
     end
 
     local color = getTileColor(tile.value)
     love.graphics.setColor(color)
-    roundedRect("fill", sx, sy, scaledSize, scaledSize, cr * tileScale)
+    roundedRect("fill", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
 
     -- Tile text
     local textColor = getTileTextColor(tile.value)
