@@ -9401,7 +9401,7 @@ function renderer.drawJukebox(selection, skip_transition)
     dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
-    love.graphics.print("Select", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+    love.graphics.print("Select / Seek", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
     local right_x = w - math.floor(20 * scale)
     local curr_sel_is_playing = (curr_idx == selection) and is_actively_playing

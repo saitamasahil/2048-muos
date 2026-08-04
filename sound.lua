@@ -421,6 +421,18 @@ function sound.isBgmPlaying()
     return currentBgmSource ~= nil and currentBgmSource:isPlaying()
 end
 
+function sound.seekBgm(offsetSeconds)
+    if not currentBgmSource then return false end
+    local ok_pos, pos = pcall(function() return currentBgmSource:tell("seconds") end)
+    local ok_dur, dur = pcall(function() return currentBgmSource:getDuration("seconds") end)
+    if ok_pos and ok_dur and type(pos) == "number" and type(dur) == "number" and dur > 0 then
+        local new_pos = math.max(0, math.min(dur - 0.5, pos + offsetSeconds))
+        local ok_seek = pcall(function() currentBgmSource:seek(new_pos, "seconds") end)
+        return ok_seek
+    end
+    return false
+end
+
 function sound.toggleBgmPause()
     if not currentBgmSource then return end
     if currentBgmSource:isPlaying() then

@@ -754,6 +754,16 @@ function love.update(dt)
             elseif event == input.events.DOWN then
                 _G.jukebox_selection = _G.jukebox_selection < total_tracks and (_G.jukebox_selection + 1) or 1
                 sound.playMenuMove()
+            elseif event == input.events.LEFT then
+                if sound.seekBgm then
+                    local seeked = sound.seekBgm(-10)
+                    if seeked then sound.playMenuMove() end
+                end
+            elseif event == input.events.RIGHT then
+                if sound.seekBgm then
+                    local seeked = sound.seekBgm(10)
+                    if seeked then sound.playMenuMove() end
+                end
             elseif event == input.events.CONFIRM then
                 sound.playMenuSelect()
                 local curr_idx = sound.getCurrentBgmIndex and sound.getCurrentBgmIndex() or 0

@@ -79,7 +79,7 @@ This project is inspired by and references the popular open-source [2048 Android
 
 | Button | Action |
 |--|--| 
-| **D-Pad / Left Stick** | Swipe tiles / Navigate Menus |
+| **D-Pad / Left Stick** | Swipe tiles / Navigate Menus / Seek BGM Track (◄ -10s / ► +10s in Jukebox) |
 | **A** | Confirm / Select Item / Confirm Powerup Target |
 | **B** | Undo Move (Classic & Plus Mode) / Cancel Target / Go Back |
 | **X** | Quit to Menu (Pause / Game Over / Victory) |
