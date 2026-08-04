@@ -184,6 +184,11 @@ function Game.new(mode)
         self.swap_used_this_run = 0
     end
 
+    -- Clear lingering menu coin banners on new game
+    if renderer and renderer.clearHeaderLogoMorph then
+        renderer.clearHeaderLogoMorph()
+    end
+
     -- Trigger "First Steps" achievement
     if _G.unlockAchievement and self.mode ~= "huge" then
         _G.unlockAchievement("ach_first_game")

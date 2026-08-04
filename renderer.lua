@@ -136,6 +136,7 @@ local coin_toast_timer = 0
 local coin_toast_max_duration = 1.8
 local coin_toast_text = ""
 local pending_logo_morph_text = nil
+local pending_coin_total = 0
 
 local function spawnToastParticles()
     local w, h = love.graphics.getDimensions()
@@ -1406,15 +1407,31 @@ function renderer.triggerHeaderLogoMorph(text)
     end
     _G.theme_morph_name = text
     _G.theme_morph_timer = 4.0
+    pending_coin_total = 0
 end
 
 function renderer.queueHeaderLogoMorph(text)
     if not text or text == "" then return end
+
+    local coins = text:match("^%+(%d+) COINS$")
+    if coins then
+        pending_coin_total = pending_coin_total + (tonumber(coins) or 0)
+        text = "+" .. tostring(pending_coin_total) .. " COINS"
+    end
+
     if toast_timer > 0 then
         pending_logo_morph_text = text
     else
         renderer.triggerHeaderLogoMorph(text)
     end
+end
+
+function renderer.clearHeaderLogoMorph()
+    _G.theme_morph_name = nil
+    _G.theme_morph_timer = 0
+    _G.theme_morph_prev_name = nil
+    pending_logo_morph_text = nil
+    pending_coin_total = 0
 end
 
 function renderer.triggerCoinFooterToast()
@@ -4745,6 +4762,7 @@ function renderer.updateTransition(dt)
             elseif pending_logo_morph_text then
                 renderer.triggerHeaderLogoMorph(pending_logo_morph_text)
                 pending_logo_morph_text = nil
+                pending_coin_total = 0
             end
         end
     end
