@@ -1,17 +1,17 @@
-# 2048 Plus for muOS
+# 2048 Plus
 
 <p align="center">
   <img src="demo.webp" alt="Gameplay Animation" width="400" />
 </p>
 
-A feature-packed implementation of the classic puzzle game 2048 for muOS, built using the LÖVE framework.
+A feature-packed implementation of the classic puzzle game 2048 for muOS and PortMaster, built using the LÖVE framework.
 
-This project is inspired by and references the popular open-source [2048 Android](https://github.com/tpcstld/2048) game by tpcstld, which itself is based on the original web game by Gabriele Cirulli. While taking visual and design references from the Android version, this codebase was written from the ground up in Lua for the LÖVE engine. In addition to the classic gameplay, I have introduced numerous new features, including multiple game modes, an achievement system, and a wide variety of themes to enhance the overall experience.
+This project is inspired by and references the popular open-source [2048 Android](https://github.com/tpcstld/2048) game by tpcstld, which itself is based on the original web game by Gabriele Cirulli. While taking visual and design references from the Android version, this codebase was written from the ground up in Lua for the LÖVE engine. In addition to the classic gameplay, I have introduced numerous new features, including multiple game modes, store, an achievement system, and a wide variety of themes to enhance the overall experience.
 
 ## Features
 
-- **Game Modes**: Classic, Plus Mode (with Bomb, Swap, and Undo powerups), and 4 Arcade Modes (Time Attack, 5x5 Huge, No Mercy, Goose).
-- **Store & Customization**: Integrated Store and unlockable themes.
+- **Game Modes**: Classic, Plus Mode with Bomb, Swap, and Undo powerups, and 4 Arcade Modes - Time Attack, 5x5 Huge, No Mercy, Goose.
+- **Store & Customization**: Integrated Store and unlockable themes & items.
 - **Achievements & Visuals**: 28 unlockable achievements, embedded lo-fi BGM playlist, procedural SFX, and CRT shader.
 - **Stats & Settings**: Comprehensive player statistics tracking, 100-move undo stack, and customizable gameplay speed and limits.
 - **Quality of Life**: Auto-save & resume after every move, interactive pause menu, instant theme switching.
@@ -20,10 +20,27 @@ This project is inspired by and references the popular open-source [2048 Android
 
 ## Installation on muOS
 
-1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048-muos/releases) page.
+1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048plus/releases) page.
 2. Move the downloaded file to the `/mnt/mmc/MUOS/ARCHIVE` folder on your SD card.
 3. Open Archive Manager on your device and select the file to install.
 4. After installation, you'll find an entry called "2048 Plus" in the Applications section.
+
+## Installation on PortMaster
+
+### Method 1: Direct Install via PortMaster
+1. Launch the PortMaster application on your handheld.
+2. Go to All Ports or Ready to Run and search for `2048 Plus`.
+3. Select Install. The game will automatically download and install into your Ports menu.
+
+### Method 2: Offline Autoinstall
+1. Download the game's `.zip` release package on your PC from [PortMaster](https://portmaster.games/detail.html?name=2048plus).
+2. Place the downloaded `.zip` file directly into the `autoinstall` folder on your SD card for your OS:
+   - **muOS:** `/mnt/mmc/MUOS/PortMaster/autoinstall/`
+   - **ArkOS:** `/roms/tools/PortMaster/autoinstall/`
+   - **AmberELEC / ROCKNIX:** `/roms/ports/PortMaster/autoinstall/`
+   - **Knulli:** `/userdata/system/.local/share/PortMaster/autoinstall/`
+3. Reinsert the SD card into your device and launch the PortMaster app once.
+4. PortMaster will automatically detect the `.zip` file and complete the installation.
 
 ## Visual Showcase
 
@@ -94,12 +111,14 @@ This project is inspired by and references the popular open-source [2048 Android
 
 ## Building from Source
 
-To build the package yourself, you should be on a Linux or macOS environment with `bash` and `zip` installed. 
+To build the package yourself, you should be on a Linux or macOS environment with `bash` and `zip` installed.
+
+*Note: Running `build.sh` will only generate the **muOS package (`.muxapp`)**. PortMaster packages are managed and distributed via the official PortMaster repository.*
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/saitamasahil/2048-muos.git
-   cd 2048-muos
+   git clone https://github.com/saitamasahil/2048plus.git
+   cd 2048plus
    ```
 
 2. Make sure the build script is executable:
