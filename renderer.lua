@@ -8851,19 +8851,19 @@ function renderer.getStoreItems()
 
         -- Plus Mode Powerups
         {id="powerup_undo",  cost=40,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
-        {id="powerup_swap",  cost=40,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
-        {id="powerup_bomb",  cost=40,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
+        {id="powerup_swap",  cost=50,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
+        {id="powerup_bomb",  cost=60,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
 
         -- Permanent Upgrades
-        {id="extra_undo",    cost=300,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
-        {id="extra_swap",    cost=450,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
-        {id="extra_bomb",    cost=600,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
-        {id="jukebox",       cost=900,  name="Jukebox",               desc="Unlock Music Player & Jukebox Control"},
+        {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
+        {id="extra_swap",    cost=350,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
+        {id="extra_bomb",    cost=500,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
+        {id="jukebox",       cost=1000,  name="Jukebox",               desc="Unlock Music Player & Jukebox Control"},
         {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
 
         -- Visual FX
-        {id="anim_bounce",   cost=500,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
-        {id="anim_glow",     cost=650,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
+        {id="anim_bounce",   cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
+        {id="anim_glow",     cost=400,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
 
         -- Themes
         {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
