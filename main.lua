@@ -1273,9 +1273,22 @@ function love.update(dt)
                     end)
                 end
             elseif event == input.events.Y then
-                queueTransitionAction(event, 0.08, function()
-                    game:startShieldTargeting()
-                end)
+                sound.playMenuSelect()
+                local un_themes = _G.unlocked_themes or {"light", "dark"}
+                if #un_themes > 1 then
+                    local cur_idx = 1
+                    for i, t in ipairs(un_themes) do
+                        if t == _G.theme then cur_idx = i; break end
+                    end
+                    local next_idx = (cur_idx % #un_themes) + 1
+                    local next_theme = un_themes[next_idx]
+                    renderer.startThemeTransition(function()
+                        _G.theme = next_theme
+                        if renderer.applyTheme then renderer.applyTheme() end
+                        if save and save.saveTheme then save.saveTheme(_G.theme) end
+                        return function() if game then renderer.draw(game) end end
+                    end)
+                end
             -- Undo
             elseif event == input.events.BACK then
                 if game.mode == "timeattack" or game.mode == "nomercy" or game.mode == "goose" then
@@ -1397,9 +1410,31 @@ function love.update(dt)
                     end)
                 end
             elseif event == input.events.Y then
-                queueTransitionAction(event, 0.08, function()
-                    game:startShieldTargeting()
-                end)
+                sound.playMenuSelect()
+                local un_themes = _G.unlocked_themes or {"light", "dark"}
+                if #un_themes > 1 then
+                    local cur_idx = 1
+                    for i, t in ipairs(un_themes) do
+                        if t == _G.theme then cur_idx = i; break end
+                    end
+                    local next_idx = (cur_idx % #un_themes) + 1
+                    local next_theme = un_themes[next_idx]
+                    renderer.startThemeTransition(function()
+                        _G.theme = next_theme
+                        if renderer.applyTheme then renderer.applyTheme() end
+                        if save and save.saveTheme then save.saveTheme(_G.theme) end
+                        return function() if game then renderer.draw(game) end end
+                    end)
+                end
+            elseif event == input.events.R1 or event == input.events.L1 then
+                local shield_cnt = _G.stats and (_G.stats.second_chance_count or 0) or 0
+                if shield_cnt > 0 then
+                    queueTransitionAction(event, 0.08, function()
+                        game:startShieldTargeting()
+                    end)
+                else
+                    renderer.showToast("No Second Chance Shield! Buy in Store.")
+                end
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()
                     local is_arcade = game and (game.mode == "timeattack" or game.mode == "huge" or game.mode == "nomercy" or game.mode == "goose")

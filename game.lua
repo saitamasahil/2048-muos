@@ -113,9 +113,10 @@ function Game.new(mode)
         self.score = savedState.score or 0
         self.max_score_for_coins = savedState.max_score_for_coins or self.score
         self.state = savedState.state or Game.STATE_PLAYING
+        self.prevShieldState = savedState.prevShieldState
         self.won = savedState.won or false
         if self.state == Game.STATE_PAUSED then
-            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
+            self.state = self.won and Game.STATE_ENDLESS or (self:movesAvailable() and Game.STATE_PLAYING or Game.STATE_LOST)
         end
         self.canUndo = savedState.canUndo or false
         self.grid:restoreState(savedState.gridState)
@@ -227,6 +228,7 @@ function Game:saveGameState()
         score = self.score,
         max_score_for_coins = self.max_score_for_coins,
         state = self.state,
+        prevShieldState = self.prevShieldState,
         won = self.won,
         canUndo = self.canUndo,
         gridState = self.grid:saveState(),
@@ -1217,16 +1219,36 @@ end
 function Game:moveShieldSelection(dir)
     local sound = require("sound")
     if dir == "up" then
-        self.shield_index = self.shield_index - 1
-        if self.shield_index < 1 then self.shield_index = self.size end
+        if self.shield_mode ~= "row" then
+            self.shield_mode = "row"
+        else
+            self.shield_index = self.shield_index - 1
+            if self.shield_index < 1 then self.shield_index = self.size end
+        end
         if sound and sound.playMenuMove then sound.playMenuMove() end
     elseif dir == "down" then
-        self.shield_index = self.shield_index + 1
-        if self.shield_index > self.size then self.shield_index = 1 end
+        if self.shield_mode ~= "row" then
+            self.shield_mode = "row"
+        else
+            self.shield_index = self.shield_index + 1
+            if self.shield_index > self.size then self.shield_index = 1 end
+        end
         if sound and sound.playMenuMove then sound.playMenuMove() end
-    elseif dir == "left" or dir == "right" then
-        self.shield_mode = (self.shield_mode == "row") and "col" or "row"
-        self.shield_index = math.min(self.shield_index, self.size)
+    elseif dir == "left" then
+        if self.shield_mode ~= "col" then
+            self.shield_mode = "col"
+        else
+            self.shield_index = self.shield_index - 1
+            if self.shield_index < 1 then self.shield_index = self.size end
+        end
+        if sound and sound.playMenuMove then sound.playMenuMove() end
+    elseif dir == "right" then
+        if self.shield_mode ~= "col" then
+            self.shield_mode = "col"
+        else
+            self.shield_index = self.shield_index + 1
+            if self.shield_index > self.size then self.shield_index = 1 end
+        end
         if sound and sound.playMenuMove then sound.playMenuMove() end
     end
 end
@@ -1294,7 +1316,9 @@ end
 
 function Game:cancelShieldTargeting()
     if self.state == Game.STATE_TARGETING_SHIELD then
-        self.state = self.prevShieldState or (self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING)
+        local fallback = self.won and Game.STATE_ENDLESS or (self:movesAvailable() and Game.STATE_PLAYING or Game.STATE_LOST)
+        self.state = self.prevShieldState or fallback
+        self:saveGameState()
     end
 end
 

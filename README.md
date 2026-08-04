@@ -84,8 +84,8 @@ This project is inspired by and references the popular open-source [2048 Android
 | **B** | Undo Move (Classic & Plus Mode) / Cancel Target / Go Back |
 | **X** | Quit to Menu (Pause / Game Over / Victory) |
 | **Y** | Cycle Unlocked Themes |
-| **L1** | Activate Swap Powerup (Plus Mode) / Open Jukebox / Skip BGM Track |
-| **R1** | Activate Bomb Powerup (Plus Mode) / Open Store / Skip BGM Track |
+| **L1** | Activate Swap Powerup (Plus Mode) / Activate Shield (Game Over) / Open Jukebox |
+| **R1** | Activate Bomb Powerup (Plus Mode) / Activate Shield (Game Over) / Open Store |
 | **Select** | Show Coin Balance During Gameplay |
 | **Start** | Open Pause Menu / Resume Gameplay |
 | **Menu + Start** | Exit the game safely (force quit) |
