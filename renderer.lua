@@ -3451,13 +3451,11 @@ function renderer.drawTile(tile, slideProgress, popProgress)
                 tileScaleY = 1.15 - 0.15 * s
             end
         elseif _G.merge_fx == "glow" then
-            if popProgress < 0.5 then
-                tileScaleX = 1 + 0.20 * (popProgress / 0.5)
-                tileScaleY = tileScaleX
-            else
-                tileScaleX = 1.20 - 0.20 * ((popProgress - 0.5) / 0.5)
-                tileScaleY = tileScaleX
-            end
+            local p = popProgress
+            -- Smooth radiant pulse curve: smooth expand to 1.28x with ease-out finish
+            local s = math.sin(p * math.pi)
+            tileScaleX = 1.0 + 0.28 * s
+            tileScaleY = 1.0 + 0.28 * s
         else
             if popProgress < 0.5 then
                 tileScaleX = 1 + 0.25 * (popProgress / 0.5)
@@ -3476,6 +3474,22 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local sx = cx - scaledW / 2
     local sy = cy - scaledH / 2
 
+    -- Glow Pulse FX: Draw expanding soft neon bloom halo BEHIND tile (matching rounded rect shape)
+    if tile.isMerged and _G.merge_fx == "glow" and popProgress < 1 then
+        local p = popProgress
+        local glow_alpha = (1.0 - p) * 0.65
+        local tile_col = getTileColor(tile.value)
+        local theme_gold, theme_super = renderer.getThemeHighlightColors()
+
+        -- Multi-layer soft neon box bloom (expanding outward)
+        for layer = 3, 1, -1 do
+            local expand = (layer * 4.5 * scale) * (0.5 + p * 0.8)
+            local layer_alpha = glow_alpha * (0.22 / layer)
+            love.graphics.setColor(tile_col[1], tile_col[2], tile_col[3], layer_alpha)
+            roundedRect("fill", sx - expand, sy - expand, scaledW + expand * 2, scaledH + expand * 2, (cr * ((tileScaleX + tileScaleY) / 2)) + expand * 0.5)
+        end
+    end
+
     -- Tile background
     if tile.value == "goose" then
         love.graphics.setColor(0.15, 0.55, 0.75, 1)
@@ -3487,6 +3501,16 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local color = getTileColor(tile.value)
     love.graphics.setColor(color)
     roundedRect("fill", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
+
+    -- Glow Pulse FX: Surface radiant energy flash on peak pulse
+    if tile.isMerged and _G.merge_fx == "glow" and popProgress < 1 then
+        local p = popProgress
+        if p < 0.6 then
+            local flash_a = math.sin((p / 0.6) * math.pi) * 0.35
+            love.graphics.setColor(1, 1, 1, flash_a)
+            roundedRect("fill", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
+        end
+    end
 
     -- Tile text
     local textColor = getTileTextColor(tile.value)
@@ -3506,25 +3530,6 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local tw = font:getWidth(text)
     local th = font:getHeight()
     love.graphics.print(text, cx - tw / 2, cy - th / 2)
-
-    -- Glow Pulse FX particles & aura on merged tiles
-    if tile.isMerged and _G.merge_fx == "glow" and popProgress < 1 then
-        local aura_r = cs * (0.55 + popProgress * 0.45)
-        local aura_alpha = (1.0 - popProgress) * 0.55
-        love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], aura_alpha)
-        love.graphics.circle("line", cx, cy, aura_r)
-        
-        -- Radial star sparks
-        for spark = 1, 8 do
-            local angle = (spark * math.pi / 4) + popProgress * 0.5
-            local dist = cs * (0.3 + popProgress * 0.6)
-            local sp_x = cx + math.cos(angle) * dist
-            local sp_y = cy + math.sin(angle) * dist
-            local sp_sz = (3.5 * (1.0 - popProgress)) * scale
-            love.graphics.setColor(super_tile_color[1], super_tile_color[2], super_tile_color[3], aura_alpha * 0.9)
-            love.graphics.circle("fill", sp_x, sp_y, math.max(1, sp_sz))
-        end
-    end
 end
 
 -- ============================================================================
