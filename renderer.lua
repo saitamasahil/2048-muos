@@ -8846,9 +8846,9 @@ function renderer.getStoreItems()
         {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
 
         -- Plus Mode Powerups
-        {id="powerup_undo",  cost=80,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
-        {id="powerup_swap",  cost=130,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
-        {id="powerup_bomb",  cost=160,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
+        {id="powerup_undo",  cost=40,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
+        {id="powerup_swap",  cost=40,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
+        {id="powerup_bomb",  cost=40,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
 
         -- Permanent Upgrades
         {id="extra_undo",    cost=300,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
