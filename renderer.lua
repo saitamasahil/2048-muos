@@ -3087,7 +3087,7 @@ function renderer.init()
     -- Load store item icons & achievement icons
     item_icons = {}
     achievement_icons = {}
-    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb" }
+    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key" }
     for _, name in ipairs(item_names) do
         local ok_item, item_img = pcall(love.graphics.newImage, "assets/icon/" .. name .. ".png")
         if not ok_item then
@@ -4832,9 +4832,6 @@ local function drawToast()
         ach_img = achievement_icons and achievement_icons[toast_ach_id]
         if ach_img == nil then
             local ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. toast_ach_id .. ".png")
-            if not ok_ach then
-                ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. toast_ach_id:gsub("^ach_", "") .. ".png")
-            end
             if ok_ach then
                 achievement_icons = achievement_icons or {}
                 achievement_icons[toast_ach_id] = loaded_img
@@ -8082,9 +8079,6 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
                 local custom_ach_img = achievement_icons[ach.id]
                 if custom_ach_img == nil then
                     local ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. ach.id .. ".png")
-                    if not ok_ach then
-                        ok_ach, loaded_img = pcall(love.graphics.newImage, "assets/icon/" .. ach.id:gsub("^ach_", "") .. ".png")
-                    end
                     if ok_ach then
                         achievement_icons[ach.id] = loaded_img
                         custom_ach_img = loaded_img
@@ -8568,7 +8562,7 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
     local key = item_id:gsub("^theme_", ""):gsub("^extra_", ""):gsub("^anim_", ""):gsub("^start_", ""):gsub("^coin_", "")
     if key == "cherry_blossom" then key = "cherry" end
 
-    local img = item_icons and (item_icons[key] or (key == "jukebox" and (item_icons["music"] or item_icons["jukebox"])))
+    local img = item_icons and (item_icons[key] or item_icons[item_id] or (key == "second_chance" and item_icons["shield"]) or (key == "secret_key" and item_icons["key"]))
     if img then
         local size = math.floor(radius * 1.85)
         local sw = size / img:getWidth()
