@@ -1,9 +1,9 @@
 # Changelog
 
 ## [6.0.0]
-- Added In-Game Store: Spend Coins on powerup charges (Undo, Swap, Bomb), 128 Booster, 2x Coin Multiplier, Merge FX, and Themes
+- Added In-Game Store: Spend Coins on Powerup Charges, High-Tile Boosters (128/256/512), Second Chance Shield, 2x Coin Multiplier, Merge FX, and Themes
+- Added 5 New Themes: Cosmic, Cherry, Gold Luxe, Cyber Neon Grid, and Synthwave 80s
 - Added PNG icon support for Store items, Achievements, and Notification Toasts
-- Improved footer alignment and UI layout across all screens
 
 ## [5.0.3]
 - Redesigned Forest theme to a cleaner, minimalist aesthetic with elegant falling leaves and subtle ambient mist
