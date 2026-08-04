@@ -346,6 +346,10 @@ function love.load(args)
         end
     end
 
+    if _G.rebuildUnlockedThemes then
+        _G.rebuildUnlockedThemes()
+    end
+
     local defaults = {
         games_played = 0,
         moves_made = 0,

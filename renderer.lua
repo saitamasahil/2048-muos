@@ -8512,7 +8512,7 @@ function renderer.drawAbout(skip_transition)
     cur_y = cur_y + #lines2 * font_help_label:getHeight() + section_gap
 
     -- Section 3: Music credits
-    local s3 = "Music: AudioCoffee, Ghostrifter, Purrple Cat,\nRoa, Sakura Girl, Tokyo Music Walker via Chosic"
+    local s3 = "Music: AudioCoffee, Ghostrifter Official, Purrple Cat,\nRoa, Sakura Girl, Tokyo Music Walker via Chosic"
     love.graphics.printf(s3, 0, cur_y, w, "center")
     local _, lines3 = font_help_label:getWrap(s3, w)
     cur_y = cur_y + #lines3 * font_help_label:getHeight() + section_gap
