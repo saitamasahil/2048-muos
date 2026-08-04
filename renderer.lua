@@ -8723,6 +8723,14 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
         love.graphics.line(n_x + nr, n_y, n_x + nr, cy - radius * 0.45)
         love.graphics.line(n_x + nr, cy - radius * 0.45, n_x + nr + 6 * scale, cy - radius * 0.35)
+    elseif item_id == "secret_key" then
+        -- Keycard / Key icon
+        local kr = radius * 0.45
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        love.graphics.circle("line", cx - kr * 0.4, cy - kr * 0.4, kr * 0.45)
+        love.graphics.line(cx - kr * 0.1, cy - kr * 0.1, cx + kr * 0.6, cy + kr * 0.6)
+        love.graphics.line(cx + kr * 0.4, cy + kr * 0.4, cx + kr * 0.6, cy + kr * 0.2)
+        love.graphics.line(cx + kr * 0.6, cy + kr * 0.6, cx + kr * 0.8, cy + kr * 0.4)
     else
         love.graphics.circle("line", cx, cy, radius * 0.4)
     end
@@ -8754,6 +8762,7 @@ function renderer.getStoreItems()
         {id="extra_bomb",    cost=600,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
         {id="jukebox",       cost=900,  name="BGM Jukebox",           desc="Unlock Music Player & Jukebox Control"},
         {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
+        {id="secret_key",    cost=3000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A" or "Unlock master code to access Secret Menu"},
 
         -- Visual FX
         {id="anim_bounce",   cost=500,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},

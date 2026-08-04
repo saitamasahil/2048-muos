@@ -694,12 +694,20 @@ function love.update(dt)
 
                     local is_already_purchased = _G.stats.purchased_items[sel_item.id] or (sel_item.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"])
                     if is_already_purchased then
-                        renderer.showToast("Already purchased!")
+                        if sel_item.id == "secret_key" then
+                            renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A")
+                        else
+                            renderer.showToast("Already purchased!")
+                        end
                     elseif (_G.stats.coins or 0) >= sel_item.cost then
                         _G.stats.coins = _G.stats.coins - sel_item.cost
                         _G.stats.purchased_items[sel_item.id] = 1
                         save.saveStats(_G.stats)
-                        renderer.showToast("Purchased " .. sel_item.name .. "!")
+                        if sel_item.id == "secret_key" then
+                            renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A")
+                        else
+                            renderer.showToast("Purchased " .. sel_item.name .. "!")
+                        end
                         if sel_item.id:match("^theme_") then
                             local t_name = sel_item.id:gsub("theme_", "")
                             table.insert(_G.unlocked_themes, t_name)
