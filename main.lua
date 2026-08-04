@@ -866,7 +866,8 @@ function love.update(dt)
                     _G.appState = "MENU"
                 end)
             elseif event == input.events.RIGHT then
-                if cur_page < 8 then
+                local max_p = renderer.getTutorialPageCount and renderer.getTutorialPageCount() or 11
+                if cur_page < max_p then
                     sound.playMenuMove()
                     if _G.screen_transitions then
                         renderer.captureOldTutorialSlide(cur_page)

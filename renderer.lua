@@ -5283,6 +5283,51 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             }
         },
         {
+            title = "STORE & COINS",
+            lines = {
+                "Visit the Store to buy items.",
+                "",
+                "How to Earn Coins:",
+                " • Merge high-tier tiles",
+                " • Complete Achievements"
+            },
+            tiles = {
+                {0, 0, 0, 0},
+                {0, 128, 256, 0},
+                {0, 512, 1024, 0},
+                {0, 0, 0, 0}
+            },
+            highlight = {
+                {col = 2, row = 2, r = 1, g = 0.85, b = 0.2},
+                {col = 3, row = 2, r = 1, g = 0.85, b = 0.2},
+                {col = 2, row = 3, r = 1, g = 0.85, b = 0.2},
+                {col = 3, row = 3, r = 1, g = 0.85, b = 0.2}
+            }
+        },
+        {
+            title = "SECOND CHANCE SHIELD",
+            lines = {
+                "Got a Game Over? Use a Shield to continue!",
+                "Press R1 on the Game Over screen to use it.",
+                "",
+                "Controls:",
+                " • Up/Down D-Pad: Select Row to clear",
+                " • Left/Right D-Pad: Select Column to clear"
+            },
+            tiles = {
+                {2, 4, 8, 16},
+                {32, 64, 128, 256},
+                {2, 4, 8, 16},
+                {32, 64, 128, 256}
+            },
+            highlight = {
+                {col = 1, row = 3, r = 0.3, g = 0.8, b = 1},
+                {col = 2, row = 3, r = 0.3, g = 0.8, b = 1},
+                {col = 3, row = 3, r = 0.3, g = 0.8, b = 1},
+                {col = 4, row = 3, r = 0.3, g = 0.8, b = 1}
+            }
+        },
+        {
             title = "THEMES  [Y]",
             lines = {
                 "Press Y anytime to change theme!",
