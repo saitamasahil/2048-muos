@@ -29,7 +29,7 @@ input.events = {
     UP     = "up",
     DOWN   = "down",
     CONFIRM = "return",               -- A button (Enter key)
-    BACK   = use_fallback and "escape" or "backspace", -- B button
+    BACK   = "backspace",             -- B button
     SELECT = use_fallback and "tab" or "rshift",    -- Select button
     START  = use_fallback and "p" or "space",  -- Start button (P key or Space)
     MENU   = "escape",                -- Physical Menu/Function button
@@ -127,12 +127,11 @@ function love.keypressed(key)
         end
     end
 
-    -- Support both Backspace and Escape (and 'b') for B / BACK on PC & Web
+    -- Support Backspace (and 'b') for B / BACK on PC & Web
     if not triggered and use_fallback then
-        if key == "backspace" or key == "escape" or key == "b" then
+        if key == "backspace" or key == "b" then
             local k = input.events.BACK
             input.state["backspace"] = true
-            input.state["escape"] = true
             input.state["b"] = true
             input.state[k] = true
             emit(k, false)
@@ -178,10 +177,9 @@ function love.keyreleased(key)
     end
 
     if use_fallback then
-        if key == "backspace" or key == "escape" or key == "b" then
+        if key == "backspace" or key == "b" then
             local k = input.events.BACK
             input.state["backspace"] = false
-            input.state["escape"] = false
             input.state["b"] = false
             input.state[k] = false
         end
