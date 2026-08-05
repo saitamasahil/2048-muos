@@ -8524,8 +8524,9 @@ function renderer.drawAbout(skip_transition)
 
     local w, h = love.graphics.getDimensions()
     local scale = _G.scale
-    local padding = math.floor(12 * scale)
+    local padding = math.floor(10 * scale)
 
+    -- Fixed Header (Title + Version)
     love.graphics.setFont(font_title)
     love.graphics.setColor(ui_text)
     local title = "About 2048 Plus"
@@ -8534,16 +8535,31 @@ function renderer.drawAbout(skip_transition)
 
     love.graphics.setFont(font_label)
     love.graphics.setColor(ui_text)
-    local version_text = _G.version or "v2.0.1"
+    local version_text = _G.version or "v6.0.0"
     local vw = font_label:getWidth(version_text)
-    love.graphics.print(version_text, (w - vw) / 2, padding + font_title:getHeight() - math.floor(2 * scale))
+    local header_title_h = font_title:getHeight()
+    local header_ver_h = font_label:getHeight()
+    love.graphics.print(version_text, (w - vw) / 2, padding + header_title_h - math.floor(2 * scale))
 
-    local start_y = padding + font_title:getHeight() + font_label:getHeight() - math.floor(4 * scale)
+    local header_h = padding + header_title_h + header_ver_h
+
+    -- Fixed Footer position
+    local badge_h = math.floor(28 * scale)
+    local footer_y = h - badge_h - math.floor(7 * scale)
+
+    -- Scrollable Viewport bounds
+    local viewport_top = header_h + math.floor(2 * scale)
+    local viewport_h = footer_y - viewport_top - math.floor(4 * scale)
+
+    -- Scissor clip viewport
+    love.graphics.setScissor(0, viewport_top, w, viewport_h)
+
+    local scroll = _G.about_scroll or 0
+    local cur_y = viewport_top - scroll
+    local section_gap = math.floor(8 * scale)
+
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
-
-    local section_gap = math.floor(8 * scale)
-    local cur_y = start_y
 
     -- Section 1: Developer
     local s1 = "Developed by saitamasahil\nA feature-packed implementation of the classic 2048 puzzle game"
@@ -8563,10 +8579,19 @@ function renderer.drawAbout(skip_transition)
     local _, lines3 = font_help_label:getWrap(s3, w)
     cur_y = cur_y + #lines3 * font_help_label:getHeight() + section_gap
 
-    -- Section 4: Support Callout
+    -- Section 4: Special Thanks (Playtesters)
+    local s_thanks = "Special Thanks to Egggdoggo & d98jay\nfor early feedback, playtesting & incredible support!"
+    love.graphics.printf(s_thanks, 0, cur_y, w, "center")
+    local _, lines_t = font_help_label:getWrap(s_thanks, w)
+    cur_y = cur_y + #lines_t * font_help_label:getHeight() + section_gap
+
+    -- Section 5: Support Callout
     local s4 = "If you enjoy the game, consider supporting!"
     love.graphics.printf(s4, 0, cur_y, w, "center")
+    local _, lines4 = font_help_label:getWrap(s4, w)
+    cur_y = cur_y + #lines4 * font_help_label:getHeight() + math.floor(20 * scale)
 
+    -- Section 6: Ko-fi QR Image
     if not qr_image then
         local success, img = pcall(love.graphics.newImage, "assets/ui/kofi_qr.png")
         if success then qr_image = img end
@@ -8574,40 +8599,56 @@ function renderer.drawAbout(skip_transition)
 
     if qr_image then
         local iw, ih = qr_image:getDimensions()
-        local qr_size = math.floor(100 * scale)
+        local qr_size = math.floor(130 * scale)
         local qr_scale = qr_size / math.max(iw, ih)
         local scaled_w = iw * qr_scale
         local scaled_h = ih * qr_scale
-
-        -- Calculate position relative to the footer badge (bottom-up layout)
-        local badge_h = math.floor(28 * scale)
-        local badge_y = h - badge_h - math.floor(7 * scale)
-        local caption_y = badge_y - font_help_label:getHeight() - math.floor(4 * scale)
-        local qr_y = caption_y - scaled_h - math.floor(6 * scale)
         local qr_x = (w - scaled_w) / 2
 
         -- Draw white background behind QR
-        local bg_pad = math.floor(4 * scale)
+        local bg_pad = math.floor(6 * scale)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.rectangle("fill", qr_x - bg_pad, qr_y - bg_pad, scaled_w + bg_pad * 2, scaled_h + bg_pad * 2, math.floor(4 * scale), math.floor(4 * scale))
+        love.graphics.rectangle("fill", qr_x - bg_pad, cur_y - bg_pad, scaled_w + bg_pad * 2, scaled_h + bg_pad * 2, math.floor(4 * scale), math.floor(4 * scale))
 
         -- Draw QR
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(qr_image, qr_x, qr_y, 0, qr_scale, qr_scale)
+        love.graphics.draw(qr_image, qr_x, cur_y, 0, qr_scale, qr_scale)
+        cur_y = cur_y + scaled_h + math.floor(6 * scale)
 
         -- Caption
         love.graphics.setFont(font_help_label)
         love.graphics.setColor(ui_text)
-        love.graphics.printf("Scan to support on Ko-fi", 0, caption_y, w, "center")
+        love.graphics.printf("Scan to support on Ko-fi", 0, cur_y, w, "center")
+        cur_y = cur_y + font_help_label:getHeight() + section_gap
     end
 
-    -- Footer bar for About
-    local badge_h = math.floor(28 * scale)
-    local badge_y = h - badge_h - math.floor(7 * scale)
+    -- Calculate total content height & max scroll
+    local total_content_height = (cur_y + scroll) - viewport_top
+    _G.about_max_scroll = math.max(0, total_content_height - viewport_h)
+
+    -- Reset Scissor
+    love.graphics.setScissor()
+
+    -- Scrollbar indicator if scrollable
+    if _G.about_max_scroll > 0 then
+        local bar_w = math.floor(3 * scale)
+        local bar_x = w - bar_w - math.floor(5 * scale)
+        local bar_ratio = viewport_h / total_content_height
+        local thumb_h = math.max(math.floor(16 * scale), math.floor(viewport_h * bar_ratio))
+        local thumb_y = viewport_top + (scroll / _G.about_max_scroll) * (viewport_h - thumb_h)
+
+        -- Track background
+        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.1)
+        love.graphics.rectangle("fill", bar_x, viewport_top, bar_w, viewport_h, bar_w / 2, bar_w / 2)
+        -- Thumb
+        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.4)
+        love.graphics.rectangle("fill", bar_x, thumb_y, bar_w, thumb_h, bar_w / 2, bar_w / 2)
+    end
+
+    -- Fixed Footer bar for About
     local item_gap = math.floor(10 * scale)
     local label_gap = math.floor(4 * scale)
 
-    -- Right side actions: B (Back), Y (Theme)
     if love.system.getOS() ~= "Web" then
         local right_x = w - math.floor(20 * scale)
         local actions = {
@@ -8620,13 +8661,13 @@ function renderer.drawAbout(skip_transition)
             local lbl_w = font_help_label:getWidth(action.label)
             right_x = right_x - lbl_w
             love.graphics.setColor(ui_text)
-            love.graphics.print(action.label, right_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+            love.graphics.print(action.label, right_x, footer_y + (badge_h - font_help_label:getHeight()) / 2)
 
             -- Badge
             right_x = right_x - label_gap
             local key_w = math.max(math.floor(28 * scale), font_help_key:getWidth(action.key) + math.floor(12 * scale))
             right_x = right_x - key_w
-            drawKeyBadge(action.key, right_x, badge_y, key_w, badge_h)
+            drawKeyBadge(action.key, right_x, footer_y, key_w, badge_h)
 
             right_x = right_x - item_gap
         end

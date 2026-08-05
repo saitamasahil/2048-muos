@@ -480,6 +480,21 @@ function love.update(dt)
         end
     end
 
+    -- Smooth scroll interpolation for About screen
+    if _G.about_scroll == nil then _G.about_scroll = 0 end
+    if _G.about_scroll_target == nil then _G.about_scroll_target = 0 end
+    if not _G.screen_transitions then
+        _G.about_scroll = _G.about_scroll_target
+    else
+        if _G.about_scroll ~= _G.about_scroll_target then
+            local diff = _G.about_scroll_target - _G.about_scroll
+            _G.about_scroll = _G.about_scroll + diff * 15 * dt
+            if math.abs(_G.about_scroll - _G.about_scroll_target) < 0.01 then
+                _G.about_scroll = _G.about_scroll_target
+            end
+        end
+    end
+
     -- Don't process game input during splash
     if not splash.finished then
         -- Allow skipping splash with any button
@@ -643,6 +658,8 @@ function love.update(dt)
                         _G.settings_page = "main"
                     elseif sel == "About" then
                         _G.appState = "ABOUT"
+                        _G.about_scroll = 0
+                        _G.about_scroll_target = 0
                     elseif sel == "Quit" or sel == "Exit the Game" then
                         love.event.quit()
                     end
@@ -891,7 +908,19 @@ function love.update(dt)
             end
             return
         elseif _G.appState == "ABOUT" then
-            if event == input.events.BACK or event == input.events.CONFIRM then
+            local max_scroll = _G.about_max_scroll or 0
+            local step = math.floor(35 * (_G.scale or 1))
+            if event == input.events.UP then
+                if (_G.about_scroll_target or 0) > 0 then
+                    _G.about_scroll_target = math.max(0, (_G.about_scroll_target or 0) - step)
+                    sound.playMenuMove()
+                end
+            elseif event == input.events.DOWN then
+                if (_G.about_scroll_target or 0) < max_scroll then
+                    _G.about_scroll_target = math.min(max_scroll, (_G.about_scroll_target or 0) + step)
+                    sound.playMenuMove()
+                end
+            elseif event == input.events.BACK or event == input.events.CONFIRM then
                 if event == input.events.BACK then
                     sound.playMenuBack()
                 else
