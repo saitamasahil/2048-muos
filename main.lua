@@ -1428,13 +1428,17 @@ function love.update(dt)
                     end)
                 end
             elseif event == input.events.R1 or event == input.events.L1 then
-                local shield_cnt = _G.stats and (_G.stats.second_chance_count or 0) or 0
-                if shield_cnt > 0 then
-                    queueTransitionAction(event, 0.08, function()
-                        game:startShieldTargeting()
-                    end)
+                if game and (game.timesUp or (game.mode == "timeattack" and game.timeLeft and game.timeLeft <= 0)) then
+                    renderer.showToast("Cannot use Shield when time is up!")
                 else
-                    renderer.showToast("No Second Chance Shield! Buy in Store.")
+                    local shield_cnt = _G.stats and (_G.stats.second_chance_count or 0) or 0
+                    if shield_cnt > 0 then
+                        queueTransitionAction(event, 0.08, function()
+                            game:startShieldTargeting()
+                        end)
+                    else
+                        renderer.showToast("No Second Chance Shield! Buy in Store.")
+                    end
                 end
             elseif event == input.events.X then
                 queueTransitionAction(event, 0.08, function()

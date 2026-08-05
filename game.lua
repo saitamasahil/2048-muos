@@ -1201,6 +1201,13 @@ function Game:isAnimating()
 end
 
 function Game:startShieldTargeting()
+    if self.timesUp or (self.mode == "timeattack" and self.timeLeft and self.timeLeft <= 0) then
+        local renderer = require("renderer")
+        if renderer and renderer.showToast then
+            renderer.showToast("Cannot use Shield when time is up!")
+        end
+        return
+    end
     local count = _G.stats and (_G.stats.second_chance_count or 0) or 0
     if count <= 0 then
         local sound = require("sound")

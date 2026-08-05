@@ -4410,7 +4410,7 @@ function renderer.drawHelp(game)
             table.insert(actions, 1, {key = "A", label = "New Game"})
             table.insert(actions, 1, {key = "X", label = "Quit"})
             local shield_cnt = _G.stats and (_G.stats.second_chance_count or 0) or 0
-            if shield_cnt > 0 then
+            if shield_cnt > 0 and not game.timesUp and not (game.mode == "timeattack" and game.timeLeft and game.timeLeft <= 0) then
                 table.insert(actions, 1, {key = "R1", label = "Shield:" .. shield_cnt})
             end
             table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
