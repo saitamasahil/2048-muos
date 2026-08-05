@@ -3221,7 +3221,7 @@ function renderer.init()
     -- Load store item icons & achievement icons
     item_icons = {}
     achievement_icons = {}
-    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key", "skin_wood", "skin_glass", "skin_matrix", "wood", "glass", "matrix" }
+    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key", "skin_wood", "skin_glass", "skin_matrix", "wood", "glass", "matrix", "skin_marble", "skin_bamboo", "marble", "bamboo" }
     for _, name in ipairs(item_names) do
         local ok_item, item_img = pcall(love.graphics.newImage, "assets/icon/" .. name .. ".png")
         if not ok_item then
@@ -3487,6 +3487,75 @@ function renderer.drawBoard(game)
         love.graphics.setScissor()
         love.graphics.pop()
 
+    elseif skin == "marble" then
+        -- Pristine Polished Carrara Marble Board
+        love.graphics.setColor(0.95, 0.94, 0.92, 1.0)
+        roundedRect("fill", bx, by, bs, bs, cr * 2)
+
+        -- Soft cloud-like marble haze (no sharp lines or cracks)
+        love.graphics.setColor(0.88, 0.86, 0.82, 0.35)
+        love.graphics.circle("fill", bx + bs * 0.3, by + bs * 0.35, bs * 0.35)
+        love.graphics.circle("fill", bx + bs * 0.7, by + bs * 0.65, bs * 0.40)
+
+        -- Polished silver trim outline
+        love.graphics.setColor(0.80, 0.82, 0.85, 0.95)
+        love.graphics.setLineWidth(math.max(2, math.floor(3 * _G.scale)))
+        roundedRect("line", bx, by, bs, bs, cr * 2)
+
+    elseif skin == "bamboo" then
+        -- Natural Asymmetric Japanese Bamboo Board
+        love.graphics.setColor(0.34, 0.46, 0.24, 1.0)
+        roundedRect("fill", bx, by, bs, bs, cr * 2)
+
+        -- Organic bamboo stalk slats with varying widths and staggered node joints
+        local scale = _G.scale or 1
+        local num_slats = 9
+        local slat_step = (bs - 8 * scale) / num_slats
+        local node_offsets = { 0.15, 0.45, 0.25, 0.70, 0.35, 0.60, 0.20, 0.80, 0.40 }
+
+        for i = 1, num_slats do
+            local sx = bx + 4 * scale + (i - 1) * slat_step
+            local sw = slat_step
+            
+            -- Slight color variation per stalk for natural organic look
+            local shade = (i % 3 == 0) and 0.05 or ((i % 2 == 0) and -0.04 or 0.0)
+            love.graphics.setColor(0.34 + shade, 0.46 + shade, 0.24 + shade * 0.5, 0.95)
+            love.graphics.rectangle("fill", sx, by + 4 * scale, sw - 1, bs - 8 * scale)
+
+            -- Subtle vertical fiber line inside stalk
+            love.graphics.setColor(0.24, 0.34, 0.16, 0.35)
+            love.graphics.setLineWidth(math.max(1, math.floor(1 * scale)))
+            love.graphics.line(sx + sw * 0.5, by + 4 * scale, sx + sw * 0.5, by + bs - 4 * scale)
+
+            -- Staggered Node Joints (nature is asymmetric!)
+            local node_ratio = node_offsets[(i - 1) % #node_offsets + 1]
+            local ny1 = by + bs * node_ratio
+            local ny2 = by + bs * ((node_ratio + 0.45) % 0.85 + 0.1)
+
+            -- Node ring 1
+            love.graphics.setColor(0.50 + shade, 0.65 + shade, 0.32, 0.85)
+            love.graphics.setLineWidth(math.max(2, math.floor(2.5 * scale)))
+            love.graphics.line(sx + 1, ny1, sx + sw - 1, ny1)
+            love.graphics.setColor(0.16, 0.24, 0.10, 0.85)
+            love.graphics.line(sx + 1, ny1 + 1.5 * scale, sx + sw - 1, ny1 + 1.5 * scale)
+
+            -- Node ring 2
+            love.graphics.setColor(0.50 + shade, 0.65 + shade, 0.32, 0.85)
+            love.graphics.line(sx + 1, ny2, sx + sw - 1, ny2)
+            love.graphics.setColor(0.16, 0.24, 0.10, 0.85)
+            love.graphics.line(sx + 1, ny2 + 1.5 * scale, sx + sw - 1, ny2 + 1.5 * scale)
+
+            -- Stalk divider groove
+            love.graphics.setColor(0.16, 0.24, 0.10, 0.75)
+            love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+            love.graphics.line(sx + sw, by + 4 * scale, sx + sw, by + bs - 4 * scale)
+        end
+
+        -- Dark organic mossy bamboo frame
+        love.graphics.setColor(0.14, 0.22, 0.08, 0.95)
+        love.graphics.setLineWidth(math.max(2, math.floor(3 * _G.scale)))
+        roundedRect("line", bx, by, bs, bs, cr * 2)
+
     else
         -- Default theme board
         love.graphics.setColor(board_color)
@@ -3506,6 +3575,10 @@ function renderer.drawBoard(game)
         end
     elseif skin == "matrix" then
         love.graphics.setColor(0.04, 0.14, 0.06, 0.9)
+    elseif skin == "marble" then
+        love.graphics.setColor(0.82, 0.80, 0.76, 0.95)
+    elseif skin == "bamboo" then
+        love.graphics.setColor(0.16, 0.24, 0.10, 0.92)
     elseif _G.theme == "matrix" then
         love.graphics.setColor(board_color)
     else
@@ -3537,6 +3610,16 @@ function renderer.drawBoard(game)
                 love.graphics.setLineWidth(math.max(1, math.floor(1.5 * _G.scale)))
                 roundedRect("line", cx, cy, cs, cs, cr)
                 love.graphics.setColor(0.04, 0.14, 0.06, 0.9)
+            elseif skin == "marble" then
+                love.graphics.setColor(0.72, 0.70, 0.66, 0.45)
+                love.graphics.setLineWidth(math.max(1, math.floor(1.2 * _G.scale)))
+                roundedRect("line", cx, cy, cs, cs, cr)
+                love.graphics.setColor(0.82, 0.80, 0.76, 0.95)
+            elseif skin == "bamboo" then
+                love.graphics.setColor(0.42, 0.58, 0.28, 0.55)
+                love.graphics.setLineWidth(math.max(1, math.floor(1.5 * _G.scale)))
+                roundedRect("line", cx, cy, cs, cs, cr)
+                love.graphics.setColor(0.16, 0.24, 0.10, 0.92)
             end
         end
     end
@@ -9152,6 +9235,20 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         love.graphics.line(cx - sr * 0.4, cy - sr * 0.5, cx - sr * 0.4, cy + sr * 0.5)
         love.graphics.line(cx, cy - sr * 0.2, cx, cy + sr * 0.6)
         love.graphics.line(cx + sr * 0.4, cy - sr * 0.6, cx + sr * 0.4, cy + sr * 0.3)
+    elseif item_id == "skin_marble" then
+        -- Marble Grid Icon
+        local sr = radius * 0.45
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        roundedRect("line", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.2)
+        love.graphics.line(cx - sr * 0.5, cy - sr * 0.3, cx + sr * 0.5, cy + sr * 0.4)
+    elseif item_id == "skin_bamboo" then
+        -- Bamboo Grid Icon
+        local sr = radius * 0.45
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        love.graphics.setColor(0.24, 0.35, 0.18, 0.9)
+        roundedRect("line", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.2)
+        love.graphics.line(cx - sr * 0.3, cy - sr, cx - sr * 0.3, cy + sr)
+        love.graphics.line(cx + sr * 0.3, cy - sr, cx + sr * 0.3, cy + sr)
     else
         love.graphics.circle("line", cx, cy, radius * 0.4)
     end
@@ -9190,7 +9287,9 @@ function renderer.getStoreItems()
 
         -- Board Grid Skins & Customization
         {id="skin_wood",     cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
+        {id="skin_bamboo",   cost=150,  name="Bamboo Board",         desc="Natural woven Japanese bamboo grid texture"},
         {id="skin_glass",    cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid with glowing borders"},
+        {id="skin_marble",   cost=200,  name="Marble Board",         desc="Polished white marble texture with subtle veins"},
         {id="skin_matrix",   cost=250,  name="Matrix Board",         desc="Animated digital green code lines running down board"},
 
         -- Themes
