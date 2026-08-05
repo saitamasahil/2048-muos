@@ -4423,18 +4423,20 @@ function renderer.drawHelp(game)
     local item_gap = math.floor(8 * scale)
     local label_gap = math.floor(4 * scale)
 
-    -- --- D-PAD section (left side) ---
-    local dpad_x = bar_x + math.floor(10 * scale)
-    local dpad_size = math.floor(24 * scale)
+    if game.state ~= Game.STATE_LOST and game.state ~= Game.STATE_WON then
+        -- --- D-PAD section (left side) ---
+        local dpad_x = bar_x + math.floor(10 * scale)
+        local dpad_size = math.floor(24 * scale)
 
-    -- Draw unified vector D-pad icon
-    drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
-    dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+        -- Draw unified vector D-pad icon
+        drawKeyBadge("DPAD", dpad_x, badge_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+        dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
 
-    -- D-pad Label
-    love.graphics.setFont(font_help_label)
-    love.graphics.setColor(ui_text)
-    love.graphics.print("Move", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+        -- D-pad Label
+        love.graphics.setFont(font_help_label)
+        love.graphics.setColor(ui_text)
+        love.graphics.print("Move", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
+    end
 
     -- Action buttons (right side) ---
     local right_x = bar_x + bar_w - math.floor(10 * scale)
