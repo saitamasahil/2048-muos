@@ -289,6 +289,9 @@ function love.load(args)
                 if _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["coin_multiplier"] then
                     coin_reward = coin_reward * 2
                 end
+                if game and game.coin_rush_active then
+                    coin_reward = coin_reward * 2
+                end
                 _G.stats = _G.stats or {}
                 _G.stats.coins = (_G.stats.coins or 0) + coin_reward
                 _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
