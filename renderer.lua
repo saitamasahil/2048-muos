@@ -3221,7 +3221,7 @@ function renderer.init()
     -- Load store item icons & achievement icons
     item_icons = {}
     achievement_icons = {}
-    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key", "skin_wood", "skin_glass", "skin_matrix", "wood", "glass", "matrix", "skin_marble", "skin_bamboo", "marble", "bamboo" }
+    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key", "skin_wood", "skin_glass", "skin_matrix", "wood", "glass", "matrix", "skin_marble", "skin_bamboo", "marble", "bamboo", "coin_rush", "ticket" }
     for _, name in ipairs(item_names) do
         local ok_item, item_img = pcall(love.graphics.newImage, "assets/icon/" .. name .. ".png")
         if not ok_item then
@@ -4049,7 +4049,12 @@ function renderer.drawScores(game)
     love.graphics.setColor(score_value)
     love.graphics.printf(tostring(game.score), score_x, score_y, box_w, "center")
 
-    -- (Coin Pill moved cleanly to Left Footer Bar to avoid header/score box collision)
+    -- 2x COIN RUSH active indicator badge
+    if game and game.coin_rush_active then
+        love.graphics.setFont(font_help_label or love.graphics.getFont())
+        love.graphics.setColor(0.95, 0.85, 0.15, 0.95)
+        love.graphics.printf("★ 2x COIN RUSH ★", score_x, box_y - math.floor(14 * scale), box_w, "center")
+    end
 
     if game.mode == "timeattack" and game.timeLeft ~= nil then
         -- TIMER box (replaces BEST in Time Attack)
@@ -9249,6 +9254,15 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         roundedRect("line", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.2)
         love.graphics.line(cx - sr * 0.3, cy - sr, cx - sr * 0.3, cy + sr)
         love.graphics.line(cx + sr * 0.3, cy - sr, cx + sr * 0.3, cy + sr)
+    elseif item_id == "coin_rush" then
+        -- Golden Ticket Icon
+        local tw = radius * 0.85
+        local th = radius * 0.55
+        love.graphics.setColor(0.95, 0.82, 0.15, 0.95)
+        roundedRect("fill", cx - tw/2, cy - th/2, tw, th, 3 * scale)
+        love.graphics.setColor(0.20, 0.15, 0.05, 0.95)
+        love.graphics.setFont(font_help_label or love.graphics.getFont())
+        love.graphics.print("2x", cx - 7 * scale, cy - 6 * scale)
     else
         love.graphics.circle("line", cx, cy, radius * 0.4)
     end
@@ -9258,12 +9272,14 @@ function renderer.getStoreItems()
     local booster_128 = _G.stats and (_G.stats.start_128_count or 0) or 0
     local booster_256 = _G.stats and (_G.stats.start_256_count or 0) or 0
     local booster_512 = _G.stats and (_G.stats.start_512_count or 0) or 0
+    local coin_rush_count = _G.stats and (_G.stats.coin_rush_count or 0) or 0
     local shield_count = _G.stats and (_G.stats.second_chance_count or 0) or 0
     local pu_undo  = _G.stats and (_G.stats.powerup_undo_count  or 0) or 0
     local pu_swap  = _G.stats and (_G.stats.powerup_swap_count  or 0) or 0
     local pu_bomb  = _G.stats and (_G.stats.powerup_bomb_count  or 0) or 0
     return {
         -- Boosters & Shields
+        {id="coin_rush",     cost=100,  name="Coin Rush Ticket",     desc="Doubles all Coins earned in your next game  (x" .. coin_rush_count .. " owned)", consumable=true, ckey="coin_rush_count"},
         {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
         {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
         {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},

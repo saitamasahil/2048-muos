@@ -178,6 +178,13 @@ function Game.new(mode)
             else
                 _G.stats.arcade_games = (_G.stats.arcade_games or 0) + 1
             end
+
+            -- Consume Coin Rush Ticket if owned
+            local cr_count = _G.stats.coin_rush_count or 0
+            if cr_count > 0 then
+                _G.stats.coin_rush_count = cr_count - 1
+                self.coin_rush_active = true
+            end
             save.saveStats(_G.stats)
         end
 
@@ -458,6 +465,9 @@ function Game:move(direction)
                         local coins_to_add = math.floor(self.score / 200) - math.floor(self.max_score_for_coins / 200)
                         if coins_to_add > 0 and _G.stats then
                             if _G.stats.purchased_items and _G.stats.purchased_items["coin_multiplier"] then
+                                coins_to_add = coins_to_add * 2
+                            end
+                            if self.coin_rush_active then
                                 coins_to_add = coins_to_add * 2
                             end
                             _G.stats.coins = (_G.stats.coins or 0) + coins_to_add
