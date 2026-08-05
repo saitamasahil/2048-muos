@@ -124,6 +124,30 @@ function save.loadMergeFX()
     return "default"
 end
 
+local BOARD_SKIN_FILE = "board_skin.dat"
+
+function save.saveBoardSkin(skin)
+    local path = getFilePath(BOARD_SKIN_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(skin or "default")
+        file:close()
+    end
+end
+
+function save.loadBoardSkin()
+    local path = getFilePath(BOARD_SKIN_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "default"
+end
+
 function save.loadTextSize()
     local path = getFilePath(TEXT_SIZE_FILE)
     local file = io.open(path, "r")

@@ -328,6 +328,7 @@ function love.load(args)
     _G.vibration = save.loadVibration()
     _G.crt_filter = save.loadCrtFilter()
     _G.merge_fx = save.loadMergeFX() or "default"
+    _G.board_skin = save.loadBoardSkin() or "default"
 
     -- Load and initialize global stats
     _G.stats = save.loadStats() or {}
@@ -739,6 +740,17 @@ function love.update(dt)
                     if is_already_purchased then
                         if sel_item.id == "secret_key" then
                             renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START")
+                        elseif sel_item.id:match("^skin_") then
+                            local s_name = sel_item.id:gsub("^skin_", "")
+                            if _G.board_skin == s_name then
+                                _G.board_skin = "default"
+                                save.saveBoardSkin("default")
+                                renderer.showToast("Unequipped " .. sel_item.name)
+                            else
+                                _G.board_skin = s_name
+                                save.saveBoardSkin(s_name)
+                                renderer.showToast("Equipped " .. sel_item.name)
+                            end
                         else
                             renderer.showToast("Already purchased!")
                         end
@@ -752,6 +764,11 @@ function love.update(dt)
                         save.saveStats(_G.stats)
                         if sel_item.id == "secret_key" then
                             renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START")
+                        elseif sel_item.id:match("^skin_") then
+                            local s_name = sel_item.id:gsub("^skin_", "")
+                            _G.board_skin = s_name
+                            save.saveBoardSkin(s_name)
+                            renderer.showToast("Purchased & Equipped " .. sel_item.name .. "!")
                         else
                             renderer.showToast("Purchased " .. sel_item.name .. "!")
                         end

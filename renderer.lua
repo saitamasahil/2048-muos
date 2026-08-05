@@ -1564,6 +1564,7 @@ end
 renderer.applyTheme(true)
 local matrix_cols = nil
 local matrix_last_t = nil
+local skin_matrix_cols = nil
 
 function renderer.drawDynamicBackground(themeName)
     local w, h = love.graphics.getDimensions()
@@ -3220,7 +3221,7 @@ function renderer.init()
     -- Load store item icons & achievement icons
     item_icons = {}
     achievement_icons = {}
-    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key" }
+    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key", "skin_wood", "skin_glass", "skin_matrix", "wood", "glass", "matrix" }
     for _, name in ipairs(item_names) do
         local ok_item, item_img = pcall(love.graphics.newImage, "assets/icon/" .. name .. ".png")
         if not ok_item then
@@ -3375,20 +3376,168 @@ function renderer.drawBoard(game)
     local cg = layout.cell_gap
     local cr = layout.corner_radius
     local size = game and game.size or 4
+    local skin = _G.board_skin or "default"
 
-    love.graphics.setColor(board_color)
-    roundedRect("fill", bx, by, bs, bs, cr * 2)
+    if skin == "wood" then
+        -- Retro Wood Board
+        love.graphics.setColor(0.32, 0.20, 0.12, 1.0)
+        roundedRect("fill", bx, by, bs, bs, cr * 2)
+        
+        -- Wood grain lines
+        love.graphics.setColor(0.24, 0.14, 0.08, 0.5)
+        love.graphics.setLineWidth(math.max(1.5, math.floor(2 * _G.scale)))
+        local grain_step = math.floor(18 * _G.scale)
+        for gy = by + grain_step, by + bs - grain_step, grain_step do
+            local wave = math.sin(gy * 0.05) * 6 * _G.scale
+            love.graphics.line(bx + 4 * _G.scale, gy + wave, bx + bs - 4 * _G.scale, gy - wave)
+        end
+        
+        -- Dark wood border outline
+        love.graphics.setColor(0.48, 0.32, 0.20, 0.9)
+        love.graphics.setLineWidth(math.max(2, math.floor(3 * _G.scale)))
+        roundedRect("line", bx, by, bs, bs, cr * 2)
+        
+    elseif skin == "glass" then
+        -- Minimalist Aesthetic Glassmorphism Board
+        local r_bg, g_bg, b_bg = (bg_color and bg_color[1]) or 0.95, (bg_color and bg_color[2]) or 0.95, (bg_color and bg_color[3]) or 0.9
+        local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
+        local is_light_theme = bg_lum > 0.45
 
-    if _G.theme == "matrix" then
+        if is_light_theme then
+            -- Elegant smoked glass panel
+            love.graphics.setColor(0.15, 0.18, 0.24, 0.22)
+            roundedRect("fill", bx, by, bs, bs, cr * 2)
+
+            -- Subtle crisp glass edge line
+            love.graphics.setColor(0.15, 0.25, 0.35, 0.45)
+            love.graphics.setLineWidth(math.max(1, math.floor(1.5 * _G.scale)))
+            roundedRect("line", bx, by, bs, bs, cr * 2)
+        else
+            -- Elegant frosted ice glass panel
+            love.graphics.setColor(1, 1, 1, 0.14)
+            roundedRect("fill", bx, by, bs, bs, cr * 2)
+
+            -- Subtle crisp glass edge line
+            love.graphics.setColor(1, 1, 1, 0.35)
+            love.graphics.setLineWidth(math.max(1, math.floor(1.5 * _G.scale)))
+            roundedRect("line", bx, by, bs, bs, cr * 2)
+        end
+
+    elseif skin == "matrix" then
+        -- Cyber Matrix Grid Board
+        love.graphics.setColor(0.02, 0.08, 0.04, 1.0)
+        roundedRect("fill", bx, by, bs, bs, cr * 2)
+        
+        -- Neon Matrix grid outline
+        love.graphics.setColor(0.1, 0.95, 0.3, 0.75)
+        love.graphics.setLineWidth(math.max(2, math.floor(3 * _G.scale)))
+        roundedRect("line", bx, by, bs, bs, cr * 2)
+        
+        -- Shorter, compact digital letter rain streams inside the board grid
+        local font = font_help_label or love.graphics.getFont()
+        local scale = _G.scale or 1
+        local char_h = math.floor(11 * scale)
+        local col_w = math.floor(13 * scale)
+        local num_cols = math.floor((bs - 8 * scale) / col_w)
+        local t = love.timer.getTime()
+        
+        if not skin_matrix_cols or #skin_matrix_cols ~= num_cols then
+            skin_matrix_cols = {}
+            local chars_pool = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@%&*+-=:<>?"
+            for i = 1, num_cols do
+                local length = math.random(3, 6)
+                local chars = {}
+                for j = 1, length do
+                    local rand_idx = math.random(1, #chars_pool)
+                    chars[j] = chars_pool:sub(rand_idx, rand_idx)
+                end
+                skin_matrix_cols[i] = {
+                    rel_x = (i - 0.5) * ((bs - 8 * scale) / num_cols) + 4 * scale,
+                    speed = math.random(40, 90) * scale,
+                    length = length,
+                    chars = chars,
+                    offset_t = math.random() * 10
+                }
+            end
+        end
+        
+        love.graphics.push("all")
+        love.graphics.setFont(font)
+        love.graphics.setScissor(bx + 2, by + 2, bs - 4, bs - 4)
+        
+        local chars_pool = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@%&*+-=:<>?"
+        for i, col in ipairs(skin_matrix_cols) do
+            local head_y = by + ((t * col.speed + col.offset_t * 50) % (bs + col.length * char_h)) - col.length * char_h
+            for j = 1, col.length do
+                local cy = head_y + (j - 1) * char_h
+                if cy >= by - char_h and cy <= by + bs then
+                    local char_idx = (math.floor(t * 10 + j * 7) % #chars_pool) + 1
+                    local ch = chars_pool:sub(char_idx, char_idx)
+                    
+                    if j == col.length then
+                        love.graphics.setColor(0.85, 1.0, 0.9, 0.95)
+                    else
+                        local alpha = (j / col.length) * 0.55
+                        love.graphics.setColor(0.1, 0.95, 0.35, alpha)
+                    end
+                    love.graphics.print(ch, bx + col.rel_x - font:getWidth(ch)/2, cy)
+                end
+            end
+        end
+        love.graphics.setScissor()
+        love.graphics.pop()
+
+    else
+        -- Default theme board
+        love.graphics.setColor(board_color)
+        roundedRect("fill", bx, by, bs, bs, cr * 2)
+    end
+
+    -- Draw cell cutouts
+    if skin == "wood" then
+        love.graphics.setColor(0.20, 0.12, 0.07, 0.85)
+    elseif skin == "glass" then
+        local r_bg, g_bg, b_bg = (bg_color and bg_color[1]) or 0.95, (bg_color and bg_color[2]) or 0.95, (bg_color and bg_color[3]) or 0.9
+        local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
+        if bg_lum > 0.45 then
+            love.graphics.setColor(0.12, 0.16, 0.22, 0.15)
+        else
+            love.graphics.setColor(1, 1, 1, 0.07)
+        end
+    elseif skin == "matrix" then
+        love.graphics.setColor(0.04, 0.14, 0.06, 0.9)
+    elseif _G.theme == "matrix" then
         love.graphics.setColor(board_color)
     else
         love.graphics.setColor(tile_colors[0])
     end
+
     for col = 1, size do
         for row = 1, size do
             local cx = bx + cg + (col - 1) * (cs + cg)
             local cy = by + cg + (row - 1) * (cs + cg)
             roundedRect("fill", cx, cy, cs, cs, cr)
+            if skin == "glass" then
+                local r_bg, g_bg, b_bg = (bg_color and bg_color[1]) or 0.95, (bg_color and bg_color[2]) or 0.95, (bg_color and bg_color[3]) or 0.9
+                local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
+                if bg_lum > 0.45 then
+                    love.graphics.setColor(0.15, 0.25, 0.35, 0.25)
+                else
+                    love.graphics.setColor(1, 1, 1, 0.20)
+                end
+                love.graphics.setLineWidth(math.max(1, math.floor(1 * _G.scale)))
+                roundedRect("line", cx, cy, cs, cs, cr)
+                if bg_lum > 0.45 then
+                    love.graphics.setColor(0.12, 0.16, 0.22, 0.15)
+                else
+                    love.graphics.setColor(1, 1, 1, 0.07)
+                end
+            elseif skin == "matrix" then
+                love.graphics.setColor(0.1, 0.9, 0.3, 0.25)
+                love.graphics.setLineWidth(math.max(1, math.floor(1.5 * _G.scale)))
+                roundedRect("line", cx, cy, cs, cs, cr)
+                love.graphics.setColor(0.04, 0.14, 0.06, 0.9)
+            end
         end
     end
 end
@@ -8812,7 +8961,7 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
     local base_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
     local alpha = is_selected and 0.95 or 0.65
 
-    local key = item_id:gsub("^theme_", ""):gsub("^extra_", ""):gsub("^anim_", ""):gsub("^start_", ""):gsub("^coin_", "")
+    local key = item_id:gsub("^theme_", ""):gsub("^extra_", ""):gsub("^anim_", ""):gsub("^start_", ""):gsub("^coin_", ""):gsub("^skin_", "")
     if key == "cherry_blossom" then key = "cherry" end
 
     local img = item_icons and (item_icons[key] or item_icons[item_id] or (key == "second_chance" and item_icons["shield"]) or (key == "secret_key" and item_icons["key"]))
@@ -8978,6 +9127,31 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         love.graphics.line(cx - kr * 0.1, cy - kr * 0.1, cx + kr * 0.6, cy + kr * 0.6)
         love.graphics.line(cx + kr * 0.4, cy + kr * 0.4, cx + kr * 0.6, cy + kr * 0.2)
         love.graphics.line(cx + kr * 0.6, cy + kr * 0.6, cx + kr * 0.8, cy + kr * 0.4)
+    elseif item_id == "skin_wood" then
+        -- Wooden Grid Icon
+        local sr = radius * 0.45
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        roundedRect("line", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.2)
+        love.graphics.line(cx - sr * 0.5, cy - sr * 0.7, cx - sr * 0.2, cy + sr * 0.7)
+        love.graphics.line(cx + sr * 0.3, cy - sr * 0.7, cx + sr * 0.6, cy + sr * 0.7)
+    elseif item_id == "skin_glass" then
+        -- Translucent Glass Icon
+        local sr = radius * 0.45
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        love.graphics.setColor(1, 1, 1, 0.4)
+        roundedRect("fill", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.3)
+        love.graphics.setColor(1, 1, 1, 0.9)
+        roundedRect("line", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.3)
+        love.graphics.line(cx - sr * 0.6, cy - sr * 0.2, cx + sr * 0.2, cy - sr * 0.6)
+    elseif item_id == "skin_matrix" then
+        -- Matrix Code Lines Icon
+        local sr = radius * 0.45
+        love.graphics.setLineWidth(math.max(1.8, math.floor(2 * scale)))
+        love.graphics.setColor(0.1, 0.9, 0.3, 0.9)
+        roundedRect("line", cx - sr, cy - sr, sr * 2, sr * 2, sr * 0.2)
+        love.graphics.line(cx - sr * 0.4, cy - sr * 0.5, cx - sr * 0.4, cy + sr * 0.5)
+        love.graphics.line(cx, cy - sr * 0.2, cx, cy + sr * 0.6)
+        love.graphics.line(cx + sr * 0.4, cy - sr * 0.6, cx + sr * 0.4, cy + sr * 0.3)
     else
         love.graphics.circle("line", cx, cy, radius * 0.4)
     end
@@ -9013,6 +9187,11 @@ function renderer.getStoreItems()
         -- Visual FX
         {id="anim_bounce",   cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
         {id="anim_glow",     cost=400,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
+
+        -- Board Grid Skins & Customization
+        {id="skin_wood",     cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
+        {id="skin_glass",    cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid with glowing borders"},
+        {id="skin_matrix",   cost=250,  name="Matrix Board",         desc="Animated digital green code lines running down board"},
 
         -- Themes
         {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
@@ -9159,6 +9338,17 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
             if purchased then
                 local tag_txt = "PURCHASED"
+                local is_equipped = false
+                if item.id:match("^skin_") then
+                    local s_name = item.id:gsub("^skin_", "")
+                    if _G.board_skin == s_name then
+                        tag_txt = "EQUIPPED"
+                        is_equipped = true
+                    else
+                        tag_txt = "EQUIP"
+                    end
+                end
+
                 local tw = font_help_label:getWidth(tag_txt)
                 local font_h = font_help_label:getHeight()
                 local tag_h = font_h + math.floor(8 * scale)
@@ -9166,7 +9356,11 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 local tag_y = y + math.floor((card_h - tag_h) / 2)
                 local text_y = tag_y + math.floor((tag_h - font_h) / 2)
 
-                love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
+                if is_equipped then
+                    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.35)
+                else
+                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
+                end
                 roundedRect("fill", tag_x - math.floor(6 * scale), tag_y, tw + math.floor(12 * scale), tag_h, math.floor(6 * scale))
 
                 love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
