@@ -1310,6 +1310,10 @@ function Game:confirmShieldTarget()
     _G.stats.second_chance_count = math.max(0, count - 1)
     if save and save.saveStats then save.saveStats(_G.stats) end
 
+    if _G.unlockAchievement then
+        _G.unlockAchievement("ach_first_shield")
+    end
+
     if sound and sound.playBomb then sound.playBomb() end
     if renderer and renderer.showToast then
         local lbl = (self.shield_mode == "row" and "Row " or "Column ") .. tostring(self.shield_index)

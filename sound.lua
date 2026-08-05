@@ -311,6 +311,21 @@ function sound.playNextBgm()
         currentBgmSource:setVolume(0.55)
         currentBgmSource:play()
         _G.jukebox_card_change_time = love.timer.getTime()
+
+        if _G.stats then
+            _G.stats.played_bgm_ids = _G.stats.played_bgm_ids or {}
+            local key = track.title or track.path or tostring(currentBgmIdx)
+            if not _G.stats.played_bgm_ids[key] then
+                _G.stats.played_bgm_ids[key] = true
+                local count = 0
+                for _ in pairs(_G.stats.played_bgm_ids) do count = count + 1 end
+                if count >= 5 and _G.unlockAchievement then
+                    _G.unlockAchievement("ach_melody_maker")
+                end
+                local save = require("save")
+                if save and save.saveStats then save.saveStats(_G.stats) end
+            end
+        end
     else
         print("Failed to load music track: " .. tostring(track.path))
     end

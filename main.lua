@@ -167,6 +167,9 @@ function love.load(args)
         if _G.achievements.ach_speedrun_2048 then table.insert(_G.unlocked_themes, "retrogold") end
         if _G.achievements.ach_hardcore_2048 then table.insert(_G.unlocked_themes, "spectrum") end
         if _G.achievements.ach_tactician then table.insert(_G.unlocked_themes, "steel") end
+        if _G.achievements.ach_melody_maker then table.insert(_G.unlocked_themes, "lofi") end
+        if _G.achievements.ach_big_spender then table.insert(_G.unlocked_themes, "platinum") end
+        if _G.achievements.ach_first_shield then table.insert(_G.unlocked_themes, "guardian") end
         if _G.stats and _G.stats.purchased_items then
             for item_id, purchased in pairs(_G.stats.purchased_items) do
                 if purchased and purchased ~= 0 and item_id:match("^theme_") then
@@ -228,7 +231,10 @@ function love.load(args)
                 ach_score_250k = "hyperdrive",
                 ach_speedrun_2048 = "retrogold",
                 ach_hardcore_2048 = "spectrum",
-                ach_tactician = "steel"
+                ach_tactician = "steel",
+                ach_melody_maker = "lofi",
+                ach_big_spender = "platinum",
+                ach_first_shield = "guardian"
             }
             if theme_map[id] then
                 local already = false
@@ -268,7 +274,10 @@ function love.load(args)
                 ach_score_250k = "Infinity Legend",
                 ach_speedrun_2048 = "Speed Demon",
                 ach_hardcore_2048 = "Hardcore Gamer",
-                ach_tactician = "Tactician"
+                ach_tactician = "Tactician",
+                ach_melody_maker = "Melody Maker",
+                ach_big_spender = "Big Spender",
+                ach_first_shield = "Second Chance"
             }
             local coin_reward = 0
             if renderer and renderer.getAchievementsList then
@@ -714,6 +723,10 @@ function love.update(dt)
                         elseif (_G.stats.coins or 0) >= sel_item.cost then
                             _G.stats.coins = _G.stats.coins - sel_item.cost
                             _G.stats[stat_key] = current + 1
+                            _G.stats.total_spent_coins = (_G.stats.total_spent_coins or 0) + sel_item.cost
+                            if _G.stats.total_spent_coins >= 5000 and _G.unlockAchievement then
+                                _G.unlockAchievement("ach_big_spender")
+                            end
                             save.saveStats(_G.stats)
                             renderer.showToast("Purchased! " .. sel_item.name .. " (" .. _G.stats[stat_key] .. " owned)")
                         else
@@ -732,6 +745,10 @@ function love.update(dt)
                     elseif (_G.stats.coins or 0) >= sel_item.cost then
                         _G.stats.coins = _G.stats.coins - sel_item.cost
                         _G.stats.purchased_items[sel_item.id] = 1
+                        _G.stats.total_spent_coins = (_G.stats.total_spent_coins or 0) + sel_item.cost
+                        if _G.stats.total_spent_coins >= 5000 and _G.unlockAchievement then
+                            _G.unlockAchievement("ach_big_spender")
+                        end
                         save.saveStats(_G.stats)
                         if sel_item.id == "secret_key" then
                             renderer.showToast("Secret Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START")
@@ -972,7 +989,7 @@ function love.update(dt)
                     sound.playMenuMove()
                 end
             elseif event == input.events.DOWN and _G.achievements_tab == 1 then
-                -- 28 achievements total, allow scrolling only if items overflow visible area
+                -- 31 achievements total, allow scrolling only if items overflow visible area
                 local w, h = love.graphics.getDimensions()
 
                 local scale = _G.scale

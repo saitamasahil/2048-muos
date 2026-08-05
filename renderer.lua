@@ -1314,6 +1314,96 @@ local themes = {
         help_bg_color    = {hex("#1e0b38")},
         help_key_color   = {hex("#ff5e00")},
         help_key_text    = {hex("#ffffff")},
+    },
+    lofi = {
+        tile_colors = {
+            [0]    = {hex("#342f3f")},   -- empty cell
+            [2]    = {hex("#e8d5c4")},
+            [4]    = {hex("#dcb5a0")},
+            [8]    = {hex("#c89f8d")},
+            [16]   = {hex("#b38b7a")},
+            [32]   = {hex("#d49b9b")},
+            [64]   = {hex("#b8829e")},
+            [128]  = {hex("#9b72aa")},
+            [256]  = {hex("#7a5d99")},
+            [512]  = {hex("#c9a87c")},
+            [1024] = {hex("#8ba892")},
+            [2048] = {hex("#e0a96d")},
+        },
+        super_tile_color = {hex("#f5c48b")},
+        dark_text        = {hex("#5c4b43")},
+        light_text       = {hex("#f5ede6")},
+        ui_text          = {hex("#e6ded6")},
+        bg_color         = {hex("#1b1822")},
+        board_color      = {hex("#272330")},
+        score_bg_color   = {hex("#272330")},
+        score_label      = {hex("#b38b7a")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#e0a96d")},
+        overlay_lose     = {hex("#272330")},
+        help_bg_color    = {hex("#272330")},
+        help_key_color   = {hex("#473c54")},
+        help_key_text    = {hex("#e6ded6")},
+    },
+    platinum = {
+        tile_colors = {
+            [0]    = {hex("#1a2029")},   -- empty cell
+            [2]    = {hex("#d0e1e9")},
+            [4]    = {hex("#a8c9db")},
+            [8]    = {hex("#70b2ce")},
+            [16]   = {hex("#459bbd")},
+            [32]   = {hex("#3283a8")},
+            [64]   = {hex("#276f93")},
+            [128]  = {hex("#42b0d5")},
+            [256]  = {hex("#35cad8")},
+            [512]  = {hex("#62e0eb")},
+            [1024] = {hex("#9df2f8")},
+            [2048] = {hex("#ffffff")},
+        },
+        super_tile_color = {hex("#73f0ff")},
+        dark_text        = {hex("#102028")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#e8f4f8")},
+        bg_color         = {hex("#090b0e")},
+        board_color      = {hex("#12161c")},
+        score_bg_color   = {hex("#12161c")},
+        score_label      = {hex("#70b2ce")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#35cad8")},
+        overlay_lose     = {hex("#12161c")},
+        help_bg_color    = {hex("#12161c")},
+        help_key_color   = {hex("#223040")},
+        help_key_text    = {hex("#e8f4f8")},
+    },
+    guardian = {
+        tile_colors = {
+            [0]    = {hex("#151d38")},   -- empty cell
+            [2]    = {hex("#1e2b4d")},
+            [4]    = {hex("#283b69")},
+            [8]    = {hex("#334d8a")},
+            [16]   = {hex("#4062b0")},
+            [32]   = {hex("#99762a")},
+            [64]   = {hex("#bd9233")},
+            [128]  = {hex("#d9ab3f")},
+            [256]  = {hex("#4d75d6")},
+            [512]  = {hex("#f0c254")},
+            [1024] = {hex("#628ef0")},
+            [2048] = {hex("#ffd700")},
+        },
+        super_tile_color = {hex("#60adff")},
+        dark_text        = {hex("#0a1020")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#e2eafe")},
+        bg_color         = {hex("#060914")},
+        board_color      = {hex("#0d1326")},
+        score_bg_color   = {hex("#0d1326")},
+        score_label      = {hex("#bd9233")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#ffd700")},
+        overlay_lose     = {hex("#0d1326")},
+        help_bg_color    = {hex("#0d1326")},
+        help_key_color   = {hex("#1c2b54")},
+        help_key_text    = {hex("#e2eafe")},
     }
 }
 themes.cherry_blossom = themes.cherry
@@ -1373,6 +1463,9 @@ local theme_display_overrides = {
     hyperdrive = "Hyperdrive",
     vaporwave = "Vaporwave",
     cyberpunk = "Cyberpunk",
+    lofi = "Lo-Fi",
+    platinum = "Luxe",
+    guardian = "Sapphire",
 }
 
 function renderer.getThemeDisplayName(theme_id, uppercase)
@@ -5337,7 +5430,7 @@ function renderer.drawTutorial(page, skip_transition, static_only)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 35 themes total!"
+                "achievements. 38 themes total!"
             },
 
             tiles = {
@@ -7951,7 +8044,10 @@ local achievementsList = {
     { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme", coins = 200 },
     { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme", coins = 400 },
     { id = "ach_speedrun_2048", name = "Speed Demon", desc = "Create a 2048 tile in under 5 minutes", reward = "Retro Gold Theme", coins = 400 },
-    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme", coins = 500 }
+    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme", coins = 500 },
+    { id = "ach_melody_maker", name = "Melody Maker", desc = "Listen to 5 different tracks in the Jukebox", reward = "Lo-Fi Theme", coins = 150 },
+    { id = "ach_big_spender", name = "Big Spender", desc = "Spend 5,000 total coins in the Store", reward = "Luxe Theme", coins = 300 },
+    { id = "ach_first_shield", name = "Second Chance", desc = "Use a Second Chance Shield to clear a row or column", reward = "Sapphire Theme", coins = 200 }
 }
 
 function renderer.getAchievementsList()
