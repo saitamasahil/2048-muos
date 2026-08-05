@@ -9106,8 +9106,10 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
             -- Card border
             if is_sel then
-                love.graphics.setColor(help_key_color)
-                love.graphics.setLineWidth(math.floor(2 * scale))
+                local pulse = (math.sin(love.timer.getTime() * 6) + 1) / 2 -- smooth 0..1 pulse
+                local alpha = 0.4 + pulse * 0.6  -- pulses between 0.4 and 1.0
+                love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], alpha)
+                love.graphics.setLineWidth(math.floor((2 + pulse * 1) * scale))
             else
                 love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.25)
                 love.graphics.setLineWidth(math.floor(1.5 * scale))
