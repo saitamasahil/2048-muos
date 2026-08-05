@@ -4,6 +4,7 @@
 local Grid = require("grid")
 local Tile = require("tile")
 local save = require("save")
+local sound = require("sound")
 
 local Game = {}
 Game.__index = Game
@@ -107,6 +108,10 @@ function Game.new(mode)
 
     self.max_score_for_coins = 0
 
+    if sound and sound.startFreshGameBgm then
+        sound.startFreshGameBgm()
+    end
+
     -- Try to load saved game state
     local savedState = save.loadState(self.mode)
     if savedState and savedState.gridState then
@@ -162,6 +167,7 @@ function Game.new(mode)
     else
         -- Start a fresh game if no save state exists
         self:addStartTiles()
+
 
         if _G.stats then
             _G.stats.games_played = (_G.stats.games_played or 0) + 1

@@ -4979,6 +4979,16 @@ function renderer.updateTransition(dt)
     end
 end
 
+function renderer.triggerNowPlayingNotification()
+    last_track_path = nil
+    local sound = require("sound")
+    local current_track = sound.getCurrentTrack()
+    if current_track then
+        now_playing_track = current_track
+        now_playing_timer = 4.0
+    end
+end
+
 local function drawToast()
     if toast_timer <= 0 or not toast_message then return end
 
