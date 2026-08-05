@@ -4508,7 +4508,9 @@ function renderer.drawHelp(game)
             if shield_cnt > 0 and not game.timesUp and not (game.mode == "timeattack" and game.timeLeft and game.timeLeft <= 0) then
                 table.insert(actions, 1, {key = "R1", label = "Shield:" .. shield_cnt})
             end
-            table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+            if game.mode ~= "plus" then
+                table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
+            end
             if game.mode ~= "timeattack" and game.mode ~= "nomercy" and game.mode ~= "goose" and game.canUndo then
                 if game.mode == "plus" and game.powerups.undo > 0 then
                     table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
@@ -4533,8 +4535,6 @@ function renderer.drawHelp(game)
         else
             if game.mode == "plus" then
                 table.insert(actions, 1, {key = "START", label = "Pause"})
-                table.insert(actions, 1, {key = "SELECT", label = "Coins"})
-                table.insert(actions, 1, {key = "Y", label = "Switch Theme"})
                 table.insert(actions, 1, {key = "L1", label = "Swap:" .. game.powerups.swap})
                 table.insert(actions, 1, {key = "R1", label = "Bomb:" .. game.powerups.bomb})
                 table.insert(actions, 1, {key = "B", label = "Undo:" .. game.powerups.undo})
