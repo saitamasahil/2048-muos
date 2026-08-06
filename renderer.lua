@@ -3492,10 +3492,18 @@ function renderer.drawBoard(game)
         love.graphics.setColor(0.95, 0.94, 0.92, 1.0)
         roundedRect("fill", bx, by, bs, bs, cr * 2)
 
-        -- Soft cloud-like marble haze (no sharp lines or cracks)
+        -- Clip cloud haze strictly inside board boundary (no bleeding outside!)
+        love.graphics.stencil(function()
+            roundedRect("fill", bx, by, bs, bs, cr * 2)
+        end, "replace", 1)
+        love.graphics.setStencilTest("greater", 0)
+
+        -- Soft cloud-like marble haze
         love.graphics.setColor(0.88, 0.86, 0.82, 0.35)
         love.graphics.circle("fill", bx + bs * 0.3, by + bs * 0.35, bs * 0.35)
         love.graphics.circle("fill", bx + bs * 0.7, by + bs * 0.65, bs * 0.40)
+
+        love.graphics.setStencilTest()
 
         -- Polished silver trim outline
         love.graphics.setColor(0.80, 0.82, 0.85, 0.95)
