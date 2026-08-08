@@ -577,6 +577,11 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_goose_2048")
                     end
 
+                    -- Trigger pet companion excitement on high tile merges (512+)
+                    if merged.value >= 512 then
+                        _G.pet_excited_timer = 2.0
+                    end
+
                     if merged.value >= 8192 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_merge_8192")
                     end

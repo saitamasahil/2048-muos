@@ -148,6 +148,30 @@ function save.loadBoardSkin()
     return "default"
 end
 
+local COMPANION_FILE = "companion.dat"
+
+function save.saveCompanion(companion)
+    local path = getFilePath(COMPANION_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(companion or "none")
+        file:close()
+    end
+end
+
+function save.loadCompanion()
+    local path = getFilePath(COMPANION_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "none"
+end
+
 function save.loadTextSize()
     local path = getFilePath(TEXT_SIZE_FILE)
     local file = io.open(path, "r")

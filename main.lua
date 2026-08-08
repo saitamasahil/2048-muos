@@ -113,6 +113,8 @@ function love.load(args)
     end
 
     sound.init()
+    _G.board_skin = save.loadBoardSkin and save.loadBoardSkin() or "default"
+    _G.active_companion = save.loadCompanion and save.loadCompanion() or "none"
 
     -- Load achievements
     local loadedAchievements = save.loadAchievements()
@@ -717,6 +719,32 @@ function love.update(dt)
                 queueTransitionAction(event, 0.08, function()
                     local sel_item = items[_G.store_selection or 1]
                     if not sel_item then return end
+
+                    if sel_item.id == "mascot_cat" then
+                        local is_owned = _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["mascot_cat"]
+                        if is_owned then
+                            if _G.active_companion == "cat" then
+                                _G.active_companion = "none"
+                                if save and save.saveCompanion then save.saveCompanion("none") end
+                                renderer.showToast("Unequipped Cat Companion")
+                            else
+                                _G.active_companion = "cat"
+                                if save and save.saveCompanion then save.saveCompanion("cat") end
+                                renderer.showToast("Equipped Cat Companion!")
+                            end
+                        elseif (_G.stats.coins or 0) >= sel_item.cost then
+                            _G.stats.coins = _G.stats.coins - sel_item.cost
+                            _G.stats.purchased_items["mascot_cat"] = 1
+                            _G.stats.total_spent_coins = (_G.stats.total_spent_coins or 0) + sel_item.cost
+                            save.saveStats(_G.stats)
+                            _G.active_companion = "cat"
+                            if save and save.saveCompanion then save.saveCompanion("cat") end
+                            renderer.showToast("Purchased & Equipped Cat Companion!")
+                        else
+                            renderer.showToast("Not enough Coins!")
+                        end
+                        return
+                    end
 
                     -- Consumables (boosters, powerup charges, shields)
                     if sel_item.consumable then

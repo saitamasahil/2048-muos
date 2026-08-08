@@ -34,6 +34,13 @@ local vinyl_record_img = nil
 local item_icons = {}
 local icon_shader = nil
 local font_bgm = nil
+local pet_cat_idle_frames = {}
+local pet_cat_walk_frames = {}
+local pet_cat_happy_frames = {}
+local pet_cat_sit_frames = {}
+local pet_cat_sleep_frames = {}
+local pet_cat_sneak_frames = {}
+local pet_cat_react_frames = {}
 
 local badge_canvas = nil
 local badge_quad = nil
@@ -3202,31 +3209,58 @@ function renderer.init()
     font_bgm        = love.graphics.newFont(font_path, math.floor(13 * scale))
     logo_2048 = love.graphics.newImage("assets/logo/logo_2048.png")
 
-    -- Load store and coin icons (supporting both store.png / store_icon.png)
+    -- Load UI header icons directly from assets/icon/
     local ok_store, s_img = pcall(love.graphics.newImage, "assets/icon/store.png")
-    if not ok_store then ok_store, s_img = pcall(love.graphics.newImage, "assets/icon/store_icon.png") end
     if ok_store then store_icon = s_img end
 
     local ok_coin, c_img = pcall(love.graphics.newImage, "assets/icon/coin.png")
-    if not ok_coin then ok_coin, c_img = pcall(love.graphics.newImage, "assets/icon/coin_icon.png") end
     if ok_coin then coin_icon = c_img end
 
     local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
-    if not ok_music then ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/jukebox.png") end
     if ok_music then music_icon = m_img end
 
     local ok_vinyl, v_img = pcall(love.graphics.newImage, "assets/icon/vinyl_record.png")
     if ok_vinyl then vinyl_record_img = v_img end
 
+    -- Load Cat Companion animated sprite frames (all 57 frames across 10 rows)
+    pet_cat_idle_frames = {}
+    pet_cat_walk_frames = {}
+    pet_cat_happy_frames = {}
+    pet_cat_sit_frames = {}
+    pet_cat_sleep_frames = {}
+    pet_cat_stretch_frames = {}
+
+    for i = 1, 4 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_down_" .. i .. ".png")
+        if ok then table.insert(pet_cat_idle_frames, img) end
+    end
+    for i = 1, 8 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_down_" .. i .. ".png")
+        if ok then table.insert(pet_cat_walk_frames, img) end
+    end
+    for i = 1, 8 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_side_" .. i .. ".png")
+        if ok then table.insert(pet_cat_stretch_frames, img) end
+    end
+    for i = 1, 7 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_happy_" .. i .. ".png")
+        if ok then table.insert(pet_cat_happy_frames, img) end
+    end
+    for i = 1, 6 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_sit_" .. i .. ".png")
+        if ok then table.insert(pet_cat_sit_frames, img) end
+    end
+    for i = 1, 4 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_sleep_" .. i .. ".png")
+        if ok then table.insert(pet_cat_sleep_frames, img) end
+    end
+
     -- Load store item icons & achievement icons
     item_icons = {}
     achievement_icons = {}
-    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "second_chance", "shield", "gold_luxe", "cyber_grid", "synthwave", "secret_key", "key", "skin_wood", "skin_glass", "skin_matrix", "wood", "glass", "matrix", "skin_marble", "skin_bamboo", "marble", "bamboo", "coin_rush", "ticket" }
+    local item_names = { "undo", "swap", "bomb", "cosmic", "cherry", "jukebox", "music", "128", "256", "512", "bounce", "glow", "multiplier", "powerup_undo", "powerup_swap", "powerup_bomb", "shield", "gold_luxe", "cyber_grid", "synthwave", "key", "skin_wood", "skin_glass", "skin_matrix", "skin_marble", "skin_bamboo", "coin_rush", "ticket", "cat" }
     for _, name in ipairs(item_names) do
         local ok_item, item_img = pcall(love.graphics.newImage, "assets/icon/" .. name .. ".png")
-        if not ok_item then
-            ok_item, item_img = pcall(love.graphics.newImage, "assets/icon/" .. name .. "_icon.png")
-        end
         if ok_item then
             item_icons[name] = item_img
         end
@@ -8247,6 +8281,11 @@ function renderer.draw(game, skip_transition)
     renderer.drawOverlay(game)
     renderer.drawHelp(game)
 
+    -- Draw active pet companion ON TOP OF ALL TILES, SCORE, AND BEST BOXES
+    if renderer.drawGooseCompanion then
+        renderer.drawGooseCompanion(layout.board_x + (layout.board_size or 300) * 0.5, layout.board_y, _G.scale or 1, game)
+    end
+
     if not skip_transition and transition_timer > 0 and transition_canvas then
         -- We want to draw the OLD screen (transition_canvas) everywhere EXCEPT where the stencil is.
         love.graphics.stencil(drawStencilCircle, "replace", 1)
@@ -9057,10 +9096,15 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
     local base_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
     local alpha = is_selected and 0.95 or 0.65
 
-    local key = item_id:gsub("^theme_", ""):gsub("^extra_", ""):gsub("^anim_", ""):gsub("^start_", ""):gsub("^coin_", ""):gsub("^skin_", "")
+    local key = item_id:gsub("^theme_", ""):gsub("^extra_", ""):gsub("^anim_", ""):gsub("^start_", ""):gsub("^coin_", ""):gsub("^skin_", ""):gsub("^mascot_", "")
     if key == "cherry_blossom" then key = "cherry" end
+    if key == "second_chance" then key = "shield" end
+    if key == "secret_key" then key = "key" end
 
-    local img = item_icons and (item_icons[key] or item_icons[item_id] or (key == "second_chance" and item_icons["shield"]) or (key == "secret_key" and item_icons["key"]))
+    local img = item_icons and (item_icons[key] or item_icons[item_id])
+    if not img and key == "cat" then
+        img = pet_cat_idle_frames and pet_cat_idle_frames[1]
+    end
     if img then
         local size = math.floor(radius * 1.85)
         local sw = size / img:getWidth()
@@ -9271,6 +9315,16 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         love.graphics.setColor(0.20, 0.15, 0.05, 0.95)
         love.graphics.setFont(font_help_label or love.graphics.getFont())
         love.graphics.print("2x", cx - 7 * scale, cy - 6 * scale)
+    elseif item_id == "mascot_cat" then
+        local img = pet_cat_idle_frames[1] or pet_cat_happy_frames[1]
+        if img then
+            local target_h = math.floor(radius * 1.5)
+            local s = target_h / img:getHeight()
+            love.graphics.setColor(1, 1, 1, alpha)
+            love.graphics.draw(img, cx, cy, 0, s, s, img:getWidth() / 2, img:getHeight() / 2)
+        else
+            love.graphics.circle("line", cx, cy, radius * 0.4)
+        end
     else
         love.graphics.circle("line", cx, cy, radius * 0.4)
     end
@@ -9297,6 +9351,9 @@ function renderer.getStoreItems()
         {id="powerup_undo",  cost=40,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
         {id="powerup_swap",  cost=50,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
         {id="powerup_bomb",  cost=60,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
+
+        -- Mascots & Companions
+        {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Adorable animated sprite cat perched on HUD that pounces on high merges!"},
 
         -- Permanent Upgrades
         {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
@@ -9465,6 +9522,14 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 if item.id:match("^skin_") then
                     local s_name = item.id:gsub("^skin_", "")
                     if _G.board_skin == s_name then
+                        tag_txt = "EQUIPPED"
+                        is_equipped = true
+                    else
+                        tag_txt = "EQUIP"
+                    end
+                elseif item.id:match("^mascot_") or item.id:match("^companion_") then
+                    local m_name = item.id:gsub("^mascot_", ""):gsub("^companion_", "")
+                    if _G.active_companion == m_name then
                         tag_txt = "EQUIPPED"
                         is_equipped = true
                     else
@@ -10056,5 +10121,294 @@ function renderer.drawJukebox(selection, skip_transition)
 
     drawToast()
 end
+
+-- Grounded Real-Physics Cat Companion Engine
+local cat_phys = {
+    x = nil,
+    y = nil,
+    vx = 0,
+    vy = 0,
+    facing = 1,
+    is_grounded = true,
+    squish_sy = 1,
+    action_timer = 0,
+    anim_time = 0,
+    state = "idle"
+}
+
+local function drawVectorHeart(x, y, size, r, g, b, alpha)
+    love.graphics.setColor(r, g, b, alpha)
+    local radius = size * 0.45
+    love.graphics.circle("fill", x - radius * 0.45, y - radius * 0.25, radius * 0.5)
+    love.graphics.circle("fill", x + radius * 0.45, y - radius * 0.25, radius * 0.5)
+    love.graphics.polygon("fill", 
+        x - radius * 0.9, y - radius * 0.05,
+        x + radius * 0.9, y - radius * 0.05,
+        x, y + radius * 0.85
+    )
+end
+
+local function drawVectorSparkle(x, y, size, r, g, b, alpha)
+    love.graphics.setColor(r, g, b, alpha)
+    local s = size * 0.5
+    local inner = s * 0.25
+    love.graphics.polygon("fill",
+        x, y - s,
+        x + inner, y - inner,
+        x + s, y,
+        x + inner, y + inner,
+        x, y + s,
+        x - inner, y + inner,
+        x - s, y,
+        x - inner, y - inner
+    )
+end
+
+function renderer.drawGooseCompanion(cx, cy, scale, game)
+    if not _G.active_companion or _G.active_companion ~= "cat" then return end
+    if #pet_cat_idle_frames == 0 then return end
+
+    local dt = love.timer.getDelta()
+    local is_won = (game and game.state == Game.STATE_WON)
+    local is_excited = is_won or ((_G.pet_excited_timer and _G.pet_excited_timer > 0) or (_G.goose_excited_timer and _G.goose_excited_timer > 0))
+
+    -- Ground ledge position (anchored right on top of main 2048 board grid!)
+    local bs = layout.board_size or 300
+    local ground_y = layout.board_y
+    if not cat_phys.x or math.abs(cat_phys.y - ground_y) > 120 * scale then
+        cat_phys.x = layout.board_x + bs * 0.5
+        cat_phys.y = ground_y
+    end
+
+    -- Physics boundary bounds (Entire top edge of the board grid)
+    local min_x = layout.board_x + math.floor(24 * scale)
+    local max_x = layout.board_x + bs - math.floor(24 * scale)
+
+    -- Update cooldown timers
+    if _G.pet_excited_timer and _G.pet_excited_timer > 0 then
+        _G.pet_excited_timer = _G.pet_excited_timer - dt
+    end
+    cat_phys.jump_cooldown = (cat_phys.jump_cooldown or 0) - dt
+    cat_phys.sit_cooldown = (cat_phys.sit_cooldown or 0) - dt
+    cat_phys.particles = cat_phys.particles or {}
+    cat_phys.spawn_timer = (cat_phys.spawn_timer or 0) - dt
+
+    -- Spawn dynamic floating heart particles when excited or celebrating
+    if is_excited and cat_phys.spawn_timer <= 0 then
+        cat_phys.spawn_timer = 0.16
+        table.insert(cat_phys.particles, {
+            x = cat_phys.x + (love.math.random() - 0.5) * 28 * scale,
+            y = cat_phys.y - 25 * scale,
+            vx = (love.math.random() - 0.5) * 16 * scale,
+            vy = - (35 + love.math.random() * 30) * scale,
+            size = (12 + love.math.random() * 8) * scale,
+            life = 1.1,
+            max_life = 1.1,
+            ptype = "heart"
+        })
+    end
+
+    -- Handle excited celebration jump trigger (always triggers on victory!)
+    if (is_won or (is_excited and cat_phys.jump_cooldown <= 0)) and cat_phys.is_grounded and cat_phys.vy == 0 then
+        cat_phys.vy = -190 * scale
+        cat_phys.is_grounded = false
+        cat_phys.squish_sy = 1.15
+        cat_phys.state = "happy"
+        cat_phys.anim_time = 0
+        if not is_won then
+            cat_phys.jump_cooldown = 45.0 -- Rare event cooldown
+        end
+    end
+
+    -- Strictly enforce zero velocity when in stationary states (sleep, idle, sit) BEFORE position update
+    if cat_phys.state == "sleep" or cat_phys.state == "idle" or cat_phys.state == "sit" then
+        cat_phys.vx = 0
+    end
+
+    -- Apply gravity & movement
+    if not cat_phys.is_grounded then
+        cat_phys.vy = cat_phys.vy + 550 * scale * dt
+    end
+
+    cat_phys.x = cat_phys.x + cat_phys.vx * dt
+    cat_phys.y = cat_phys.y + cat_phys.vy * dt
+
+    -- Ledge boundary bounce
+    if cat_phys.x < min_x then
+        cat_phys.x = min_x
+        cat_phys.vx = math.abs(cat_phys.vx)
+        cat_phys.facing = 1
+    elseif cat_phys.x > max_x then
+        cat_phys.x = max_x
+        cat_phys.vx = -math.abs(cat_phys.vx)
+        cat_phys.facing = -1
+    end
+
+    -- Ground collision
+    if cat_phys.y >= ground_y then
+        if not cat_phys.is_grounded then
+            cat_phys.squish_sy = 0.85 -- Landing bounce squish
+            if cat_phys.state == "happy" then
+                if is_won then
+                    -- Bounce again in continuous victory celebration!
+                    cat_phys.vy = -190 * scale
+                    cat_phys.is_grounded = false
+                    cat_phys.squish_sy = 1.15
+                    cat_phys.anim_time = 0
+                else
+                    cat_phys.state = "idle"
+                    cat_phys.anim_time = 0
+                end
+            end
+        end
+        cat_phys.y = ground_y
+        cat_phys.vy = 0
+        cat_phys.is_grounded = true
+    end
+
+    -- Smooth recovery for squish bounce
+    cat_phys.squish_sy = cat_phys.squish_sy + (1 - cat_phys.squish_sy) * math.min(1, 12 * dt)
+
+    -- Random strolling / idle / sit / stretch / sleep behavior
+    cat_phys.action_timer = cat_phys.action_timer - dt
+    if cat_phys.action_timer <= 0 and cat_phys.is_grounded and cat_phys.state ~= "happy" then
+        local roll = love.math.random()
+        cat_phys.anim_time = 0
+        
+        if cat_phys.state == "sleep" then
+            -- After waking up from sleep -> 60% idle, 25% walk, 15% stretch
+            if roll < 0.60 then
+                cat_phys.vx = 0
+                cat_phys.state = "idle"
+                cat_phys.action_timer = 6.0 + love.math.random() * 6.0
+            elseif roll < 0.85 then
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                cat_phys.vx = dir * 18 * scale
+                cat_phys.facing = dir
+                cat_phys.state = "walk"
+                cat_phys.action_timer = 2.0 + love.math.random() * 1.0
+            else
+                cat_phys.vx = 0
+                cat_phys.state = "stretch"
+                cat_phys.action_timer = 1.35
+            end
+        else
+            -- Original balanced levels (85% resting, 15% stroll)
+            if roll < 0.15 then
+                -- Short stroll to a new spot (2.0 - 3.0s)
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                cat_phys.vx = dir * 18 * scale
+                cat_phys.facing = dir
+                cat_phys.state = "walk"
+                cat_phys.action_timer = 2.0 + love.math.random() * 1.0
+            elseif roll < 0.25 then
+                -- 1 Paw Lick at a time
+                cat_phys.vx = 0
+                cat_phys.state = "sit"
+                cat_phys.action_timer = 1.2
+            elseif roll < 0.35 then
+                -- 1 Stretch at a time
+                cat_phys.vx = 0
+                cat_phys.state = "stretch"
+                cat_phys.action_timer = 1.35
+            elseif roll < 0.70 then
+                -- Tail Wag Idle (6.0 - 12.0s)
+                cat_phys.vx = 0
+                cat_phys.state = "idle"
+                cat_phys.action_timer = 6.0 + love.math.random() * 6.0
+            else
+                -- Cozy Flat Nap (10.0 - 20.0s)
+                cat_phys.vx = 0
+                cat_phys.state = "sleep"
+                cat_phys.action_timer = 10.0 + love.math.random() * 10.0
+            end
+        end
+    end
+
+    -- Strictly enforce zero velocity when in stationary states
+    if cat_phys.state == "sleep" or cat_phys.state == "idle" or cat_phys.state == "sit" or cat_phys.state == "stretch" then
+        cat_phys.vx = 0
+    end
+
+    -- Choose frame animation set & looping mode
+    local frames = pet_cat_idle_frames
+    local fps = 5
+    local is_single_play = false
+
+    if cat_phys.state == "happy" or not cat_phys.is_grounded then
+        frames = (#pet_cat_happy_frames > 0) and pet_cat_happy_frames or pet_cat_idle_frames
+        fps = 10
+        is_single_play = true
+    elseif cat_phys.state == "walk" and math.abs(cat_phys.vx) > 1 then
+        frames = (#pet_cat_walk_frames > 0) and pet_cat_walk_frames or pet_cat_idle_frames
+        fps = 8
+    elseif cat_phys.state == "sit" then
+        frames = (#pet_cat_sit_frames > 0) and pet_cat_sit_frames or pet_cat_idle_frames
+        fps = 6
+        is_single_play = true
+    elseif cat_phys.state == "stretch" then
+        frames = (#pet_cat_stretch_frames > 0) and pet_cat_stretch_frames or pet_cat_idle_frames
+        fps = 6
+        is_single_play = true
+    elseif cat_phys.state == "sleep" then
+        frames = (#pet_cat_sleep_frames > 0) and pet_cat_sleep_frames or pet_cat_idle_frames
+        fps = 4
+    else
+        frames = pet_cat_idle_frames
+        fps = 5
+    end
+
+    cat_phys.anim_time = cat_phys.anim_time + dt
+    local frame_idx = 1
+
+    if is_single_play then
+        -- Single-play actions (1 paw lick or 1 stretch at a time!)
+        local raw_idx = math.floor(cat_phys.anim_time * fps) + 1
+        frame_idx = math.min(#frames, raw_idx)
+        if raw_idx > #frames and (cat_phys.state == "sit" or cat_phys.state == "stretch") then
+            cat_phys.state = "idle"
+            cat_phys.anim_time = 0
+        end
+    else
+        -- Continuous looping actions (walk, sleep, idle)
+        frame_idx = (math.floor(cat_phys.anim_time * fps) % #frames) + 1
+    end
+    local img = frames[frame_idx]
+
+    if img then
+        -- CRISP DISPLAY SIZE (56px scale)
+        local target_h = math.floor(56 * scale)
+        local s = target_h / img:getHeight()
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        -- Anchored cleanly at feet (img:getWidth() / 2, img:getHeight()) sitting ON TOP of board grid!
+        love.graphics.draw(
+            img, 
+            cat_phys.x, 
+            cat_phys.y, 
+            0, 
+            s * cat_phys.facing, 
+            s * cat_phys.squish_sy, 
+            img:getWidth() / 2, 
+            img:getHeight()
+        )
+    end
+
+    -- Update and draw dynamic floating heart & sparkle particles
+    for i = #cat_phys.particles, 1, -1 do
+        local p = cat_phys.particles[i]
+        p.life = p.life - dt
+        if p.life <= 0 then
+            table.remove(cat_phys.particles, i)
+        else
+            p.x = p.x + p.vx * dt + math.sin((1.1 - p.life) * 8 + i) * 12 * scale * dt
+            p.y = p.y + p.vy * dt
+            local alpha = math.min(1, (p.life / p.max_life) * 1.5)
+            drawVectorHeart(p.x, p.y, p.size, 1.0, 0.30, 0.50, alpha)
+        end
+    end
+end
+
+renderer.drawPetCompanion = renderer.drawGooseCompanion
 
 return renderer
