@@ -34,13 +34,17 @@ local vinyl_record_img = nil
 local item_icons = {}
 local icon_shader = nil
 local font_bgm = nil
-local pet_cat_idle_frames = {}
-local pet_cat_walk_frames = {}
+local pet_cat_idle_down_frames = {}
+local pet_cat_idle_left_frames = {}
+local pet_cat_idle_right_frames = {}
+local pet_cat_idle_up_frames = {}
+local pet_cat_idle_frames = pet_cat_idle_down_frames
+local pet_cat_walk_down_frames = {}
+local pet_cat_walk_up_frames = {}
 local pet_cat_happy_frames = {}
 local pet_cat_sit_frames = {}
 local pet_cat_sleep_frames = {}
-local pet_cat_sneak_frames = {}
-local pet_cat_react_frames = {}
+local pet_cat_stretch_frames = {}
 
 local badge_canvas = nil
 local badge_quad = nil
@@ -3222,21 +3226,41 @@ function renderer.init()
     local ok_vinyl, v_img = pcall(love.graphics.newImage, "assets/icon/vinyl_record.png")
     if ok_vinyl then vinyl_record_img = v_img end
 
-    -- Load Cat Companion animated sprite frames (all 57 frames across 10 rows)
-    pet_cat_idle_frames = {}
-    pet_cat_walk_frames = {}
+    -- Load Cat Companion animated sprite frames (ALL 57 frames across 10 animation sets)
+    pet_cat_idle_down_frames = {}
+    pet_cat_idle_left_frames = {}
+    pet_cat_idle_right_frames = {}
+    pet_cat_idle_up_frames = {}
+    pet_cat_walk_down_frames = {}
+    pet_cat_walk_up_frames = {}
+    pet_cat_stretch_frames = {}
     pet_cat_happy_frames = {}
     pet_cat_sit_frames = {}
     pet_cat_sleep_frames = {}
-    pet_cat_stretch_frames = {}
 
     for i = 1, 4 do
         local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_down_" .. i .. ".png")
-        if ok then table.insert(pet_cat_idle_frames, img) end
+        if ok then table.insert(pet_cat_idle_down_frames, img) end
+    end
+    for i = 1, 4 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_left_" .. i .. ".png")
+        if ok then table.insert(pet_cat_idle_left_frames, img) end
+    end
+    for i = 1, 4 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_right_" .. i .. ".png")
+        if ok then table.insert(pet_cat_idle_right_frames, img) end
+    end
+    for i = 1, 4 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_up_" .. i .. ".png")
+        if ok then table.insert(pet_cat_idle_up_frames, img) end
     end
     for i = 1, 8 do
         local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_down_" .. i .. ".png")
-        if ok then table.insert(pet_cat_walk_frames, img) end
+        if ok then table.insert(pet_cat_walk_down_frames, img) end
+    end
+    for i = 1, 8 do
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_up_" .. i .. ".png")
+        if ok then table.insert(pet_cat_walk_up_frames, img) end
     end
     for i = 1, 8 do
         local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_side_" .. i .. ".png")
@@ -3254,6 +3278,7 @@ function renderer.init()
         local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_sleep_" .. i .. ".png")
         if ok then table.insert(pet_cat_sleep_frames, img) end
     end
+    pet_cat_idle_frames = pet_cat_idle_down_frames
 
     -- Load store item icons & achievement icons
     item_icons = {}
@@ -10166,7 +10191,7 @@ end
 
 function renderer.drawGooseCompanion(cx, cy, scale, game)
     if not _G.active_companion or _G.active_companion ~= "cat" then return end
-    if #pet_cat_idle_frames == 0 then return end
+    if not pet_cat_idle_down_frames or #pet_cat_idle_down_frames == 0 then return end
 
     local dt = love.timer.getDelta()
     local is_won = (game and game.state == Game.STATE_WON)
@@ -10280,12 +10305,14 @@ function renderer.drawGooseCompanion(cx, cy, scale, game)
             if roll < 0.60 then
                 cat_phys.vx = 0
                 cat_phys.state = "idle"
+                cat_phys.idle_type = love.math.random(1, 4)
                 cat_phys.action_timer = 6.0 + love.math.random() * 6.0
             elseif roll < 0.85 then
                 local dir = (love.math.random() < 0.5 and 1 or -1)
                 cat_phys.vx = dir * 18 * scale
                 cat_phys.facing = dir
                 cat_phys.state = "walk"
+                cat_phys.walk_type = love.math.random(1, 2)
                 cat_phys.action_timer = 2.0 + love.math.random() * 1.0
             else
                 cat_phys.vx = 0
@@ -10293,34 +10320,36 @@ function renderer.drawGooseCompanion(cx, cy, scale, game)
                 cat_phys.action_timer = 1.35
             end
         else
-            -- Original balanced levels (85% resting, 15% stroll)
-            if roll < 0.15 then
-                -- Short stroll to a new spot (2.0 - 3.0s)
+            -- 35% walk, 10% sit, 10% stretch, 35% idle, 10% sleep
+            if roll < 0.35 then
+                -- Stroll to a new spot (3.0 - 5.0s)
                 local dir = (love.math.random() < 0.5 and 1 or -1)
                 cat_phys.vx = dir * 18 * scale
                 cat_phys.facing = dir
                 cat_phys.state = "walk"
-                cat_phys.action_timer = 2.0 + love.math.random() * 1.0
-            elseif roll < 0.25 then
+                cat_phys.walk_type = love.math.random(1, 2)
+                cat_phys.action_timer = 3.0 + love.math.random() * 2.0
+            elseif roll < 0.45 then
                 -- 1 Paw Lick at a time
                 cat_phys.vx = 0
                 cat_phys.state = "sit"
                 cat_phys.action_timer = 1.2
-            elseif roll < 0.35 then
+            elseif roll < 0.55 then
                 -- 1 Stretch at a time
                 cat_phys.vx = 0
                 cat_phys.state = "stretch"
                 cat_phys.action_timer = 1.35
-            elseif roll < 0.70 then
+            elseif roll < 0.90 then
                 -- Tail Wag Idle (6.0 - 12.0s)
                 cat_phys.vx = 0
                 cat_phys.state = "idle"
+                cat_phys.idle_type = love.math.random(1, 4)
                 cat_phys.action_timer = 6.0 + love.math.random() * 6.0
             else
-                -- Cozy Flat Nap (10.0 - 20.0s)
+                -- Cozy Flat Nap (25.0 - 35.0s)
                 cat_phys.vx = 0
                 cat_phys.state = "sleep"
-                cat_phys.action_timer = 10.0 + love.math.random() * 10.0
+                cat_phys.action_timer = 25.0 + love.math.random() * 10.0
             end
         end
     end
@@ -10331,30 +10360,43 @@ function renderer.drawGooseCompanion(cx, cy, scale, game)
     end
 
     -- Choose frame animation set & looping mode
-    local frames = pet_cat_idle_frames
+    local frames = pet_cat_idle_down_frames
     local fps = 5
     local is_single_play = false
 
     if cat_phys.state == "happy" or not cat_phys.is_grounded then
-        frames = (#pet_cat_happy_frames > 0) and pet_cat_happy_frames or pet_cat_idle_frames
+        frames = (#pet_cat_happy_frames > 0) and pet_cat_happy_frames or pet_cat_idle_down_frames
         fps = 10
         is_single_play = true
     elseif cat_phys.state == "walk" and math.abs(cat_phys.vx) > 1 then
-        frames = (#pet_cat_walk_frames > 0) and pet_cat_walk_frames or pet_cat_idle_frames
+        if cat_phys.walk_type == 2 and #pet_cat_walk_up_frames > 0 then
+            frames = pet_cat_walk_up_frames
+        else
+            frames = (#pet_cat_walk_down_frames > 0) and pet_cat_walk_down_frames or pet_cat_idle_down_frames
+        end
         fps = 8
     elseif cat_phys.state == "sit" then
-        frames = (#pet_cat_sit_frames > 0) and pet_cat_sit_frames or pet_cat_idle_frames
+        frames = (#pet_cat_sit_frames > 0) and pet_cat_sit_frames or pet_cat_idle_down_frames
         fps = 6
         is_single_play = true
     elseif cat_phys.state == "stretch" then
-        frames = (#pet_cat_stretch_frames > 0) and pet_cat_stretch_frames or pet_cat_idle_frames
+        frames = (#pet_cat_stretch_frames > 0) and pet_cat_stretch_frames or pet_cat_idle_down_frames
         fps = 6
         is_single_play = true
     elseif cat_phys.state == "sleep" then
-        frames = (#pet_cat_sleep_frames > 0) and pet_cat_sleep_frames or pet_cat_idle_frames
+        frames = (#pet_cat_sleep_frames > 0) and pet_cat_sleep_frames or pet_cat_idle_down_frames
         fps = 4
     else
-        frames = pet_cat_idle_frames
+        -- Directional Idle (Randomly picked on state entry)
+        if cat_phys.idle_type == 2 and #pet_cat_idle_left_frames > 0 then
+            frames = pet_cat_idle_left_frames
+        elseif cat_phys.idle_type == 3 and #pet_cat_idle_right_frames > 0 then
+            frames = pet_cat_idle_right_frames
+        elseif cat_phys.idle_type == 4 and #pet_cat_idle_up_frames > 0 then
+            frames = pet_cat_idle_up_frames
+        else
+            frames = pet_cat_idle_down_frames
+        end
         fps = 5
     end
 
