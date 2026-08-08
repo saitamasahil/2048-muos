@@ -8996,6 +8996,12 @@ function renderer.drawAbout(skip_transition)
     local _, lines3 = font_help_label:getWrap(s3, w)
     cur_y = cur_y + #lines3 * font_help_label:getHeight() + section_gap
 
+    -- Section 3b: Sprite credits
+    local s_sprites = "Adorable Animal Sprites by Elthen"
+    love.graphics.printf(s_sprites, 0, cur_y, w, "center")
+    local _, lines_sprites = font_help_label:getWrap(s_sprites, w)
+    cur_y = cur_y + #lines_sprites * font_help_label:getHeight() + section_gap
+
     -- Section 4: Special Thanks (Playtesters)
     local s_thanks = "Special Thanks to Egggdoggo & d98jay\nfor early feedback, playtesting & incredible support!"
     love.graphics.printf(s_thanks, 0, cur_y, w, "center")
