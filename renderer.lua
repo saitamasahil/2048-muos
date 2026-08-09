@@ -3221,12 +3221,13 @@ function renderer.init()
     if ok_coin then coin_icon = c_img end
 
     local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
+            local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
     if ok_music then music_icon = m_img end
 
     local ok_vinyl, v_img = pcall(love.graphics.newImage, "assets/icon/vinyl_record.png")
     if ok_vinyl then vinyl_record_img = v_img end
 
-    -- Load Cat Companion animated sprite frames (ALL 57 frames across 10 animation sets)
+    -- Preload pet animations (all 1 to N frames for different states)
     pet_cat_idle_down_frames = {}
     pet_cat_idle_left_frames = {}
     pet_cat_idle_right_frames = {}
@@ -3239,43 +3240,43 @@ function renderer.init()
     pet_cat_sleep_frames = {}
 
     for i = 1, 4 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_down_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_idle_down_" .. i .. ".png")
         if ok then table.insert(pet_cat_idle_down_frames, img) end
     end
     for i = 1, 4 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_left_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_idle_left_" .. i .. ".png")
         if ok then table.insert(pet_cat_idle_left_frames, img) end
     end
     for i = 1, 4 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_right_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_idle_right_" .. i .. ".png")
         if ok then table.insert(pet_cat_idle_right_frames, img) end
     end
     for i = 1, 4 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_idle_up_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_idle_up_" .. i .. ".png")
         if ok then table.insert(pet_cat_idle_up_frames, img) end
     end
     for i = 1, 8 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_down_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_walk_down_" .. i .. ".png")
         if ok then table.insert(pet_cat_walk_down_frames, img) end
     end
     for i = 1, 8 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_up_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_walk_up_" .. i .. ".png")
         if ok then table.insert(pet_cat_walk_up_frames, img) end
     end
     for i = 1, 8 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_walk_side_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_walk_side_" .. i .. ".png")
         if ok then table.insert(pet_cat_stretch_frames, img) end
     end
     for i = 1, 7 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_happy_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_happy_" .. i .. ".png")
         if ok then table.insert(pet_cat_happy_frames, img) end
     end
     for i = 1, 6 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_sit_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_sit_" .. i .. ".png")
         if ok then table.insert(pet_cat_sit_frames, img) end
     end
     for i = 1, 4 do
-        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat_sleep_" .. i .. ".png")
+        local ok, img = pcall(love.graphics.newImage, "assets/pet/cat/cat_sleep_" .. i .. ".png")
         if ok then table.insert(pet_cat_sleep_frames, img) end
     end
     pet_cat_idle_frames = pet_cat_idle_down_frames
