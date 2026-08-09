@@ -188,6 +188,10 @@ function Game.new(mode)
             save.saveStats(_G.stats)
         end
 
+        if _G.active_companion == "dog" and _G.recordDogBreedPlayed then
+            _G.recordDogBreedPlayed(_G.active_dog_breed)
+        end
+
         if _G.achievements then
             _G.achievements.powerups_used_this_run = 0
             save.saveAchievements(_G.achievements)
@@ -472,6 +476,10 @@ function Game:move(direction)
                             end
                             _G.stats.coins = (_G.stats.coins or 0) + coins_to_add
                             save.saveStats(_G.stats)
+                            -- Coin Hoarder achievement: accumulate 10,000 coins
+                            if _G.stats.coins >= 10000 and _G.unlockAchievement then
+                                _G.unlockAchievement("ach_coin_hoarder")
+                            end
                         end
                         self.max_score_for_coins = self.score
                     end
@@ -635,6 +643,9 @@ function Game:move(direction)
     end
 
     if moved then
+        if _G.active_companion == "dog" and _G.recordDogBreedPlayed then
+            _G.recordDogBreedPlayed(_G.active_dog_breed)
+        end
         if _G.stats then
             _G.stats.moves_made = (_G.stats.moves_made or 0) + 1
             if self.score > (_G.stats.highest_score or 0) then

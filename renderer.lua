@@ -1417,6 +1417,66 @@ local themes = {
         help_bg_color    = {hex("#0d1326")},
         help_key_color   = {hex("#1c2b54")},
         help_key_text    = {hex("#e2eafe")},
+    },
+    pastel = {
+        tile_colors = {
+            [0]    = {hex("#e8eae6")},   -- soft chalk empty cell
+            [2]    = {hex("#fce1e4")},   -- soft blush pink
+            [4]    = {hex("#fcf4dd")},   -- soft buttery cream
+            [8]    = {hex("#ddedf4")},   -- soft sky blue
+            [16]   = {hex("#e8dff5")},   -- soft lavender
+            [32]   = {hex("#ddf0e7")},   -- soft mint green
+            [64]   = {hex("#f7d6c8")},   -- soft peach coral
+            [128]  = {hex("#fef9ef")},   -- soft pearl white
+            [256]  = {hex("#d0f4de")},   -- soft sage
+            [512]  = {hex("#a9def9")},   -- soft baby blue
+            [1024] = {hex("#e4c1f9")},   -- soft lilac
+            [2048] = {hex("#ff99c8")},   -- soft flamingo pink
+        },
+        super_tile_color = {hex("#ff70a6")},
+        dark_text        = {hex("#4a4e69")},
+        light_text       = {hex("#ffffff")},
+        ui_text          = {hex("#5c6b5d")},
+        bg_color         = {hex("#f4f7f4")},   -- soothing minimal mint-milk
+        board_color      = {hex("#d8e2dc")},   -- soft slate sage frame
+        score_bg_color   = {hex("#d8e2dc")},
+        score_label      = {hex("#6b705c")},
+        score_value      = {hex("#4a4e69")},
+        overlay_win      = {hex("#ff99c8")},
+        overlay_lose     = {hex("#d8e2dc")},
+        help_bg_color    = {hex("#d8e2dc")},
+        help_key_color   = {hex("#f19c79")},
+        help_key_text    = {hex("#ffffff")},
+    },
+    pawprint = {
+        tile_colors = {
+            [0]    = {hex("#e0d4cc")},
+            [2]    = {hex("#f7ede2")},
+            [4]    = {hex("#f5cac3")},
+            [8]    = {hex("#f28482")},
+            [16]   = {hex("#e07a5f")},
+            [32]   = {hex("#d4a373")},
+            [64]   = {hex("#bc6c25")},
+            [128]  = {hex("#dda15e")},
+            [256]  = {hex("#c68b59")},
+            [512]  = {hex("#a0522d")},
+            [1024] = {hex("#7f4f24")},
+            [2048] = {hex("#582f0e")},
+        },
+        super_tile_color = {hex("#3a1700")},
+        dark_text        = {hex("#582f0e")},
+        light_text       = {hex("#fdf8f5")},
+        ui_text          = {hex("#582f0e")},
+        bg_color         = {hex("#fdf8f5")},
+        board_color      = {hex("#8d5b4c")},
+        score_bg_color   = {hex("#8d5b4c")},
+        score_label      = {hex("#fdf8f5")},
+        score_value      = {hex("#ffffff")},
+        overlay_win      = {hex("#dda15e")},
+        overlay_lose     = {hex("#8d5b4c")},
+        help_bg_color    = {hex("#8d5b4c")},
+        help_key_color   = {hex("#d4a373")},
+        help_key_text    = {hex("#ffffff")},
     }
 }
 themes.cherry_blossom = themes.cherry
@@ -5702,7 +5762,7 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             }
         },
         {
-            title = "UNDO  [B]",
+            title = "UNDO",
             lines = {
                 "Made a mistake? Press B to undo!",
                 "",
@@ -5718,9 +5778,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             }
         },
         {
-            title = "SWAP  [L1]  (Plus Mode)",
+            title = "SWAP",
             lines = {
-                "Press L1 to swap any two tiles!",
+                "Plus Mode: Press L1 to swap tiles!",
                 "Select first tile, then second.",
                 "",
                 "Use it to rearrange your board",
@@ -5738,9 +5798,9 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             }
         },
         {
-            title = "BOMB  [R1]  (Plus Mode)",
+            title = "BOMB",
             lines = {
-                "Press R1 to enter bomb mode.",
+                "Plus Mode: Press R1 for bomb mode.",
                 "Select any tile to destroy it!",
                 "",
                 "Great for clearing high tiles",
@@ -5802,12 +5862,12 @@ function renderer.drawTutorial(page, skip_transition, static_only)
             }
         },
         {
-            title = "THEMES  [Y]",
+            title = "THEMES",
             lines = {
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 38 themes total!"
+                "achievements. 40 themes total!"
             },
 
             tiles = {
@@ -8390,46 +8450,54 @@ end
 -- Achievements Screen
 -- ============================================================================
 local achievementsList = {
+    -- First Steps
+    { id = "ach_first_game",       name = "First Steps",       desc = "Play your first game",                                           reward = "Ocean Theme",      coins = 20  },
+
     -- Score Milestones
-    { id = "ach_score_1k", name = "Getting Started", desc = "Reach 1,000 points", reward = "Forest Theme", coins = 20 },
-    { id = "ach_score_2k", name = "Gaining Momentum", desc = "Reach 2,000 points", reward = "Volcano Theme", coins = 35 },
-    { id = "ach_score_5k", name = "Rising Star", desc = "Reach 5,000 points", reward = "Sunset Theme", coins = 50 },
-    { id = "ach_score_7k", name = "High Scorer", desc = "Reach 7,500 points", reward = "Abyss Theme", coins = 75 },
-    { id = "ach_score_10k", name = "High Roller", desc = "Reach 10,000 points", reward = "Neon Theme", coins = 100 },
-    { id = "ach_score_25k", name = "Aesthetic", desc = "Reach 25,000 points", reward = "Vaporwave Theme", coins = 200 },
-    { id = "ach_score_50k", name = "Vampire Lord", desc = "Reach 50,000 points", reward = "Dracula Theme", coins = 350 },
-    { id = "ach_score_100k", name = "Midas Touch", desc = "Reach 100,000 points", reward = "Gold Theme", coins = 600 },
-    { id = "ach_score_250k", name = "Infinity Legend", desc = "Reach 250,000 points", reward = "Hyperdrive Theme", coins = 1000 },
+    { id = "ach_score_1k",         name = "Getting Started",   desc = "Reach 1,000 points",                                             reward = "Forest Theme",     coins = 20  },
+    { id = "ach_score_2k",         name = "Gaining Momentum",  desc = "Reach 2,000 points",                                             reward = "Volcano Theme",    coins = 35  },
+    { id = "ach_score_5k",         name = "Rising Star",       desc = "Reach 5,000 points",                                             reward = "Sunset Theme",     coins = 50  },
+    { id = "ach_score_7k",         name = "High Scorer",       desc = "Reach 7,500 points",                                             reward = "Abyss Theme",      coins = 75  },
+    { id = "ach_score_10k",        name = "High Roller",       desc = "Reach 10,000 points",                                            reward = "Neon Theme",       coins = 100 },
+    { id = "ach_score_25k",        name = "Aesthetic",         desc = "Reach 25,000 points",                                            reward = "Vaporwave Theme",  coins = 200 },
+    { id = "ach_score_50k",        name = "Vampire Lord",      desc = "Reach 50,000 points",                                            reward = "Dracula Theme",    coins = 350 },
+    { id = "ach_score_100k",       name = "Midas Touch",       desc = "Reach 100,000 points",                                           reward = "Gold Theme",       coins = 600 },
+    { id = "ach_score_250k",       name = "Infinity Legend",   desc = "Reach 250,000 points",                                           reward = "Hyperdrive Theme", coins = 1000},
 
     -- Tile Merges
-    { id = "ach_merge_512", name = "Half Way There", desc = "Create a 512 tile", reward = "Candy Theme", coins = 50 },
-    { id = "ach_merge_1024", name = "Almost There", desc = "Create a 1024 tile", reward = "Midnight Theme", coins = 100 },
-    { id = "ach_2048", name = "2048 Master", desc = "Create a 2048 tile in Classic Mode", reward = "OLED Dark Theme", coins = 250 },
-    { id = "ach_4096", name = "The One", desc = "Create a 4096 tile", reward = "Glitch Theme", coins = 500 },
-    { id = "ach_merge_8192", name = "The Chosen One", desc = "Create an 8192 tile", reward = "Quantum Theme", coins = 1000 },
+    { id = "ach_merge_512",        name = "Half Way There",    desc = "Create a 512 tile",                                              reward = "Candy Theme",      coins = 50  },
+    { id = "ach_merge_1024",       name = "Almost There",      desc = "Create a 1024 tile",                                             reward = "Midnight Theme",   coins = 100 },
+    { id = "ach_2048",             name = "2048 Master",       desc = "Create a 2048 tile in Classic Mode",                             reward = "OLED Dark Theme",  coins = 250 },
+    { id = "ach_4096",             name = "The One",           desc = "Create a 4096 tile",                                             reward = "Glitch Theme",     coins = 500 },
+    { id = "ach_merge_8192",       name = "The Chosen One",    desc = "Create an 8192 tile",                                            reward = "Quantum Theme",    coins = 1000},
 
-    -- Plus Mode Milestones
-    { id = "ach_first_bomb", name = "Boom!", desc = "Use your first bomb in Plus Mode", reward = "Eclipse Theme", coins = 20 },
-    { id = "ach_demolition", name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode", reward = "Retro Theme", coins = 75 },
-    { id = "ach_2048_plus", name = "Plus Mode Master", desc = "Create a 2048 tile in Plus Mode", reward = "Cyberpunk Theme", coins = 250 },
-    { id = "ach_tactician", name = "Tactician", desc = "Use 5 Undos and 5 Swaps in a single Plus Mode game", reward = "Steel Theme", coins = 150 },
+    -- Plus Mode
+    { id = "ach_first_bomb",       name = "Boom!",             desc = "Use your first bomb in Plus Mode",                               reward = "Eclipse Theme",    coins = 20  },
+    { id = "ach_demolition",       name = "Demolition Expert", desc = "Use 10 bombs in total in Plus Mode",                             reward = "Retro Theme",      coins = 75  },
+    { id = "ach_tactician",        name = "Tactician",         desc = "Use 5 Undos and 5 Swaps in a single Plus Mode game",             reward = "Steel Theme",      coins = 150 },
+    { id = "ach_2048_plus",        name = "Plus Mode Master",  desc = "Create a 2048 tile in Plus Mode",                                reward = "Cyberpunk Theme",  coins = 250 },
 
-    -- Alternative Modes
-    { id = "ach_timeattack_2048", name = "Aurora", desc = "Create a 2048 tile in Time Attack mode", reward = "Aurora Theme", coins = 250 },
-    { id = "ach_huge_2048", name = "Spacious Giant", desc = "Create a 2048 tile in Huge Mode", reward = "Nebula Theme", coins = 250 },
-    { id = "ach_nomercy_512", name = "No Escape", desc = "Create a 512 tile in No Mercy Mode", reward = "Inferno Theme", coins = 250 },
-    { id = "ach_goose_2048", name = "Honk Honk!", desc = "Create a 2048 tile in Goose Mode", reward = "Honk Theme", coins = 250 },
+    -- Arcade Modes
+    { id = "ach_timeattack_2048",  name = "Aurora",            desc = "Create a 2048 tile in Time Attack mode",                         reward = "Aurora Theme",     coins = 250 },
+    { id = "ach_huge_2048",        name = "Spacious Giant",    desc = "Create a 2048 tile in Huge Mode",                                reward = "Nebula Theme",     coins = 250 },
+    { id = "ach_nomercy_512",      name = "No Escape",         desc = "Create a 512 tile in No Mercy Mode",                             reward = "Inferno Theme",    coins = 250 },
+    { id = "ach_goose_2048",       name = "Honk Honk!",        desc = "Create a 2048 tile in Goose Mode",                               reward = "Honk Theme",       coins = 250 },
 
-    -- Special Challenges & Secrets
-    { id = "ach_first_game", name = "First Steps", desc = "Play your first game", reward = "Ocean Theme", coins = 20 },
-    { id = "ach_secret_menu", name = "Secret Discovery", desc = "Access the Secret Menu for the first time", reward = "Matrix Theme", coins = 100 },
-    { id = "ach_untouchable", name = "Untouchable", desc = "Create a 1024 tile without using undos or powerups", reward = "Peach Theme", coins = 200 },
-    { id = "ach_untouchable_2048", name = "Zen Master", desc = "Create a 2048 tile without using undos or powerups", reward = "Matcha Theme", coins = 400 },
-    { id = "ach_speedrun_2048", name = "Speed Demon", desc = "Create a 2048 tile in under 5 minutes", reward = "Retro Gold Theme", coins = 400 },
-    { id = "ach_hardcore_2048", name = "Hardcore Gamer", desc = "Create 2048 in Plus Mode without powerups or undos", reward = "Spectrum Theme", coins = 500 },
-    { id = "ach_melody_maker", name = "Melody Maker", desc = "Listen to 5 different tracks in the Jukebox", reward = "Lo-Fi Theme", coins = 150 },
-    { id = "ach_big_spender", name = "Big Spender", desc = "Spend 5,000 total coins in the Store", reward = "Luxe Theme", coins = 300 },
-    { id = "ach_first_shield", name = "Second Chance", desc = "Use a Second Chance Shield to clear a row or column", reward = "Sapphire Theme", coins = 200 }
+    -- Challenges & Secrets
+    { id = "ach_untouchable",      name = "Untouchable",       desc = "Create a 1024 tile without using undos or powerups",             reward = "Peach Theme",      coins = 200 },
+    { id = "ach_untouchable_2048", name = "Zen Master",        desc = "Create a 2048 tile without using undos or powerups",             reward = "Matcha Theme",     coins = 400 },
+    { id = "ach_speedrun_2048",    name = "Speed Demon",       desc = "Create a 2048 tile in under 5 minutes",                          reward = "Retro Gold Theme", coins = 400 },
+    { id = "ach_hardcore_2048",    name = "Hardcore Gamer",    desc = "Create 2048 in Plus Mode without powerups or undos",             reward = "Spectrum Theme",   coins = 500 },
+    { id = "ach_secret_menu",      name = "Secret Discovery",  desc = "Access the Secret Menu for the first time",                      reward = "Matrix Theme",     coins = 100 },
+
+    -- Store & Jukebox
+    { id = "ach_melody_maker",     name = "Melody Maker",      desc = "Listen to 5 different tracks in the Jukebox",                    reward = "Lo-Fi Theme",      coins = 150 },
+    { id = "ach_big_spender",      name = "Big Spender",       desc = "Spend 5,000 total coins in the Store",                           reward = "Luxe Theme",       coins = 300 },
+    { id = "ach_first_shield",     name = "Second Chance",     desc = "Use a Second Chance Shield to clear a row or column",            reward = "Sapphire Theme",   coins = 200 },
+
+    -- Companions & Economy
+    { id = "ach_coin_hoarder",     name = "Coin Hoarder",      desc = "Accumulate 10,000 coins at once",                                reward = "Pastel Theme",     coins = 250 },
+    { id = "ach_best_friend",      name = "Best Friend",       desc = "Play a game with all 4 dog breeds",                              reward = "Pawprint Theme",   coins = 200 }
 }
 
 function renderer.getAchievementsList()
@@ -8795,7 +8863,7 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
 
                 -- Reward Tag
                 love.graphics.setFont(font_help_label)
-                local rew_text = "Unlocks: " .. ach.reward
+                local rew_text = (isUnlocked and "Unlocked: " or "Unlocks: ") .. ach.reward
                 local font_h = font_help_label:getHeight()
                 local c_str = (ach.coins and ach.coins > 0) and tostring(ach.coins) or nil
                 local c_icon_sz = math.floor(15 * scale)
@@ -8806,16 +8874,17 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
                 local tag_x = w - padding - total_tag_w - math.floor(25 * scale)
                 local tag_y = current_y + math.floor(13 * scale)
 
-                local tag_text_color = super_tile_color
+                local tag_text_color = base_text_col
                 if isUnlocked then
                     local r_bg, g_bg, b_bg = board_color[1] or 0, board_color[2] or 0, board_color[3] or 0
                     local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
-                    if bg_lum > 0.45 then
-                        local r_tx, g_tx, b_tx = super_tile_color[1] or 0, super_tile_color[2] or 0, super_tile_color[3] or 0
-                        local tx_lum = 0.299 * r_tx + 0.587 * g_tx + 0.114 * b_tx
-                        if tx_lum > 0.45 then
-                            tag_text_color = dark_text
-                        end
+                    local cand = (ui_text and ui_text ~= dark_text) and ui_text or super_tile_color
+                    local r_st, g_st, b_st = cand[1] or 0, cand[2] or 0, cand[3] or 0
+                    local st_lum = 0.299 * r_st + 0.587 * g_st + 0.114 * b_st
+                    if (bg_lum < 0.45 and st_lum >= 0.45) or (bg_lum >= 0.45 and st_lum < 0.45) then
+                        tag_text_color = cand
+                    else
+                        tag_text_color = (bg_lum < 0.45) and (ui_text or light_text or base_text_col) or (dark_text or base_text_col)
                     end
                 end
 
@@ -9718,15 +9787,16 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
             -- Right Tag (Price / Purchased)
             love.graphics.setFont(font_help_label)
-            local tag_text_color = super_tile_color
             local r_bg, g_bg, b_bg = board_color[1] or 0, board_color[2] or 0, board_color[3] or 0
             local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
-            if bg_lum > 0.45 then
-                local r_tx, g_tx, b_tx = super_tile_color[1] or 0, super_tile_color[2] or 0, super_tile_color[3] or 0
-                local tx_lum = 0.299 * r_tx + 0.587 * g_tx + 0.114 * b_tx
-                if tx_lum > 0.45 then
-                    tag_text_color = dark_text
-                end
+            local cand = (ui_text and ui_text ~= dark_text) and ui_text or super_tile_color
+            local r_st, g_st, b_st = cand[1] or 0, cand[2] or 0, cand[3] or 0
+            local st_lum = 0.299 * r_st + 0.587 * g_st + 0.114 * b_st
+            local tag_text_color = base_text_col
+            if (bg_lum < 0.45 and st_lum >= 0.45) or (bg_lum >= 0.45 and st_lum < 0.45) then
+                tag_text_color = cand
+            else
+                tag_text_color = (bg_lum < 0.45) and (ui_text or light_text or base_text_col) or (dark_text or base_text_col)
             end
 
             if purchased then

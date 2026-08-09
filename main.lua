@@ -173,6 +173,8 @@ function love.load(args)
         if _G.achievements.ach_melody_maker then table.insert(_G.unlocked_themes, "lofi") end
         if _G.achievements.ach_big_spender then table.insert(_G.unlocked_themes, "platinum") end
         if _G.achievements.ach_first_shield then table.insert(_G.unlocked_themes, "guardian") end
+        if _G.achievements.ach_coin_hoarder then table.insert(_G.unlocked_themes, "pastel") end
+        if _G.achievements.ach_best_friend then table.insert(_G.unlocked_themes, "pawprint") end
         if _G.stats and _G.stats.purchased_items then
             for item_id, purchased in pairs(_G.stats.purchased_items) do
                 if purchased and purchased ~= 0 and item_id:match("^theme_") then
@@ -237,7 +239,9 @@ function love.load(args)
                 ach_tactician = "steel",
                 ach_melody_maker = "lofi",
                 ach_big_spender = "platinum",
-                ach_first_shield = "guardian"
+                ach_first_shield = "guardian",
+                ach_coin_hoarder = "pastel",
+                ach_best_friend = "pawprint"
             }
             if theme_map[id] then
                 local already = false
@@ -280,7 +284,9 @@ function love.load(args)
                 ach_tactician = "Tactician",
                 ach_melody_maker = "Melody Maker",
                 ach_big_spender = "Big Spender",
-                ach_first_shield = "Second Chance"
+                ach_first_shield = "Second Chance",
+                ach_coin_hoarder = "Coin Hoarder",
+                ach_best_friend = "Best Friend"
             }
             local coin_reward = 0
             if renderer and renderer.getAchievementsList then
@@ -306,6 +312,28 @@ function love.load(args)
                 renderer.queueHeaderLogoMorph("+" .. tostring(coin_reward) .. " COINS")
             end
             sound.playAchievement()
+        end
+    end
+
+    function _G.recordDogBreedPlayed(breed_id)
+        if _G.active_companion ~= "dog" then return end
+        breed_id = breed_id or _G.active_dog_breed or "roxy"
+        _G.stats = _G.stats or {}
+        _G.stats.played_dog_breeds = _G.stats.played_dog_breeds or {}
+        if not _G.stats.played_dog_breeds[breed_id] then
+            _G.stats.played_dog_breeds[breed_id] = true
+            save.saveStats(_G.stats)
+
+            local all_played = true
+            for _, bd in ipairs(_G.DOG_BREEDS or {}) do
+                if not _G.stats.played_dog_breeds[bd.id] then
+                    all_played = false
+                    break
+                end
+            end
+            if all_played and _G.unlockAchievement then
+                _G.unlockAchievement("ach_best_friend")
+            end
         end
     end
 
@@ -345,6 +373,11 @@ function love.load(args)
     _G.stats.coins = _G.stats.coins or 0
     _G.stats.purchased_items = _G.stats.purchased_items or {}
     _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
+
+    -- Check Coin Hoarder on startup
+    if _G.stats.coins >= 10000 and _G.unlockAchievement then
+        _G.unlockAchievement("ach_coin_hoarder")
+    end
 
     -- Retroactively award coins for already unlocked achievements
     if renderer and renderer.getAchievementsList then
@@ -1149,6 +1182,9 @@ function love.update(dt)
                     _G.stats.coins = (_G.stats.coins or 0) + 9999
                     save.saveStats(_G.stats)
                     renderer.showToast("Added 9999 Coins! Total: " .. _G.stats.coins)
+                    if _G.stats.coins >= 10000 and _G.unlockAchievement then
+                        _G.unlockAchievement("ach_coin_hoarder")
+                    end
                 elseif _G.cheats_selection == 5 then
                     if _G.cheat_debug_layout == "None" or _G.cheat_debug_layout == nil then
                         _G.cheat_debug_layout = "Two 1024s"
