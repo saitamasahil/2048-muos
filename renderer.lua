@@ -9624,7 +9624,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     local badge_y = h - badge_h - math.floor(7 * scale)
     local header_bottom = title_y + font_title:getHeight() + math.floor(15 * scale)
     local list_y = header_bottom
-    local avail_h = badge_y - list_y - math.floor(8 * scale)
+    local avail_h = badge_y - list_y - math.floor(10 * scale)
 
     local card_y_offsets = {}
     local current_y_acc = 0
@@ -9637,7 +9637,8 @@ function renderer.drawStoreMenu(selection, skip_transition)
         current_y_acc = current_y_acc + ch + card_gap
     end
 
-    local total_content_h = math.max(0, current_y_acc - card_gap)
+    -- Add extra bottom padding margin to total_content_h so last card border never clips against bottom nav
+    local total_content_h = math.max(0, current_y_acc - card_gap + math.floor(16 * scale))
     local max_scroll = math.max(0, total_content_h - avail_h)
     
     _G.store_scroll = _G.store_scroll or 0
@@ -9654,8 +9655,8 @@ function renderer.drawStoreMenu(selection, skip_transition)
     end
     local scroll = _G.store_scroll
 
-    -- Scissor clip: expand 2px upward only so first card's top border is visible without bleeding into footer
-    love.graphics.setScissor(0, list_y - 2, w, avail_h + 2)
+    -- Scissor clip: expanded slightly vertically to allow full card border strokes to draw cleanly
+    love.graphics.setScissor(0, list_y - math.floor(4 * scale), w, avail_h + math.floor(8 * scale))
 
     for i, item in ipairs(items) do
         local is_consumable = item.consumable
@@ -9663,23 +9664,28 @@ function renderer.drawStoreMenu(selection, skip_transition)
         local card_h = (item.id == "mascot_dog" and purchased) and math.floor(92 * scale) or math.floor(58 * scale)
         local y = list_y + card_y_offsets[i] - scroll
 
-        if y + card_h >= list_y and y <= list_y + avail_h then
+        if y + card_h >= list_y - math.floor(6 * scale) and y <= list_y + avail_h + math.floor(6 * scale) then
             local is_sel = (i == selection)
             local consumable_count = is_consumable and (_G.stats and item.ckey and (_G.stats[item.ckey] or 0) or 0) or 0
 
-            -- Card background using board_color
-            love.graphics.setColor(board_color[1], board_color[2], board_color[3], is_sel and 0.95 or 0.75)
-            roundedRect("fill", padding, y, w - padding * 2, card_h, math.floor(10 * scale))
-
-            -- Card border
+            -- Card background: dim unselected cards, brightly tint selected card
             if is_sel then
-                local pulse = (math.sin(love.timer.getTime() * 6) + 1) / 2 -- smooth 0..1 pulse
-                local alpha = 0.4 + pulse * 0.6  -- pulses between 0.4 and 1.0
-                love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], alpha)
-                love.graphics.setLineWidth(math.floor((2 + pulse * 1) * scale))
+                love.graphics.setColor(board_color[1], board_color[2], board_color[3], 1.0)
+                roundedRect("fill", padding, y, w - padding * 2, card_h, math.floor(10 * scale))
+                love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.22)
+                roundedRect("fill", padding, y, w - padding * 2, card_h, math.floor(10 * scale))
             else
-                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.25)
-                love.graphics.setLineWidth(math.floor(1.5 * scale))
+                love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.55)
+                roundedRect("fill", padding, y, w - padding * 2, card_h, math.floor(10 * scale))
+            end
+
+            -- Card border: solid border for selected card, subtle border for unselected
+            if is_sel then
+                love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 1.0)
+                love.graphics.setLineWidth(math.floor(2.5 * scale))
+            else
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.18)
+                love.graphics.setLineWidth(math.floor(1.2 * scale))
             end
             roundedRect("line", padding, y, w - padding * 2, card_h, math.floor(10 * scale))
 
@@ -9694,12 +9700,12 @@ function renderer.drawStoreMenu(selection, skip_transition)
             local base_text_col = renderer.getContrastTextColor(board_color, ui_text, dark_text)
 
             love.graphics.setFont(font_label)
-            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], is_sel and 1.0 or 0.85)
-            love.graphics.print(item.name, text_x, y + math.floor(8 * scale))
+            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], is_sel and 1.0 or 0.55)
+            love.graphics.print(item.name, text_x, y + math.floor(5 * scale))
 
             love.graphics.setFont(font_help_label)
-            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.6)
-            love.graphics.print(item.desc, text_x, y + math.floor(32 * scale))
+            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], is_sel and 0.80 or 0.45)
+            love.graphics.print(item.desc, text_x, y + math.floor(28 * scale))
 
             -- 4 Dog Breed Pills when Dog Companion is purchased
             if item.id == "mascot_dog" and purchased then
