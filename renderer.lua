@@ -9470,7 +9470,7 @@ function renderer.getStoreItems()
         {id="powerup_bomb",  cost=60,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
 
         -- Mascots & Companions
-        {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Adorable animated sprite cat perched on HUD that pounces on high merges!"},
+        {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Animated cat companion that celebrates your merges!"},
         {id="mascot_dog",   cost=800,  name="Dog Companion",   desc="Animated dog companion that celebrates your merges!"},
 
         -- Permanent Upgrades
@@ -9636,63 +9636,85 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
             -- 4 Dog Breed Pills when Dog Companion is purchased
             if item.id == "mascot_dog" and purchased then
-                local pill_y = y + math.floor(54 * scale)
-                local pill_avail_w = (w - padding * 2) - math.floor(24 * scale)
+                local pill_y = y + math.floor(57 * scale)
                 local start_px = padding + math.floor(12 * scale)
-                local num_pills = #_G.DOG_BREEDS
-                local gap = math.floor(6 * scale)
-                local pill_w = math.floor((pill_avail_w - (num_pills - 1) * gap) / num_pills)
-                local pill_h = math.floor(26 * scale)
+                local curr_px = start_px
+                local gap = math.floor(8 * scale)
+                local pill_h = math.floor(28 * scale)
+                local font_h = font_help_label:getHeight()
+
+                love.graphics.setFont(font_help_label)
 
                 for p_idx, breed in ipairs(_G.DOG_BREEDS) do
-                    local px = start_px + (p_idx - 1) * (pill_w + gap)
                     local is_active = (_G.active_dog_breed == breed.id)
+
+                    -- Measure snug pill width
+                    local name_w = font_help_label:getWidth(breed.name)
+                    local icon_w = math.floor(22 * scale)
+                    local pad_left = math.floor(8 * scale)
+                    local icon_text_gap = math.floor(6 * scale)
+                    local pad_right = math.floor(10 * scale)
+                    local pill_w = pad_left + icon_w + icon_text_gap + name_w + pad_right
+
+                    local px = curr_px
+                    curr_px = curr_px + pill_w + gap
 
                     -- Draw Pill Background
                     if is_active then
                         love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.95)
-                        roundedRect("fill", px, pill_y, pill_w, pill_h, math.floor(6 * scale))
+                        roundedRect("fill", px, pill_y, pill_w, pill_h, math.floor(8 * scale))
                         love.graphics.setColor(1, 1, 1, 0.9)
                         love.graphics.setLineWidth(math.floor(1.5 * scale))
-                        roundedRect("line", px, pill_y, pill_w, pill_h, math.floor(6 * scale))
+                        roundedRect("line", px, pill_y, pill_w, pill_h, math.floor(8 * scale))
                     else
-                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.12)
-                        roundedRect("fill", px, pill_y, pill_w, pill_h, math.floor(6 * scale))
-                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.25)
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.16)
+                        roundedRect("fill", px, pill_y, pill_w, pill_h, math.floor(8 * scale))
+                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.35)
                         love.graphics.setLineWidth(math.floor(1 * scale))
-                        roundedRect("line", px, pill_y, pill_w, pill_h, math.floor(6 * scale))
+                        roundedRect("line", px, pill_y, pill_w, pill_h, math.floor(8 * scale))
                     end
 
-                    -- Draw Mini Dog Idle Sprite in Pill
+                    -- Draw Mini Dog Idle Sprite in Pill (Prominent & vertically centered)
                     local b_frames = pet_dog_breed_frames[breed.id]
                     local mini_img = b_frames and b_frames.idle_down and b_frames.idle_down[1]
-                    local icon_offset_x = math.floor(4 * scale)
+                    local sprite_cx = px + pad_left + icon_w / 2
+                    local center_y = pill_y + math.floor(pill_h / 2)
+
                     if mini_img then
-                        local mini_h = math.floor(18 * scale)
+                        local mini_h = math.floor(24 * scale)
                         local ms = mini_h / mini_img:getHeight()
-                        love.graphics.setColor(1, 1, 1, is_active and 1.0 or 0.75)
+                        love.graphics.setColor(1, 1, 1, 1.0)
                         love.graphics.draw(
                             mini_img,
-                            px + icon_offset_x + math.floor(9 * scale),
-                            pill_y + pill_h / 2,
+                            sprite_cx,
+                            center_y,
                             0,
                             ms, ms,
                             mini_img:getWidth() / 2,
-                            mini_img:getHeight() / 2
+                            mini_img:getHeight() * 0.70
                         )
-                        icon_offset_x = icon_offset_x + math.floor(18 * scale)
                     end
 
-                    -- Draw Dog Name
-                    love.graphics.setFont(font_help_label)
+                    -- Draw Dog Name (Pixel-perfect aligned & high contrast across all themes!)
+                    local name_x = px + pad_left + icon_w + icon_text_gap
+                    local name_y = pill_y + math.floor((pill_h - font_h) / 2)
+
                     if is_active then
-                        love.graphics.setColor(1, 1, 1, 1)
+                        local r_k, g_k, b_k = help_key_color[1] or 1, help_key_color[2] or 1, help_key_color[3] or 1
+                        local k_lum = 0.299 * r_k + 0.587 * g_k + 0.114 * b_k
+                        if k_lum > 0.6 then
+                            love.graphics.setColor(0.08, 0.08, 0.08, 1.0)
+                        else
+                            love.graphics.setColor(1, 1, 1, 1.0)
+                        end
+                        love.graphics.print(breed.name, name_x, name_y)
                     else
-                        love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.75)
+                        love.graphics.setColor(0, 0, 0, 0.4)
+                        love.graphics.print(breed.name, name_x + 1, name_y + 1)
+
+                        love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.95)
+                        love.graphics.print(breed.name, name_x, name_y)
                     end
-                    local name_x = px + icon_offset_x + math.floor(4 * scale)
-                    local name_y = pill_y + math.floor((pill_h - font_help_label:getHeight()) / 2)
-                    love.graphics.print(breed.name, name_x, name_y)
                 end
             end
 
@@ -9734,7 +9756,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 local font_h = font_help_label:getHeight()
                 local tag_h = font_h + math.floor(8 * scale)
                 local tag_x = w - padding - tw - math.floor(20 * scale)
-                local tag_y = (item.id == "mascot_dog" and purchased) and (y + math.floor(14 * scale)) or (y + math.floor((card_h - tag_h) / 2))
+                local tag_y = y + math.floor((card_h - tag_h) / 2)
                 local text_y = tag_y + math.floor((tag_h - font_h) / 2)
 
                 if is_equipped then
