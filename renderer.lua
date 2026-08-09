@@ -9457,39 +9457,37 @@ function renderer.getStoreItems()
     end
 
     return {
-        -- Boosters & Shields
-        {id="coin_rush",     cost=100,  name="Coin Rush Ticket",     desc="Doubles all Coins earned in your next game  (x" .. coin_rush_count .. " owned)", consumable=true, ckey="coin_rush_count"},
-        {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
-        {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
-        {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},
-        {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
-
-        -- Plus Mode Powerups
-        {id="powerup_undo",  cost=40,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
-        {id="powerup_swap",  cost=50,  name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
-        {id="powerup_bomb",  cost=60,  name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
-
         -- Mascots & Companions
         {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Animated cat companion that celebrates your merges!"},
-        {id="mascot_dog",   cost=800,  name="Dog Companion",   desc="Animated dog companion that celebrates your merges!"},
+        {id="mascot_dog",   cost=1600, name="Dog Companion",   desc="Animated dog companion with 4 adorable dog pals!"},
 
         -- Permanent Upgrades
         {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
         {id="extra_swap",    cost=350,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
         {id="extra_bomb",    cost=500,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
-        {id="jukebox",       cost=1000,  name="Jukebox",               desc="Unlock Music Player & Jukebox Control"},
+        {id="jukebox",       cost=1000, name="Jukebox",               desc="Unlock Music Player & Jukebox Control"},
         {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
 
-        -- Visual FX
-        {id="anim_bounce",   cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
-        {id="anim_glow",     cost=400,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
+        -- Boosters & Powerups
+        {id="powerup_undo",  cost=40,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
+        {id="powerup_swap",  cost=50,   name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
+        {id="powerup_bomb",  cost=60,   name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
+        {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
+        {id="coin_rush",     cost=100,  name="Coin Rush Ticket",     desc="Doubles all Coins earned in your next game  (x" .. coin_rush_count .. " owned)", consumable=true, ckey="coin_rush_count"},
+        {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
+        {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
+        {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},
 
-        -- Board Grid Skins & Customization
+        -- Board Grid Skins
         {id="skin_wood",     cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
         {id="skin_bamboo",   cost=150,  name="Bamboo Board",         desc="Natural woven Japanese bamboo grid texture"},
         {id="skin_glass",    cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid with glowing borders"},
         {id="skin_marble",   cost=200,  name="Marble Board",         desc="Polished white marble texture with subtle veins"},
         {id="skin_matrix",   cost=250,  name="Matrix Board",         desc="Animated digital green code lines running down board"},
+
+        -- Visual FX
+        {id="anim_bounce",   cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
+        {id="anim_glow",     cost=400,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
 
         -- Themes
         {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
