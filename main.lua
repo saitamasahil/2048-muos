@@ -316,16 +316,21 @@ function love.load(args)
     end
 
     function _G.recordDogBreedPlayed(breed_id)
-        if _G.active_companion ~= "dog" then return end
         breed_id = breed_id or _G.active_dog_breed or "roxy"
         _G.stats = _G.stats or {}
         _G.stats.played_dog_breeds = _G.stats.played_dog_breeds or {}
-        if not _G.stats.played_dog_breeds[breed_id] then
+
+        if _G.active_companion == "dog" and breed_id then
             _G.stats.played_dog_breeds[breed_id] = true
             save.saveStats(_G.stats)
+        end
 
+        if _G.achievements and not _G.achievements["ach_best_friend"] then
             local all_played = true
-            for _, bd in ipairs(_G.DOG_BREEDS or {}) do
+            local breeds_list = _G.DOG_BREEDS or {
+                { id = "roxy" }, { id = "milo" }, { id = "bruno" }, { id = "coco" }
+            }
+            for _, bd in ipairs(breeds_list) do
                 if not _G.stats.played_dog_breeds[bd.id] then
                     all_played = false
                     break
@@ -374,9 +379,12 @@ function love.load(args)
     _G.stats.purchased_items = _G.stats.purchased_items or {}
     _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
 
-    -- Check Coin Hoarder on startup
+    -- Check Coin Hoarder & Best Friend on startup
     if _G.stats.coins >= 10000 and _G.unlockAchievement then
         _G.unlockAchievement("ach_coin_hoarder")
+    end
+    if _G.recordDogBreedPlayed then
+        _G.recordDogBreedPlayed(_G.active_dog_breed)
     end
 
     -- Retroactively award coins for already unlocked achievements
