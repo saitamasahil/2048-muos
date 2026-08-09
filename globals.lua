@@ -104,3 +104,12 @@ _G.achievements = {
 }
 
 _G.unlocked_themes = {"light", "dark"}
+
+_G.DOG_BREEDS = {
+    { id = "roxy",  name = "Roxy",  breed = "Pomeranian" },
+    { id = "milo",  name = "Milo",  breed = "Corgi" },
+    { id = "bruno", name = "Bruno", breed = "French Bulldog" },
+    { id = "coco",  name = "Coco",  breed = "Poodle" },
+}
+_G.active_dog_breed = "roxy"
+

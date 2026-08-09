@@ -172,6 +172,56 @@ function save.loadCompanion()
     return "none"
 end
 
+local DOG_BREED_FILE = "dog_breed.dat"
+
+function save.saveDogBreed(breed)
+    local path = getFilePath(DOG_BREED_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(breed or "roxy")
+        file:close()
+    end
+end
+
+function save.loadDogBreed()
+    local path = getFilePath(DOG_BREED_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "roxy"
+end
+
+
+local DOG_BREED_FILE = "dog_breed.dat"
+
+function save.saveDogBreed(breed)
+    local path = getFilePath(DOG_BREED_FILE)
+    local file = io.open(path, "w")
+    if file then
+        file:write(breed or "roxy")
+        file:close()
+    end
+end
+
+function save.loadDogBreed()
+    local path = getFilePath(DOG_BREED_FILE)
+    local file = io.open(path, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+        if content and content ~= "" then
+            return content
+        end
+    end
+    return "roxy"
+end
+
+
 function save.loadTextSize()
     local path = getFilePath(TEXT_SIZE_FILE)
     local file = io.open(path, "r")

@@ -115,6 +115,7 @@ function love.load(args)
     sound.init()
     _G.board_skin = save.loadBoardSkin and save.loadBoardSkin() or "default"
     _G.active_companion = save.loadCompanion and save.loadCompanion() or "none"
+    _G.active_dog_breed = save.loadDogBreed and save.loadDogBreed() or "roxy"
 
     -- Load achievements
     local loadedAchievements = save.loadAchievements()
@@ -709,6 +710,30 @@ function love.update(dt)
             elseif event == input.events.DOWN then
                 _G.store_selection = _G.store_selection < items_count and (_G.store_selection + 1) or 1
                 sound.playMenuMove()
+            elseif event == input.events.LEFT or event == input.events.RIGHT then
+                local sel_item = items[_G.store_selection or 1]
+                if sel_item and sel_item.id == "mascot_dog" then
+                    local is_owned = _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["mascot_dog"]
+                    if is_owned then
+                        local breeds = _G.DOG_BREEDS or {}
+                        local current = _G.active_dog_breed or "roxy"
+                        local cur_idx = 1
+                        for idx, b in ipairs(breeds) do
+                            if b.id == current then cur_idx = idx break end
+                        end
+                        if event == input.events.LEFT then
+                            cur_idx = (cur_idx > 1) and (cur_idx - 1) or #breeds
+                        else
+                            cur_idx = (cur_idx < #breeds) and (cur_idx + 1) or 1
+                        end
+                        local new_b = breeds[cur_idx]
+                        if new_b then
+                            _G.active_dog_breed = new_b.id
+                            if save and save.saveDogBreed then save.saveDogBreed(new_b.id) end
+                            sound.playMenuMove()
+                        end
+                    end
+                end
             elseif event == input.events.BACK then
                 sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
@@ -740,6 +765,32 @@ function love.update(dt)
                             _G.active_companion = "cat"
                             if save and save.saveCompanion then save.saveCompanion("cat") end
                             renderer.showToast("Purchased & Equipped Cat Companion!")
+                        else
+                            renderer.showToast("Not enough Coins!")
+                        end
+                        return
+                    end
+
+                    if sel_item.id == "mascot_dog" then
+                        local is_owned = _G.stats and _G.stats.purchased_items and _G.stats.purchased_items["mascot_dog"]
+                        if is_owned then
+                            if _G.active_companion == "dog" then
+                                _G.active_companion = "none"
+                                if save and save.saveCompanion then save.saveCompanion("none") end
+                                renderer.showToast("Unequipped Dog Companion")
+                            else
+                                _G.active_companion = "dog"
+                                if save and save.saveCompanion then save.saveCompanion("dog") end
+                                renderer.showToast("Equipped Dog Companion!")
+                            end
+                        elseif (_G.stats.coins or 0) >= sel_item.cost then
+                            _G.stats.coins = _G.stats.coins - sel_item.cost
+                            _G.stats.purchased_items["mascot_dog"] = 1
+                            _G.stats.total_spent_coins = (_G.stats.total_spent_coins or 0) + sel_item.cost
+                            save.saveStats(_G.stats)
+                            _G.active_companion = "dog"
+                            if save and save.saveCompanion then save.saveCompanion("dog") end
+                            renderer.showToast("Purchased & Equipped Dog Companion!")
                         else
                             renderer.showToast("Not enough Coins!")
                         end
