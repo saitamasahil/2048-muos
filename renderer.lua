@@ -9097,6 +9097,7 @@ end
 -- About Screen
 -- ============================================================================
 local qr_image
+local heart_icon_img
 function renderer.drawAbout(skip_transition)
     renderer.clearBackground()
 
@@ -9139,14 +9140,47 @@ function renderer.drawAbout(skip_transition)
     love.graphics.setFont(font_help_label)
     love.graphics.setColor(ui_text)
 
+    if not heart_icon_img then
+        local success, img = pcall(love.graphics.newImage, "assets/icon/heart.png")
+        if success then heart_icon_img = img end
+    end
+
     -- Section 1: Developer
-    local s1 = "Developed by saitamasahil\nA feature-packed implementation of the classic 2048 puzzle game"
-    love.graphics.printf(s1, 0, cur_y, w, "center")
-    local _, lines1 = font_help_label:getWrap(s1, w)
-    cur_y = cur_y + #lines1 * font_help_label:getHeight() + section_gap
+    local p1 = "Made with "
+    local p2 = " by saitamasahil"
+    local sub = "A feature-packed implementation of the classic 2048 puzzle game"
+
+    local fh = font_help_label:getHeight()
+    local w1 = font_help_label:getWidth(p1)
+    local w2 = font_help_label:getWidth(p2)
+    local icon_sz = math.floor(fh * 0.95)
+    local gap = math.floor(3 * scale)
+    local line1_w = w1 + icon_sz + gap + w2
+    local start_x = math.floor((w - line1_w) / 2)
+
+    love.graphics.setColor(ui_text)
+    love.graphics.print(p1, start_x, cur_y)
+
+    if heart_icon_img then
+        local iw, ih = heart_icon_img:getDimensions()
+        local icon_s = icon_sz / math.max(iw, ih)
+        local icon_x = start_x + w1 + gap / 2
+        local icon_y = cur_y + (fh - icon_sz) / 2
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(heart_icon_img, icon_x, icon_y, 0, icon_s, icon_s)
+    end
+
+    love.graphics.setColor(ui_text)
+    love.graphics.print(p2, start_x + w1 + icon_sz + gap, cur_y)
+
+    cur_y = cur_y + fh + math.floor(2 * scale)
+    love.graphics.setColor(ui_text)
+    love.graphics.printf(sub, 0, cur_y, w, "center")
+    local _, sub_lines = font_help_label:getWrap(sub, w)
+    cur_y = cur_y + #sub_lines * fh + section_gap
 
     -- Section 2: Framework
-    local s2 = "Original concept by Gabriele Cirulli\nBuilt using the LÖVE Framework"
+    local s2 = "Original concept by Gabriele Cirulli\nAndroid Port reference by tpcstld\nBuilt using the LÖVE Framework"
     love.graphics.printf(s2, 0, cur_y, w, "center")
     local _, lines2 = font_help_label:getWrap(s2, w)
     cur_y = cur_y + #lines2 * font_help_label:getHeight() + section_gap
@@ -9158,10 +9192,16 @@ function renderer.drawAbout(skip_transition)
     cur_y = cur_y + #lines3 * font_help_label:getHeight() + section_gap
 
     -- Section 3b: Sprite credits
-    local s_sprites = "Adorable Animal Sprites by Elthen"
+    local s_sprites = "Adorable Animal Sprites by Elthen and Pixelcave"
     love.graphics.printf(s_sprites, 0, cur_y, w, "center")
     local _, lines_sprites = font_help_label:getWrap(s_sprites, w)
     cur_y = cur_y + #lines_sprites * font_help_label:getHeight() + section_gap
+
+    -- Section 3c: Icon credits
+    local s_icons = "UI Icons provided by Flaticon"
+    love.graphics.printf(s_icons, 0, cur_y, w, "center")
+    local _, lines_icons = font_help_label:getWrap(s_icons, w)
+    cur_y = cur_y + #lines_icons * font_help_label:getHeight() + section_gap
 
     -- Section 4: Special Thanks (Playtesters)
     local s_thanks = "Special Thanks to Egggdoggo & d98jay\nfor early feedback, playtesting & incredible support!"
