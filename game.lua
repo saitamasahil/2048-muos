@@ -188,7 +188,7 @@ function Game.new(mode)
             save.saveStats(_G.stats)
         end
 
-        if _G.active_companion == "dog" and _G.recordDogBreedPlayed then
+        if _G.active_companion == "dog" and _G.recordDogBreedPlayed and self.mode ~= "huge" then
             _G.recordDogBreedPlayed(_G.active_dog_breed)
         end
 
@@ -551,6 +551,10 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_2048")
                     end
 
+                    if merged.value >= 2048 and _G.active_companion == "cat" and _G.unlockAchievement and self.mode ~= "huge" then
+                        _G.unlockAchievement("ach_purrfect_run")
+                    end
+
                     if merged.value >= 512 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_merge_512")
                     end
@@ -594,7 +598,7 @@ function Game:move(direction)
                         _G.unlockAchievement("ach_merge_8192")
                     end
 
-                    if merged.value >= 2048 and self.runTime and self.runTime <= 300 and _G.unlockAchievement then
+                    if merged.value >= 2048 and self.runTime and self.runTime <= 300 and _G.unlockAchievement and self.mode ~= "huge" then
                         _G.unlockAchievement("ach_speedrun_2048")
                     end
 
@@ -643,7 +647,7 @@ function Game:move(direction)
     end
 
     if moved then
-        if _G.active_companion == "dog" and _G.recordDogBreedPlayed then
+        if _G.active_companion == "dog" and _G.recordDogBreedPlayed and self.mode ~= "huge" then
             _G.recordDogBreedPlayed(_G.active_dog_breed)
         end
         if _G.stats then

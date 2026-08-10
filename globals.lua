@@ -98,6 +98,16 @@ _G.achievements = {
     ach_hardcore_2048 = false,   -- Hardcore Gamer -> unlocks 'spectrum'
     ach_tactician = false,       -- Tactician -> unlocks 'steel'
 
+    -- Store & Jukebox
+    ach_melody_maker = false,    -- Melody Maker -> unlocks 'lofi'
+    ach_big_spender = false,     -- Big Spender -> unlocks 'platinum'
+    ach_first_shield = false,    -- Second Chance -> unlocks 'guardian'
+
+    -- Companions & Economy
+    ach_coin_hoarder = false,     -- Coin Hoarder -> unlocks 'pastel'
+    ach_best_friend = false,      -- Best Friend -> unlocks 'pawprint'
+    ach_purrfect_run = false,     -- Purrfect Run -> unlocks 'neko_night'
+
     -- Hidden tracking stats
     bombs_used = 0,
     powerups_used_this_run = 0

@@ -1477,6 +1477,36 @@ local themes = {
         help_bg_color    = {hex("#8d5b4c")},
         help_key_color   = {hex("#d4a373")},
         help_key_text    = {hex("#ffffff")},
+    },
+    neko_night = {
+        tile_colors = {
+            [0]    = {hex("#312046")},
+            [2]    = {hex("#f8fafc")},
+            [4]    = {hex("#e2e8f0")},
+            [8]    = {hex("#ff2a85")},
+            [16]   = {hex("#d946ef")},
+            [32]   = {hex("#8b5cf6")},
+            [64]   = {hex("#6366f1")},
+            [128]  = {hex("#f59e0b")},
+            [256]  = {hex("#fbbf24")},
+            [512]  = {hex("#06b6d4")},
+            [1024] = {hex("#10b981")},
+            [2048] = {hex("#facc15")},
+        },
+        super_tile_color = {hex("#facc15")},
+        dark_text        = {hex("#130e20")},
+        light_text       = {hex("#f8fafc")},
+        ui_text          = {hex("#e2e8f0")},
+        bg_color         = {hex("#130e20")},
+        board_color      = {hex("#241734")},
+        score_bg_color   = {hex("#241734")},
+        score_label      = {hex("#e2e8f0")},
+        score_value      = {hex("#facc15")},
+        overlay_win      = {hex("#ff2a85")},
+        overlay_lose     = {hex("#241734")},
+        help_bg_color    = {hex("#241734")},
+        help_key_color   = {hex("#ff2a85")},
+        help_key_text    = {hex("#ffffff")},
     }
 }
 themes.cherry_blossom = themes.cherry
@@ -5867,7 +5897,7 @@ function renderer.drawTutorial(page, skip_transition, static_only)
                 "Press Y anytime to change theme!",
                 "",
                 "Unlock new themes by earning",
-                "achievements. 40 themes total!"
+                "achievements. 41 themes total!"
             },
 
             tiles = {
@@ -8497,7 +8527,8 @@ local achievementsList = {
 
     -- Companions & Economy
     { id = "ach_coin_hoarder",     name = "Coin Hoarder",      desc = "Accumulate 10,000 coins at once",                                reward = "Pastel Theme",     coins = 250 },
-    { id = "ach_best_friend",      name = "Best Friend",       desc = "Play a game with all 4 dog breeds",                              reward = "Pawprint Theme",   coins = 200 }
+    { id = "ach_best_friend",      name = "Best Friend",       desc = "Play a game with all 4 dog breeds",                              reward = "Pawprint Theme",   coins = 200 },
+    { id = "ach_purrfect_run",     name = "Purrfect Run",      desc = "Create a 2048 tile with the Cat Companion active",               reward = "Neko Night Theme", coins = 250 }
 }
 
 function renderer.getAchievementsList()

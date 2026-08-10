@@ -175,6 +175,7 @@ function love.load(args)
         if _G.achievements.ach_first_shield then table.insert(_G.unlocked_themes, "guardian") end
         if _G.achievements.ach_coin_hoarder then table.insert(_G.unlocked_themes, "pastel") end
         if _G.achievements.ach_best_friend then table.insert(_G.unlocked_themes, "pawprint") end
+        if _G.achievements.ach_purrfect_run then table.insert(_G.unlocked_themes, "neko_night") end
         if _G.stats and _G.stats.purchased_items then
             for item_id, purchased in pairs(_G.stats.purchased_items) do
                 if purchased and purchased ~= 0 and item_id:match("^theme_") then
@@ -204,6 +205,9 @@ function love.load(args)
     end
 
     function _G.unlockAchievement(id)
+        if _G.game and _G.game.mode == "huge" and id ~= "ach_huge_2048" then
+            return
+        end
         if not _G.achievements[id] then
             _G.achievements[id] = true
             save.saveAchievements(_G.achievements)
@@ -241,7 +245,8 @@ function love.load(args)
                 ach_big_spender = "platinum",
                 ach_first_shield = "guardian",
                 ach_coin_hoarder = "pastel",
-                ach_best_friend = "pawprint"
+                ach_best_friend = "pawprint",
+                ach_purrfect_run = "neko_night"
             }
             if theme_map[id] then
                 local already = false
@@ -286,7 +291,8 @@ function love.load(args)
                 ach_big_spender = "Big Spender",
                 ach_first_shield = "Second Chance",
                 ach_coin_hoarder = "Coin Hoarder",
-                ach_best_friend = "Best Friend"
+                ach_best_friend = "Best Friend",
+                ach_purrfect_run = "Purrfect Run"
             }
             local coin_reward = 0
             if renderer and renderer.getAchievementsList then
@@ -316,6 +322,7 @@ function love.load(args)
     end
 
     function _G.recordDogBreedPlayed(breed_id)
+        if _G.game and _G.game.mode == "huge" then return end
         breed_id = breed_id or _G.active_dog_breed or "roxy"
         _G.stats = _G.stats or {}
         _G.stats.played_dog_breeds = _G.stats.played_dog_breeds or {}
