@@ -6148,15 +6148,32 @@ function renderer.drawTutorial(page, skip_transition, static_only)
         drawSlide(page, 0, 1.0)
     end
 
-    -- Page indicator (dots) — NOT animated, stays fixed
+    -- Page indicator (dots) — dynamically contrast-matched to active theme
+    local active_dot_color = (ui_text and ui_text ~= dark_text) and ui_text or help_key_color
+    local r_bg, g_bg, b_bg = (bg_color and bg_color[1] or 0), (bg_color and bg_color[2] or 0), (bg_color and bg_color[3] or 0)
+    local bg_lum = 0.299 * r_bg + 0.587 * g_bg + 0.114 * b_bg
+
+    local r_act, g_act, b_act = active_dot_color[1] or 1, active_dot_color[2] or 1, active_dot_color[3] or 1
+    local act_lum = 0.299 * r_act + 0.587 * g_act + 0.114 * b_act
+
+    if (bg_lum > 0.5 and act_lum > 0.6) or (bg_lum <= 0.5 and act_lum <= 0.4) then
+        active_dot_color = renderer.getContrastTextColor(bg_color, ui_text, dark_text)
+    end
+
     local dots_x = (w - dots_w) / 2
     for i = 1, total_pages do
         local dx = dots_x + (i - 1) * (dot_r * 2 + dot_gap) + dot_r
         if i == page then
-            love.graphics.setColor(help_key_color)
-            love.graphics.circle("fill", dx, dots_y, dot_r)
+            -- Active page: prominent high-contrast pill indicator matching active theme
+            local pill_w = math.floor(20 * scale)
+            local pill_h = math.floor(8 * scale)
+            local px = dx - pill_w / 2
+            local py = dots_y - pill_h / 2
+            love.graphics.setColor(active_dot_color[1], active_dot_color[2], active_dot_color[3], 1.0)
+            roundedRect("fill", px, py, pill_w, pill_h, pill_h / 2)
         else
-            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.3)
+            -- Inactive page: subtle dot indicator
+            love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.35)
             love.graphics.circle("fill", dx, dots_y, dot_r)
         end
     end
