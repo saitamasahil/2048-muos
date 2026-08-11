@@ -3317,11 +3317,16 @@ function renderer.init()
     if ok_sort then sort_icon = s_sort_img end
 
     local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
-            local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
     if ok_music then music_icon = m_img end
 
     local ok_vinyl, v_img = pcall(love.graphics.newImage, "assets/icon/vinyl_record.png")
     if ok_vinyl then vinyl_record_img = v_img end
+
+    local ok_tr_play, tp_img = pcall(love.graphics.newImage, "assets/icon/track_play.png")
+    if ok_tr_play then track_play_icon = tp_img end
+
+    local ok_tr_pause, tps_img = pcall(love.graphics.newImage, "assets/icon/track_pause.png")
+    if ok_tr_pause then track_pause_icon = tps_img end
 
     -- Preload pet animations (all 1 to N frames for different states)
     pet_cat_idle_down_frames = {}
@@ -9917,7 +9922,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     local target_scroll = (card_y_offsets[selection] or 0) - (avail_h - sel_card_h) / 2
     target_scroll = math.max(0, math.min(max_scroll, target_scroll))
 
-    if skip_transition then
+    if skip_transition or not _G.screen_transitions then
         _G.store_scroll = target_scroll
     else
         _G.store_scroll = _G.store_scroll + (target_scroll - _G.store_scroll) * 0.22
@@ -10274,16 +10279,11 @@ function renderer.drawJukebox(selection, skip_transition)
         _G.jukebox_disc_angle = _G.jukebox_disc_angle or 0
     end
 
-    -- Viz energy level: fades out slowly (~0.9s) when paused/stopped
+    -- Viz energy level: smooth rise-up on play, smooth fall-down on pause/stop
     if is_actively_playing then
-        _G.jukebox_viz_stop_time = nil
-        _G.jukebox_viz_level = 1.0
+        _G.jukebox_viz_level = math.min(1.0, (_G.jukebox_viz_level or 0) + dt * 2.5)
     else
-        if _G.jukebox_viz_stop_time == nil then
-            _G.jukebox_viz_stop_time = t
-        end
-        local elapsed = t - _G.jukebox_viz_stop_time
-        _G.jukebox_viz_level = math.max(0, 1.0 - elapsed / 0.9)
+        _G.jukebox_viz_level = math.max(0.0, (_G.jukebox_viz_level or 0) - dt * 2.0)
     end
     local viz_level = _G.jukebox_viz_level or 0
 
@@ -10307,9 +10307,9 @@ function renderer.drawJukebox(selection, skip_transition)
     local artist_fh = font_help_label:getHeight()
     local pbar_h    = math.floor(4 * scale)
     local max_bar_h = math.floor(26 * scale)
-    local bar_gap   = math.floor(6 * scale)   -- gap between artist and EQ top
-    local pb_gap    = math.floor(5 * scale)   -- gap between EQ bottom and pbar
-    local tm_gap    = math.floor(3 * scale)   -- gap between pbar and time
+    local bar_gap   = math.floor(12 * scale)   -- gap between artist and EQ top
+    local pb_gap    = math.floor(12 * scale)   -- gap between EQ bottom and pbar (perfectly symmetric)
+    local tm_gap    = math.floor(3 * scale)    -- gap between pbar and time
 
     local y_title  = pad_v
     local y_artist = y_title + title_fh + math.floor(2 * scale)
@@ -10413,7 +10413,7 @@ function renderer.drawJukebox(selection, skip_transition)
         card_x + math.floor((card_w - ta_w) / 2),
         card_y + y_artist + new_slide_y)
 
-    -- ── 🎚️ 32-Band Mirrored LED Spectrum Analyzer ─────────────────────────────
+    -- ── 🎚️ Modern High-Contrast 32-Band Spectrum Analyzer ────────────────────────
     local num_bands  = 16 -- 16 calculated bands, mirrored left and right (32 total)
     local bw         = math.floor(3 * scale)
     local bgap       = math.floor(2 * scale)
@@ -10421,82 +10421,105 @@ function renderer.drawJukebox(selection, skip_transition)
     local eq_bot     = card_y + y_eq_bot
     local eq_x       = card_x + math.floor((card_w - total_eq_w) / 2)
     
-    local max_leds   = 8
-    local led_gap    = math.floor(1.5 * scale)
-    if led_gap < 1 then led_gap = 1 end
-    local led_h      = math.floor((max_bar_h - (max_leds - 1) * led_gap) / max_leds)
-    if led_h < 1 then led_h = 1 end
-    
     if not _G.jukebox_energies then _G.jukebox_energies = {} end
+    if not _G.jukebox_peaks then _G.jukebox_peaks = {} end
+
+    -- Visualizer Background Tray Frame
+    local tray_pad = math.floor(5 * scale)
+    local tray_x   = eq_x - tray_pad
+    local tray_y   = eq_bot - max_bar_h - tray_pad
+    local tray_w   = total_eq_w + tray_pad * 2
+    local tray_h   = max_bar_h + tray_pad * 2
+    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.40)
+    roundedRect("fill", tray_x, tray_y, tray_w, tray_h, math.floor(6 * scale))
+    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.18)
+    roundedRect("line", tray_x, tray_y, tray_w, tray_h, math.floor(6 * scale))
+
+    -- ── Guaranteed Contrast Color Calculation for Visualizer ─────────────
+    local bg_lum = 0.299 * board_color[1] + 0.587 * board_color[2] + 0.114 * board_color[3]
+    local vr, vg, vb = help_key_color[1], help_key_color[2], help_key_color[3]
+    local v_lum = 0.299 * vr + 0.587 * vg + 0.114 * vb
+    local c_ratio = math.abs(v_lum - bg_lum)
+
+    if c_ratio < 0.30 then
+        if bg_lum > 0.5 then
+            -- Light theme: darken accent for visualizer
+            local scale_d = math.max(0.01, v_lum)
+            local factor  = (bg_lum - 0.45) / scale_d
+            vr = math.max(0.1, vr * factor)
+            vg = math.max(0.1, vg * factor)
+            vb = math.max(0.1, vb * factor)
+        else
+            -- Dark theme: brighten accent for visualizer
+            vr = math.min(1.0, vr + 0.45)
+            vg = math.min(1.0, vg + 0.45)
+            vb = math.min(1.0, vb + 0.45)
+        end
+    end
 
     for b = 1, num_bands do
-        local norm  = (b - 1) / (num_bands - 1)
+        local norm = (b - 1) / (num_bands - 1)
         
-        -- Organic pseudo-random audio data synthesis with distinct frequency zones
+        -- Organic frequency synthesis
         local bass   = math.exp(-((norm-0.10)^2)/0.02) * (0.65 + 0.45*math.abs(math.sin(t*3.4 + b*0.6)))
         local mid    = math.exp(-((norm-0.45)^2)/0.04) * (0.35 + 0.65*math.abs(math.sin(t*5.3 + b*1.4)))
         local treble = math.exp(-((norm-0.85)^2)/0.03) * (0.25 + 0.85*math.abs(math.sin(t*9.1 + b*2.7)))
-        
-        -- High freq chaos injected based on beat syncing
         local beat_sync = math.abs(math.sin(t * 3.8))
         local jitter = 0.2 * math.abs(math.sin(t * 14.0 * (1 + b * 0.3))) * (norm > 0.4 and beat_sync or 1.0)
         
         local target_energy = math.min(1.0, bass + mid + treble + jitter)
         
-        -- Smoothly interpolate energy for fluid, natural movement
         local curr_energy = _G.jukebox_energies[b] or 0
         if target_energy > curr_energy then
-            curr_energy = curr_energy + (target_energy - curr_energy) * dt * 22 -- snappy rise
+            curr_energy = curr_energy + (target_energy - curr_energy) * dt * 22
         else
-            curr_energy = curr_energy - (curr_energy - target_energy) * dt * 7  -- smooth fall
+            curr_energy = curr_energy - (curr_energy - target_energy) * dt * 7
         end
         _G.jukebox_energies[b] = curr_energy
         
         local eff = curr_energy * viz_level
-        local lit_leds = math.max(0, math.floor(eff * max_leds))
-        if viz_level > 0.05 and lit_leds == 0 then lit_leds = 1 end -- Always pulse slightly if playing
-        
+        if viz_level > 0.05 and eff < 0.08 then eff = 0.08 end
+
         -- Gravity Peak Caps logic
         local prev_peak = _G.jukebox_peaks[b] or 0
-        if lit_leds > prev_peak then
-            _G.jukebox_peaks[b] = lit_leds
+        if eff > prev_peak then
+            _G.jukebox_peaks[b] = eff
         else
-            _G.jukebox_peaks[b] = math.max(0, prev_peak - dt * 10) -- Drops by 10 LED units per second
+            _G.jukebox_peaks[b] = math.max(0, prev_peak - dt * 1.2)
         end
-        local peak_cap = math.floor(_G.jukebox_peaks[b])
+        local peak_val = _G.jukebox_peaks[b] or 0
         
-        -- Mirroring: Left side (bands 16 to 1) and Right side (bands 1 to 16)
+        -- Mirroring columns (Left & Right)
         local left_b  = num_bands - b + 1
         local right_b = num_bands + b
-        
         local left_bx  = eq_x + (left_b - 1) * (bw + bgap)
         local right_bx = eq_x + (right_b - 1) * (bw + bgap)
         
         for _, bx in ipairs({left_bx, right_bx}) do
-            for i = 1, max_leds do
-                local led_y = eq_bot - (i * led_h + (i - 1) * led_gap)
-                local intensity = 0.12 -- Dim unlit state
+            -- 1. Unlit Column Guide Track (Subtle vertical line for crisp structure)
+            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.12)
+            roundedRect("fill", bx, eq_bot - max_bar_h, bw, max_bar_h, math.floor(1.5 * scale))
+
+            -- 2. Active Spectrum Bar
+            local bar_h = math.floor(eff * max_bar_h)
+            if bar_h > 0 then
+                -- Bar body fill
+                love.graphics.setColor(vr, vg, vb, 0.90)
+                roundedRect("fill", bx, eq_bot - bar_h, bw, bar_h, math.floor(1.5 * scale))
                 
-                -- Dynamic premium LED coloring (Theme Base -> Yellow -> Red)
-                local r, g, bb = help_key_color[1], help_key_color[2], help_key_color[3]
-                if i > max_leds * 0.75 then
-                    r, g, bb = 1.0, 0.2, 0.25 -- Vibrant Red for peaks
-                elseif i > max_leds * 0.4 then
-                    r, g, bb = 1.0, 0.85, 0.15 -- Warm Yellow for mids
-                end
-                
-                if i <= lit_leds then
-                    intensity = 0.95 -- Fully lit up
-                end
-                
-                -- Draw the floating peak cap
-                if i == peak_cap and lit_leds < peak_cap then
-                    intensity = 1.0
-                    r, g, bb = 1.0, 1.0, 1.0 -- Bright white floating cap
-                end
-                
-                love.graphics.setColor(r, g, bb, intensity)
-                love.graphics.rectangle("fill", bx, led_y, bw, led_h)
+                -- Glowing top cap of active bar
+                local cap_h = math.min(bar_h, math.max(2, math.floor(2 * scale)))
+                love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.95)
+                roundedRect("fill", bx, eq_bot - bar_h, bw, cap_h, math.floor(1 * scale))
+            end
+
+            -- 3. Floating Gravity Peak Cap
+            local peak_h = math.floor(peak_val * max_bar_h)
+            if peak_h > 0 then
+                local pk_y = eq_bot - peak_h - math.floor(2 * scale)
+                pk_y = math.max(eq_bot - max_bar_h, pk_y)
+                love.graphics.setColor(1, 1, 1, 0.95)
+                love.graphics.rectangle("fill", bx, pk_y, bw, math.floor(2 * scale))
             end
         end
     end
@@ -10534,81 +10557,304 @@ function renderer.drawJukebox(selection, skip_transition)
     -- Playlist Section
     local playlist = sound_mod.getBgmPlaylist and sound_mod.getBgmPlaylist() or {}
     local playlist_y = card_y + card_h + math.floor(10 * scale)
+    local row_h = math.floor(34 * scale)
+    local row_inner_h = math.floor(28 * scale)
+
+    local bottom_bar_h = math.floor(30 * scale)
     local badge_h = math.floor(28 * scale)
     local badge_y = h - badge_h - math.floor(7 * scale)
     local avail_h = badge_y - playlist_y - math.floor(8 * scale)
 
-    local row_h = math.floor(34 * scale)
     local max_visible = math.floor(avail_h / row_h)
     if #playlist == 0 then max_visible = 0 end
     selection = math.max(1, math.min(math.max(1, #playlist), selection or 1))
 
-    local scroll_offset = math.max(0, selection - math.floor(max_visible / 2))
-    if scroll_offset + max_visible > #playlist then
-        scroll_offset = math.max(0, #playlist - max_visible)
+    -- Target scroll offset calculation based on current selection
+    local target_scroll = _G.jukebox_target_scroll or 0
+    if (selection - 1) < target_scroll then
+        target_scroll = selection - 1
+    elseif selection > (target_scroll + max_visible) then
+        target_scroll = selection - max_visible
+    end
+    target_scroll = math.max(0, math.min(math.max(0, #playlist - max_visible), target_scroll))
+    _G.jukebox_target_scroll = target_scroll
+
+    -- Entry frame flag: snap animations on entry frame
+    local is_entry_frame = false
+    if _G.jukebox_just_opened then
+        is_entry_frame = true
     end
 
-    love.graphics.setScissor(0, playlist_y, w, avail_h)
+    -- Synchronized smooth scroll & selection pill animation
+    if _G.jukebox_just_opened or skip_transition or not _G.screen_transitions then
+        _G.jukebox_scroll_offset = target_scroll
+        _G.jukebox_anim_sel_idx  = selection
+    else
+        _G.jukebox_scroll_offset = _G.jukebox_scroll_offset or target_scroll
+        _G.jukebox_anim_sel_idx  = _G.jukebox_anim_sel_idx or selection
 
-    for i = 1, math.min(math.max(0, #playlist - scroll_offset), max_visible) do
-        local track_idx = scroll_offset + i
-        local track = playlist[track_idx]
-        if not track then break end
-        local ry = playlist_y + (i - 1) * row_h
-        local is_sel = (track_idx == selection)
+        local lerp_spd = 24
+        if math.abs(_G.jukebox_scroll_offset - target_scroll) > 0.0005 then
+            _G.jukebox_scroll_offset = _G.jukebox_scroll_offset + (target_scroll - _G.jukebox_scroll_offset) * dt * lerp_spd
+        else
+            _G.jukebox_scroll_offset = target_scroll
+        end
+
+        if math.abs(_G.jukebox_anim_sel_idx - selection) > 0.0005 then
+            _G.jukebox_anim_sel_idx = _G.jukebox_anim_sel_idx + (selection - _G.jukebox_anim_sel_idx) * dt * lerp_spd
+        else
+            _G.jukebox_anim_sel_idx = selection
+        end
+    end
+
+    local scroll_offset = _G.jukebox_scroll_offset
+    local anim_sel      = _G.jukebox_anim_sel_idx
+
+    local menu_anim_y = playlist_y + (anim_sel - 1 - scroll_offset) * row_h
+    local menu_anim_x = card_x
+    local menu_anim_w = card_w
+
+    -- Scissor clip: expanded slightly vertically (-4px top, +8px height) so top border stroke of song 1 is never cut off
+    love.graphics.setScissor(0, playlist_y - math.floor(4 * scale), w, avail_h + math.floor(8 * scale))
+
+    -- 1. Draw static row backgrounds for visible playlist items
+    local first_idx = math.max(1, math.floor(scroll_offset + 1))
+    local last_idx = math.min(#playlist, math.ceil(scroll_offset + max_visible + 1))
+
+    for track_idx = first_idx, last_idx do
+        local ry = playlist_y + (track_idx - 1 - scroll_offset) * row_h
         local is_curr = (track_idx == curr_idx)
 
-        -- Row background
-        if is_sel then
-            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.22)
-            roundedRect("fill", card_x, ry, card_w, row_h - math.floor(4 * scale), math.floor(6 * scale))
-            love.graphics.setColor(help_key_color)
+        if is_curr and not is_actively_playing then
+            -- PAUSED track row: Distinctive theme accent tint + outline stroke
+            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.15)
+            roundedRect("fill", card_x, ry, card_w, row_inner_h, math.floor(6 * scale))
+            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.45)
             love.graphics.setLineWidth(math.floor(1.5 * scale))
-            roundedRect("line", card_x, ry, card_w, row_h - math.floor(4 * scale), math.floor(6 * scale))
+            roundedRect("line", card_x, ry, card_w, row_inner_h, math.floor(6 * scale))
+        elseif is_curr and is_actively_playing then
+            -- PLAYING track row: Subtle active tint fill
+            love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.10)
+            roundedRect("fill", card_x, ry, card_w, row_inner_h, math.floor(6 * scale))
         else
             love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.55)
-            roundedRect("fill", card_x, ry, card_w, row_h - math.floor(4 * scale), math.floor(6 * scale))
+            roundedRect("fill", card_x, ry, card_w, row_inner_h, math.floor(6 * scale))
         end
+    end
 
-        -- Playing indicator: Mini 3-bar dancing equalizer for active track!
-        local row_inner_h = row_h - math.floor(4 * scale)
-        local label_fh    = font_help_label:getHeight()
-        local text_y      = ry + math.floor((row_inner_h - label_fh) / 2)
-        local icon_x      = card_x + math.floor(10 * scale)
+    -- 2. Draw smooth animated selection pill sliding between rows!
+    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.22)
+    roundedRect("fill", menu_anim_x, menu_anim_y, menu_anim_w, row_inner_h, math.floor(6 * scale))
+    love.graphics.setColor(help_key_color)
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+    roundedRect("line", menu_anim_x, menu_anim_y, menu_anim_w, row_inner_h, math.floor(6 * scale))
 
-        if is_curr then
-            if is_actively_playing then
-                -- 3 mini animated equalizer bars
-                local mbw = math.floor(2.5 * scale)
-                local mbg = math.floor(1.5 * scale)
-                love.graphics.setColor(help_key_color)
-                for mb = 1, 3 do
-                    local mbh = math.floor((4 + math.abs(math.sin(t * 7 + mb * 1.5 + track_idx)) * 8) * scale)
-                    love.graphics.rectangle("fill", icon_x + (mb - 1) * (mbw + mbg), text_y + label_fh - mbh, mbw, mbh)
-                end
+    -- 3. Draw track text & equalizer icons for visible playlist items
+    for track_idx = first_idx, last_idx do
+        local track = playlist[track_idx]
+        if track then
+            local ry = playlist_y + (track_idx - 1 - scroll_offset) * row_h
+            local is_sel = (track_idx == selection)
+            local is_curr = (track_idx == curr_idx)
+
+            local label_fh = font_help_label:getHeight()
+            local text_y   = ry + math.floor((row_inner_h - label_fh) / 2)
+
+            local use_transitions = _G.screen_transitions and not skip_transition
+
+            -- ── Detect play/pause state changes for THIS track ─────────────────
+            -- We maintain per-track animation state using arrays keyed by track_idx
+            if not _G.jukebox_eq_states then _G.jukebox_eq_states = {} end
+            local eqs = _G.jukebox_eq_states[track_idx]
+            if not eqs then
+                eqs = { slide_t = 0, was_playing = false, pause_badge_t = 0 }
+                _G.jukebox_eq_states[track_idx] = eqs
+            end
+
+            local this_playing = is_curr and is_actively_playing
+            local this_paused  = is_curr and not is_actively_playing
+
+            -- New track started: reset slide
+            if is_curr and is_actively_playing and _G.jukebox_eq_track_id ~= curr_idx then
+                _G.jukebox_eq_track_id = curr_idx
+                eqs.slide_t = 0
+                eqs.pause_badge_t = 0
+            end
+
+            -- Advance / reverse the equalizer slide timer
+            if is_entry_frame or not use_transitions then
+                -- Snap immediately on screen entry so no stale slide-out animations play!
+                eqs.slide_t       = this_playing and 1 or 0
+                eqs.pause_badge_t = this_paused and 1 or 0
             else
-                -- Paused icon triangle
-                local tri_h = label_fh
-                local tri_w = math.floor(tri_h * 0.7)
-                love.graphics.setColor(help_key_color)
-                love.graphics.polygon("fill",
-                    icon_x,           text_y,
-                    icon_x + tri_w,   text_y + tri_h / 2,
-                    icon_x,           text_y + tri_h)
+                local spd = 4.5  -- slide speed (1 = full range per second × spd)
+                if this_playing then
+                    eqs.slide_t = math.min(1, eqs.slide_t + dt * spd)
+                else
+                    -- Any non-playing track MUST decay slide_t to 0 so no extra equalizers show!
+                    eqs.slide_t = math.max(0, eqs.slide_t - dt * spd)
+                end
+
+                -- Pause badge fades in when paused, fades out when playing
+                local badge_spd = 5
+                if this_paused then
+                    eqs.pause_badge_t = math.min(1, eqs.pause_badge_t + dt * badge_spd)
+                else
+                    eqs.pause_badge_t = math.max(0, eqs.pause_badge_t - dt * badge_spd)
+                end
+            end
+
+            -- Cubic ease-out for the slide progress value
+            local sp = eqs.slide_t
+            local slide_p = 1 - (1 - sp) * (1 - sp) * (1 - sp)
+
+            -- Badge ease-in-out
+            local badge_p = eqs.pause_badge_t * eqs.pause_badge_t * (3 - 2 * eqs.pause_badge_t)
+
+            -- ── Equalizer ──────────────────────────────────────────────────────
+            local eq_zone_w  = math.floor(26 * scale)
+            local eq_visible = slide_p > 0.005  -- only draw if meaningfully visible
+
+            if eq_visible then
+                local eq_offset = eq_zone_w * (1 - slide_p)
+                local icon_x    = card_x + math.floor(6 * scale) - eq_offset
+                local bar_count = 7
+                local mbw = math.floor(2 * scale)
+                local mbg = math.floor(1 * scale)
+
+                -- ── Guaranteed-contrast theme color ────────────────────────────
+                -- Composite the actual visible row background
+                local bg_r = board_color[1] * 0.55 + bg_color[1] * 0.45
+                local bg_g = board_color[2] * 0.55 + bg_color[2] * 0.45
+                local bg_b = board_color[3] * 0.55 + bg_color[3] * 0.45
+                local bg_lum = 0.299 * bg_r + 0.587 * bg_g + 0.114 * bg_b
+
+                local ar, ag, ab = help_key_color[1], help_key_color[2], help_key_color[3]
+                local accent_lum = 0.299 * ar + 0.587 * ag + 0.114 * ab
+
+                -- Enforce a minimum contrast of 0.35 (much stricter than before)
+                local contrast = math.abs(accent_lum - bg_lum)
+                if contrast < 0.35 then
+                    if bg_lum > 0.5 then
+                        -- Light bg: darken + saturate the accent
+                        local scale_d = math.max(0.01, accent_lum)
+                        local target_lum = bg_lum - 0.40
+                        local factor = target_lum / scale_d
+                        -- Preserve relative channel ratios (hue) while darkening
+                        local max_ch = math.max(ar, ag, ab, 0.001)
+                        ar = ar / max_ch * math.min(1, ar * factor)
+                        ag = ag / max_ch * math.min(1, ag * factor)
+                        ab = ab / max_ch * math.min(1, ab * factor)
+                        -- Hard floor: if luminance still too close, force near-black
+                        local new_lum = 0.299 * ar + 0.587 * ag + 0.114 * ab
+                        if math.abs(new_lum - bg_lum) < 0.25 then
+                            -- Keep the hue but force a very dark shade
+                            local max2 = math.max(ar, ag, ab, 0.001)
+                            ar = (ar / max2) * 0.20
+                            ag = (ag / max2) * 0.20
+                            ab = (ab / max2) * 0.20
+                        end
+                    else
+                        -- Dark bg: lighten/boost the accent to guaranteed bright
+                        local target_lum = bg_lum + 0.45
+                        local factor = math.min(5.0, target_lum / math.max(0.01, accent_lum))
+                        ar = math.min(1, ar * factor)
+                        ag = math.min(1, ag * factor)
+                        ab = math.min(1, ab * factor)
+                        -- Hard ceiling: if still too dim, boost to near-white tinted
+                        local new_lum = 0.299 * ar + 0.587 * ag + 0.114 * ab
+                        if new_lum < 0.5 then
+                            ar = math.min(1, ar + 0.4)
+                            ag = math.min(1, ag + 0.4)
+                            ab = math.min(1, ab + 0.4)
+                        end
+                    end
+                end
+
+                -- Clip to row so bars don't bleed outside
+                love.graphics.setScissor(card_x, ry, card_w, row_inner_h + math.floor(2 * scale))
+
+                for mb = 1, bar_count do
+                    local phase
+                    if this_playing then
+                        -- Every bar has a VERY different speed and phase offset
+                        -- so they never look synchronized
+                        local speeds = {3.1, 5.7, 4.3, 7.2, 2.8, 6.1, 4.9}
+                        local offsets = {0.0, 1.3, 2.7, 0.8, 2.1, 1.7, 0.4}
+                        phase = t * speeds[mb] + offsets[mb]
+                    else
+                        phase = (eqs.freeze_phase and eqs.freeze_phase[mb]) or (mb * 0.9)
+                    end
+
+                    -- Two sine waves mixed per bar for extra organic feel
+                    local wave1 = math.abs(math.sin(phase))
+                    local wave2 = math.abs(math.sin(phase * 1.618 + 0.5))  -- golden ratio offset
+                    local bar_h_frac = 0.30 + 0.70 * (wave1 * 0.65 + wave2 * 0.35)
+
+                    local mbh = math.floor(bar_h_frac * label_fh * 0.92)
+                    local bx  = icon_x + (mb - 1) * (mbw + mbg)
+                    local by  = text_y + label_fh - mbh
+
+                    -- Tall bars get a vivid boost; short bars stay slightly subdued
+                    local bright = 0.60 + 0.40 * bar_h_frac
+                    love.graphics.setColor(
+                        math.min(1.0, ar * bright),
+                        math.min(1.0, ag * bright),
+                        math.min(1.0, ab * bright),
+                        slide_p * math.min(1.0, 0.80 + 0.20 * bar_h_frac)
+                    )
+                    love.graphics.rectangle("fill", bx, by, mbw, mbh)
+                end
+
+                -- Restore playlist scissor
+                love.graphics.setScissor(0, playlist_y - math.floor(4 * scale), w, avail_h + math.floor(8 * scale))
+            end
+
+            -- Snapshot bar heights when transitioning to paused (so bars "freeze" in place)
+            if this_paused and (not eqs.freeze_phase) then
+                local speeds  = {3.1, 5.7, 4.3, 7.2, 2.8, 6.1, 4.9}
+                local offsets = {0.0, 1.3, 2.7, 0.8, 2.1, 1.7, 0.4}
+                eqs.freeze_phase = {}
+                for mb = 1, 7 do
+                    eqs.freeze_phase[mb] = t * speeds[mb] + offsets[mb]
+                end
+            elseif this_playing then
+                eqs.freeze_phase = nil
+            end
+
+            -- ── Song title (slides right as equalizer comes in) ────────────────
+            local eq_push = (eq_zone_w - math.floor(4 * scale)) * slide_p
+            local text_x  = card_x + math.floor(12 * scale) + eq_push
+
+            love.graphics.setFont(font_help_label)
+            if is_sel then
+                love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 1.0)
+            elseif is_curr then
+                local curr_text_col = renderer.getContrastTextColor(board_color, help_key_color, dark_text)
+                love.graphics.setColor(curr_text_col[1], curr_text_col[2], curr_text_col[3], 1.0)
+            else
+                love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.80)
+            end
+            local label = track.title .. " — " .. track.artist
+            love.graphics.print(label, text_x, text_y)
+
+            -- ── "PAUSED" badge fades in/out on the right ──────────────────────
+            if badge_p > 0.005 then
+                -- Slight vertical float: drops down 3px as it fades in
+                local badge_txt = "PAUSED"
+                local bw  = font_help_label:getWidth(badge_txt)
+                local bx  = card_x + card_w - bw - math.floor(12 * scale)
+                local by2 = text_y - math.floor((1 - badge_p) * 4 * scale)
+                local badge_col = renderer.getContrastTextColor(board_color, help_key_color, dark_text)
+                love.graphics.setColor(
+                    badge_col[1],
+                    badge_col[2],
+                    badge_col[3],
+                    0.95 * badge_p
+                )
+                love.graphics.print(badge_txt, bx, by2)
             end
         end
-
-        local text_x = card_x + math.floor(26 * scale)
-
-        -- Track Title & Artist
-        love.graphics.setFont(font_help_label)
-        if is_sel then
-            love.graphics.setColor(base_text_col)
-        else
-            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.75)
-        end
-        local label = track.title .. " — " .. track.artist
-        love.graphics.print(label, text_x, text_y)
     end
 
     love.graphics.setScissor()
@@ -10669,6 +10915,7 @@ function renderer.drawJukebox(selection, skip_transition)
         love.graphics.setStencilTest()
     end
 
+    _G.jukebox_just_opened = false
     drawToast()
 end
 

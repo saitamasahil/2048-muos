@@ -360,6 +360,51 @@ function love.load(args)
         if sound and sound.playMenuMove then sound.playMenuMove() end
     end
 
+    function _G.cycleTheme()
+        local function getCurrentDrawTarget()
+            if _G.appState == "GAME" and game then
+                return game
+            elseif _G.appState == "ACHIEVEMENTS" then
+                return function() renderer.drawAchievements(_G.achievements_scroll or 0, true) end
+            elseif _G.appState == "TUTORIAL" then
+                return function() renderer.drawTutorial(_G.tutorial_page or 1, true) end
+            elseif _G.appState == "ABOUT" then
+                return function() renderer.drawAbout(true) end
+            elseif _G.appState == "CHEATS_MENU" then
+                return function() renderer.drawSecretMenu(_G.cheats_selection or 1, true) end
+            elseif _G.appState == "THEME_SELECT" then
+                return function() renderer.drawThemeSelect(true) end
+            elseif _G.appState == "SETTINGS" then
+                return function() renderer.drawSettings(_G.settings_selection or 1, true) end
+            elseif _G.appState == "PLAY_SELECT" or _G.appState == "ARCADE_MENU" then
+                return function() renderer.drawPlaySelectMenu(_G.play_select_selection or 1, _G.arcade_selection or 1, true, menuSelection) end
+            elseif _G.appState == "STORE" then
+                return function() renderer.drawStoreMenu(_G.store_selection or 1, true) end
+            elseif _G.appState == "JUKEBOX" then
+                return function() renderer.drawJukebox(_G.jukebox_selection or 1, true) end
+            end
+            return function() end
+        end
+
+        local drawTarget = getCurrentDrawTarget()
+        renderer.startThemeTransition(drawTarget)
+
+        local current_idx = 1
+        for i, t in ipairs(_G.unlocked_themes or {"light", "dark"}) do
+            if t == _G.theme then
+                current_idx = i
+                break
+            end
+        end
+        local next_idx = (current_idx % #_G.unlocked_themes) + 1
+        _G.theme = _G.unlocked_themes[next_idx]
+        if renderer and renderer.applyTheme then renderer.applyTheme() end
+        if _G.appState ~= "THEME_SELECT" then
+            if save and save.saveTheme then save.saveTheme(_G.theme) end
+            if game then game:saveGameState() end
+        end
+    end
+
     -- Load theme from dedicated file
     local savedTheme = save.loadTheme()
     if savedTheme then
@@ -745,6 +790,9 @@ function love.update(dt)
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "JUKEBOX"
                         _G.jukebox_selection = 1
+                        _G.jukebox_scroll_offset = 0
+                        _G.jukebox_anim_sel_idx = 1
+                        _G.jukebox_just_opened = true
                         -- Reset visualizer state so no stale glow on entry
                         _G.jukebox_viz_level = 0
                         _G.jukebox_viz_stop_time = love.timer.getTime() - 10  -- already "stopped long ago"
@@ -765,9 +813,13 @@ function love.update(dt)
             local items_count = math.max(1, #items)
             if _G.store_selection > items_count then _G.store_selection = items_count end
 
-            if event == input.events.SELECT or event == input.events.Y or event == input.events.X then
+            if event == input.events.SELECT or event == input.events.X then
                 if _G.cycleStoreSortMode then
                     _G.cycleStoreSortMode()
+                end
+            elseif event == input.events.Y then
+                if _G.cycleTheme then
+                    _G.cycleTheme()
                 end
             elseif event == input.events.UP then
                 _G.store_selection = _G.store_selection > 1 and (_G.store_selection - 1) or items_count
@@ -971,6 +1023,10 @@ function love.update(dt)
                 else
                     -- Different track: start it
                     sound.playBgmIndex(_G.jukebox_selection)
+                end
+            elseif event == input.events.Y then
+                if _G.cycleTheme then
+                    _G.cycleTheme()
                 end
             elseif event == input.events.X then
                 sound.playMenuSelect()

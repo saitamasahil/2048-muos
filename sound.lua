@@ -363,18 +363,20 @@ function sound.playNextBgm()
 end
 
 function sound.update(dt)
-    local in_game = _G.appState == "GAME"
+    local in_game    = _G.appState == "GAME"
     local in_jukebox = _G.appState == "JUKEBOX"
+    local allowed    = sound.isBgmEnabled() and (in_game or in_jukebox)
 
-    -- Stop BGM if not in a state that allows it
-    if not sound.isBgmEnabled() or (not in_game and not in_jukebox) then
+    -- ── Leaving an allowed state (e.g., exiting Jukebox or Game) ────────────
+    if not allowed then
         if currentBgmSource then
-            currentBgmSource:stop()
-            currentBgmSource = nil
+            if currentBgmSource:isPlaying() then
+                -- Auto-pause BGM when exiting Jukebox/Game, marking it paused by user
+                -- so it remains paused when re-entering until explicitly resumed.
+                currentBgmSource:pause()
+                bgmPausedByUser = true
+            end
         end
-        bgmStartDelay = 0
-        duckTimer = 0
-        bgmStoppedBySystem = false
         return
     end
 
@@ -397,10 +399,10 @@ function sound.update(dt)
         local currentVol = currentBgmSource:getVolume()
         local targetVol = 0.55
         if duckTimer > 0 then
-            targetVol = 0.12 -- Ducked BGM volume during SFX chimes
+            targetVol = 0.12
         end
         if math.abs(currentVol - targetVol) > 0.01 then
-            local speed = (targetVol < currentVol) and 4 or 2 -- Fade out faster than fade in
+            local speed = (targetVol < currentVol) and 4 or 2
             local newVol = currentVol + (targetVol - currentVol) * math.min(1.0, speed * dt)
             currentBgmSource:setVolume(newVol)
         else
