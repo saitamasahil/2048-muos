@@ -123,3 +123,7 @@ _G.DOG_BREEDS = {
 }
 _G.active_dog_breed = "roxy"
 
+-- Store Filter & Sort Mode (0: Default, 1: Unpurchased First, 2: Repeatable, 3: Permanent, 4: Price Low-High, 5: Price High-Low)
+_G.store_sort_mode = 0
+
+

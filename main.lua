@@ -349,6 +349,33 @@ function love.load(args)
         end
     end
 
+    function _G.cycleStoreSortMode()
+        _G.store_sort_mode = ((_G.store_sort_mode or 0) + 1) % 11
+        _G.store_selection = 1
+        _G.store_scroll = 0
+        if _G.stats then
+            _G.stats.store_sort_mode = _G.store_sort_mode
+            if save and save.saveStats then save.saveStats(_G.stats) end
+        end
+        if sound and sound.playMenuMove then sound.playMenuMove() end
+        local names = {
+            [0] = "Default Order",
+            [1] = "Not Owned Only",
+            [2] = "Owned Only",
+            [3] = "Themes Only",
+            [4] = "Board Skins Only",
+            [5] = "Companions Only",
+            [6] = "Upgrades Only",
+            [7] = "Boosters Only",
+            [8] = "Visual FX Only",
+            [9] = "Price: Low to High",
+            [10] = "Price: High to Low"
+        }
+        local toast_msg = "Filter: " .. (names[_G.store_sort_mode] or "Default Order")
+        if renderer and renderer.showToast then
+            renderer.showToast(toast_msg)
+        end
+    end
 
     -- Load theme from dedicated file
     local savedTheme = save.loadTheme()
@@ -385,6 +412,7 @@ function love.load(args)
     _G.stats.coins = _G.stats.coins or 0
     _G.stats.purchased_items = _G.stats.purchased_items or {}
     _G.stats.claimed_achievements = _G.stats.claimed_achievements or {}
+    _G.store_sort_mode = _G.stats.store_sort_mode or 0
 
     -- Check Coin Hoarder & Best Friend on startup
     if _G.stats.coins >= 10000 and _G.unlockAchievement then
@@ -751,8 +779,14 @@ function love.update(dt)
             return
         elseif _G.appState == "STORE" then
             local items = renderer.getStoreItems()
-            local items_count = #items
-            if event == input.events.UP then
+            local items_count = math.max(1, #items)
+            if _G.store_selection > items_count then _G.store_selection = items_count end
+
+            if event == input.events.SELECT or event == input.events.Y or event == input.events.X then
+                if _G.cycleStoreSortMode then
+                    _G.cycleStoreSortMode()
+                end
+            elseif event == input.events.UP then
                 _G.store_selection = _G.store_selection > 1 and (_G.store_selection - 1) or items_count
                 sound.playMenuMove()
             elseif event == input.events.DOWN then
@@ -1888,6 +1922,19 @@ function love.draw()
         love.graphics.setShader(crt_shader)
         love.graphics.draw(crt_main_canvas, 0, 0)
         love.graphics.setShader()
+    end
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+    if button == 1 then
+        if _G.appState == "STORE" and _G.store_sort_btn_bounds then
+            local b = _G.store_sort_btn_bounds
+            if x >= b.x and x <= (b.x + b.w) and y >= b.y and y <= (b.y + b.h) then
+                if _G.cycleStoreSortMode then
+                    _G.cycleStoreSortMode()
+                end
+            end
+        end
     end
 end
 

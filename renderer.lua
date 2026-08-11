@@ -30,6 +30,7 @@ local achievements_new_canvas = nil
 local logo_2048 = nil
 local store_icon = nil
 local coin_icon = nil
+local sort_icon = nil
 local vinyl_record_img = nil
 local item_icons = {}
 local icon_shader = nil
@@ -3311,6 +3312,9 @@ function renderer.init()
 
     local ok_coin, c_img = pcall(love.graphics.newImage, "assets/icon/coin.png")
     if ok_coin then coin_icon = c_img end
+
+    local ok_sort, s_sort_img = pcall(love.graphics.newImage, "assets/icon/sort.png")
+    if ok_sort then sort_icon = s_sort_img end
 
     local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
             local ok_music, m_img = pcall(love.graphics.newImage, "assets/icon/music.png")
@@ -9658,49 +9662,119 @@ function renderer.getStoreItems()
         end
     end
 
-    return {
+    local items = {
         -- Mascots & Companions
-        {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Animated cat companion!"},
-        {id="mascot_dog",   cost=1600, name="Dog Companion",   desc="Animated dog companion with 4 dog pals!"},
+        {id="mascot_cat",   category="companion", cost=800,  name="Cat Companion",   desc="Animated cat companion!"},
+        {id="mascot_dog",   category="companion", cost=1600, name="Dog Companion",   desc="Animated dog companion with 4 dog pals!"},
 
         -- Permanent Upgrades
-        {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
-        {id="extra_swap",    cost=350,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
-        {id="extra_bomb",    cost=500,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
-        {id="jukebox",       cost=1000, name="Jukebox",               desc="Unlock Music Player & Jukebox Control"},
-        {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
+        {id="extra_undo",    category="upgrade",   cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
+        {id="extra_swap",    category="upgrade",   cost=350,  name="Extra Starting Swap",  desc="Permanently start Plus Mode with +1 Swap"},
+        {id="extra_bomb",    category="upgrade",   cost=500,  name="Extra Starting Bomb",  desc="Permanently start Plus Mode with +1 Bomb"},
+        {id="jukebox",       category="upgrade",   cost=1000, name="Jukebox",               desc="Unlock Music Player & Jukebox Control"},
+        {id="coin_multiplier",category="upgrade",  cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
 
         -- Boosters & Powerups
-        {id="powerup_undo",  cost=40,   name="Purchase Undo (x" .. pu_undo .. " owned)",          desc="Add Undo charge for next Plus game", consumable=true, ckey="powerup_undo_count"},
-        {id="powerup_swap",  cost=50,   name="Purchase Swap (x" .. pu_swap .. " owned)",          desc="Add Swap charge for next Plus game", consumable=true, ckey="powerup_swap_count"},
-        {id="powerup_bomb",  cost=60,   name="Purchase Bomb (x" .. pu_bomb .. " owned)",          desc="Add Bomb charge for next Plus game", consumable=true, ckey="powerup_bomb_count"},
-        {id="start_128",     cost=60,   name="128 High-Tile Booster (x" .. booster_128 .. " owned)", desc="Next game starts with a 128 tile", consumable=true, ckey="start_128_count"},
-        {id="coin_rush",     cost=100,  name="Coin Rush Ticket (x" .. coin_rush_count .. " owned)",     desc="Doubles all Coins earned in your next game", consumable=true, ckey="coin_rush_count"},
-        {id="start_256",     cost=120,  name="256 High-Tile Booster (x" .. booster_256 .. " owned)", desc="Next game starts with a 256 tile", consumable=true, ckey="start_256_count"},
-        {id="second_chance", cost=200,  name="Second Chance Shield (x" .. shield_count .. " owned)", desc="Clear any row or col on demand", consumable=true, ckey="second_chance_count"},
-        {id="start_512",     cost=250,  name="512 High-Tile Booster (x" .. booster_512 .. " owned)", desc="Next game starts with a 512 tile", consumable=true, ckey="start_512_count"},
+        {id="powerup_undo",  category="booster",   cost=40,   name="Purchase Undo (x" .. pu_undo .. " owned)",          desc="Add Undo charge for next Plus game", consumable=true, ckey="powerup_undo_count"},
+        {id="powerup_swap",  category="booster",   cost=50,   name="Purchase Swap (x" .. pu_swap .. " owned)",          desc="Add Swap charge for next Plus game", consumable=true, ckey="powerup_swap_count"},
+        {id="powerup_bomb",  category="booster",   cost=60,   name="Purchase Bomb (x" .. pu_bomb .. " owned)",          desc="Add Bomb charge for next Plus game", consumable=true, ckey="powerup_bomb_count"},
+        {id="start_128",     category="booster",   cost=60,   name="128 High-Tile Booster (x" .. booster_128 .. " owned)", desc="Next game starts with a 128 tile", consumable=true, ckey="start_128_count"},
+        {id="start_256",     category="booster",   cost=120,  name="256 High-Tile Booster (x" .. booster_256 .. " owned)", desc="Next game starts with a 256 tile", consumable=true, ckey="start_256_count"},
+        {id="start_512",     category="booster",   cost=250,  name="512 High-Tile Booster (x" .. booster_512 .. " owned)", desc="Next game starts with a 512 tile", consumable=true, ckey="start_512_count"},
+        {id="coin_rush",     category="booster",   cost=100,  name="Coin Rush Ticket (x" .. coin_rush_count .. " owned)",     desc="Doubles all Coins earned in your next game", consumable=true, ckey="coin_rush_count"},
+        {id="second_chance", category="booster",   cost=200,  name="Second Chance Shield (x" .. shield_count .. " owned)", desc="Clear any row or col on demand", consumable=true, ckey="second_chance_count"},
 
         -- Board Grid Skins
-        {id="skin_wood",     cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
-        {id="skin_bamboo",   cost=150,  name="Bamboo Board",         desc="Natural woven bamboo grid texture"},
-        {id="skin_glass",    cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid"},
-        {id="skin_marble",   cost=200,  name="Marble Board",         desc="Polished white marble texture"},
-        {id="skin_matrix",   cost=250,  name="Matrix Board",         desc="Animated green digital code grid"},
+        {id="skin_wood",     category="skin",      cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
+        {id="skin_bamboo",   category="skin",      cost=150,  name="Bamboo Board",         desc="Natural woven bamboo grid texture"},
+        {id="skin_glass",    category="skin",      cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid"},
+        {id="skin_marble",   category="skin",      cost=200,  name="Marble Board",         desc="Polished white marble texture"},
+        {id="skin_matrix",   category="skin",      cost=250,  name="Matrix Board",         desc="Animated green digital code grid"},
 
         -- Visual FX
-        {id="anim_bounce",   cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
-        {id="anim_glow",     cost=400,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
+        {id="anim_bounce",   category="fx",        cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
+        {id="anim_glow",     category="fx",        cost=400,  name="Glow Pulse FX",        desc="Unlock Glow Pulse Merge FX"},
 
         -- Themes
-        {id="theme_cosmic",  cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
-        {id="theme_cherry",  cost=1000, name="Cherry Theme",          desc="Unlock sakura blossom theme"},
-        {id="theme_gold_luxe",cost=1500,name="Gold Luxe Theme",       desc="Unlock ultra-luxurious gold theme"},
-        {id="theme_cyber_grid",cost=1800,name="Cyber Neon Grid Theme",desc="Unlock futuristic cyber grid theme"},
-        {id="theme_synthwave",cost=2000,name="Synthwave 80s Theme",   desc="Unlock retro 80s retrowave theme"},
+        {id="theme_cosmic",  category="theme",     cost=1000, name="Cosmic Theme",          desc="Unlock deep space theme"},
+        {id="theme_cherry",  category="theme",     cost=1000, name="Cherry Theme",          desc="Unlock sakura blossom theme"},
+        {id="theme_gold_luxe",category="theme",    cost=1500,name="Gold Luxe Theme",       desc="Unlock ultra-luxurious gold theme"},
+        {id="theme_cyber_grid",category="theme",   cost=1800,name="Cyber Neon Grid Theme",desc="Unlock futuristic cyber grid theme"},
+        {id="theme_synthwave",category="theme",    cost=2000,name="Synthwave 80s Theme",   desc="Unlock retro 80s retrowave theme"},
 
         -- Secret Master Code
-        {id="secret_key",    cost=10000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Enter sequence on Main Menu to unlock Secret Menu" or "Unlock master code to access Secret Menu"}
+        {id="secret_key",    category="secret",    cost=10000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Enter sequence on Main Menu to unlock Secret Menu" or "Unlock master code to access Secret Menu"}
     }
+
+    local sort_mode = _G.store_sort_mode or 0
+
+    local function isItemOwned(item)
+        if item.consumable then
+            local count = _G.stats and item.ckey and (_G.stats[item.ckey] or 0) or 0
+            return count > 0
+        else
+            local pur = _G.stats and _G.stats.purchased_items and (_G.stats.purchased_items[item.id] or (item.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"]))
+            return pur and true or false
+        end
+    end
+
+    if sort_mode == 1 then
+        -- Not Owned Only
+        local filtered = {}
+        for _, itm in ipairs(items) do
+            if not isItemOwned(itm) then
+                table.insert(filtered, itm)
+            end
+        end
+        items = filtered
+    elseif sort_mode == 2 then
+        -- Owned Only
+        local filtered = {}
+        for _, itm in ipairs(items) do
+            if isItemOwned(itm) then
+                table.insert(filtered, itm)
+            end
+        end
+        items = filtered
+    elseif sort_mode == 3 then
+        -- Themes Only
+        local filtered = {}
+        for _, itm in ipairs(items) do if itm.category == "theme" then table.insert(filtered, itm) end end
+        items = filtered
+    elseif sort_mode == 4 then
+        -- Skins Only
+        local filtered = {}
+        for _, itm in ipairs(items) do if itm.category == "skin" then table.insert(filtered, itm) end end
+        items = filtered
+    elseif sort_mode == 5 then
+        -- Companions Only
+        local filtered = {}
+        for _, itm in ipairs(items) do if itm.category == "companion" then table.insert(filtered, itm) end end
+        items = filtered
+    elseif sort_mode == 6 then
+        -- Upgrades Only
+        local filtered = {}
+        for _, itm in ipairs(items) do if itm.category == "upgrade" then table.insert(filtered, itm) end end
+        items = filtered
+    elseif sort_mode == 7 then
+        -- Boosters Only
+        local filtered = {}
+        for _, itm in ipairs(items) do if itm.category == "booster" then table.insert(filtered, itm) end end
+        items = filtered
+    elseif sort_mode == 8 then
+        -- Visual FX Only
+        local filtered = {}
+        for _, itm in ipairs(items) do if itm.category == "fx" then table.insert(filtered, itm) end end
+        items = filtered
+    elseif sort_mode == 9 then
+        -- Price Low -> High
+        table.sort(items, function(a, b) return a.cost < b.cost end)
+    elseif sort_mode == 10 then
+        -- Price High -> Low
+        table.sort(items, function(a, b) return a.cost > b.cost end)
+    end
+
+    return items
 end
 
 function renderer.drawStoreMenu(selection, skip_transition)
@@ -9750,6 +9824,53 @@ function renderer.drawStoreMenu(selection, skip_transition)
         love.graphics.setShader()
     end
 
+    -- Sort & Filter Mode Pill (Top Left)
+    local sort_mode = _G.store_sort_mode or 0
+    local mode_labels = {
+        [0] = "Default",
+        [1] = "Not Owned",
+        [2] = "Owned",
+        [3] = "Themes",
+        [4] = "Skins",
+        [5] = "Companions",
+        [6] = "Upgrades",
+        [7] = "Boosters",
+        [8] = "Visual FX",
+        [9] = "Low → High",
+        [10] = "High → Low"
+    }
+    local mode_txt = mode_labels[sort_mode] or "Default"
+    local sort_tw = font_help_label:getWidth(mode_txt)
+    local sort_icon_sz = math.floor(16 * scale)
+    local sort_pill_w = sort_tw + (sort_icon and (sort_icon_sz + 18 * scale) or math.floor(18 * scale))
+    local sort_pill_x = padding
+    local sort_pill_y = pill_y
+
+    _G.store_sort_btn_bounds = { x = sort_pill_x, y = sort_pill_y, w = sort_pill_w, h = pill_h }
+
+    love.graphics.setColor(board_color[1], board_color[2], board_color[3], 0.9)
+    roundedRect("fill", sort_pill_x, sort_pill_y, sort_pill_w, pill_h, math.floor(6 * scale))
+    love.graphics.setColor(help_key_color)
+    love.graphics.setLineWidth(math.floor(1.5 * scale))
+    roundedRect("line", sort_pill_x, sort_pill_y, sort_pill_w, pill_h, math.floor(6 * scale))
+
+    local sort_text_y = sort_pill_y + math.floor((pill_h - font_h) / 2) - math.floor(1 * scale)
+    local sort_icon_y = sort_pill_y + math.floor((pill_h - sort_icon_sz) / 2)
+
+    local text_x_offset = math.floor(8 * scale)
+    if sort_icon then
+        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.9)
+        love.graphics.setShader(icon_shader)
+        local sw = sort_icon_sz / sort_icon:getWidth()
+        local sh = sort_icon_sz / sort_icon:getHeight()
+        love.graphics.draw(sort_icon, sort_pill_x + math.floor(8 * scale), sort_icon_y, 0, sw, sh)
+        love.graphics.setShader()
+        text_x_offset = math.floor(8 * scale) + sort_icon_sz + math.floor(4 * scale)
+    end
+
+    love.graphics.setColor(ui_text)
+    love.graphics.print(mode_txt, sort_pill_x + text_x_offset, sort_text_y)
+
     -- Items List
     local items = renderer.getStoreItems()
 
@@ -9790,6 +9911,14 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
     -- Scissor clip: expanded slightly vertically to allow full card border strokes to draw cleanly
     love.graphics.setScissor(0, list_y - math.floor(4 * scale), w, avail_h + math.floor(8 * scale))
+
+    if #items == 0 then
+        love.graphics.setFont(font_help_label)
+        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.5)
+        local empty_txt = "No items in this filter"
+        local empty_w = font_help_label:getWidth(empty_txt)
+        love.graphics.print(empty_txt, (w - empty_w) / 2, list_y + avail_h / 2 - math.floor(10 * scale))
+    end
 
     for i, item in ipairs(items) do
         local is_consumable = item.consumable
@@ -10060,12 +10189,12 @@ function renderer.drawStoreMenu(selection, skip_transition)
     love.graphics.setColor(ui_text)
     love.graphics.print("Navigate", left_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
-    -- Right side actions: B (Back), A (Buy), Y (Switch Theme)
+    -- Right side actions: B (Back), A (Select), X (Filter)
     local right_x = w - padding
     local actions = {
         {key = "B", label = "Back"},
-        {key = "A", label = "Buy"},
-        {key = "Y", label = "Switch Theme"}
+        {key = "A", label = "Select"},
+        {key = "X", label = "Filter"}
     }
     for _, action in ipairs(actions) do
         love.graphics.setFont(font_help_label)

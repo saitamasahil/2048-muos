@@ -259,6 +259,16 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
         end
     elseif abs_x < tap_threshold and abs_y < tap_threshold then
         -- It's a tap
+        if _G.appState == "STORE" and _G.store_sort_btn_bounds then
+            local b = _G.store_sort_btn_bounds
+            if x >= b.x and x <= (b.x + b.w) and y >= b.y and y <= (b.y + b.h) then
+                if _G.cycleStoreSortMode then
+                    _G.cycleStoreSortMode()
+                    return
+                end
+            end
+        end
+
         local w, h = love.graphics.getDimensions()
         if y < h * 0.2 then
             -- Top 20% of screen
