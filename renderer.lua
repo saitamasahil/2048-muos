@@ -9192,7 +9192,7 @@ function renderer.drawAbout(skip_transition)
     cur_y = cur_y + #lines3 * font_help_label:getHeight() + section_gap
 
     -- Section 3b: Sprite credits
-    local s_sprites = "Adorable Animal Sprites by Elthen and Pixelcave"
+    local s_sprites = "Adorable Animal Sprites by Elthen and Pixelcave\nAnimated Button Prompts by greenpixels_"
     love.graphics.printf(s_sprites, 0, cur_y, w, "center")
     local _, lines_sprites = font_help_label:getWrap(s_sprites, w)
     cur_y = cur_y + #lines_sprites * font_help_label:getHeight() + section_gap
@@ -9577,6 +9577,61 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
     end
 end
 
+local button_prompt_images = {}
+
+local function loadButtonPrompts()
+    if button_prompt_images.loaded then return end
+    button_prompt_images.loaded = true
+
+    local file_map = {
+        NEUTRAL = "CONTROLPAD.png",
+        UP      = "CONTROLPADUP.png",
+        DOWN    = "CONTROLPADDOWN.png",
+        LEFT    = "CONTROLPADLEFT.png",
+        RIGHT   = "CONTROLPADRIGHT.png",
+        B       = "B.png",
+        A       = "A.png",
+        START   = "START.png",
+    }
+
+    for key, filename in pairs(file_map) do
+        local path = "assets/ui/buttons/" .. filename
+        local ok, img = pcall(love.graphics.newImage, path)
+        if ok and img then
+            img:setFilter("nearest", "nearest")
+            button_prompt_images[key] = img
+        end
+    end
+end
+
+local function drawAnimatedButtonSequence(start_x, start_y, btn_seq, active_step, scale)
+    loadButtonPrompts()
+
+    local btn_size = math.floor(26 * scale)
+    local gap = math.floor(4 * scale)
+
+    for idx, btn_type in ipairs(btn_seq) do
+        local is_dpad = (btn_type == "UP" or btn_type == "DOWN" or btn_type == "LEFT" or btn_type == "RIGHT")
+        local is_active = (idx == active_step)
+
+        -- D-pad uses NEUTRAL (unpressed CONTROLPAD.png) when inactive, and directional prompt when active
+        local img_key = (is_dpad and not is_active) and "NEUTRAL" or btn_type
+        local img = button_prompt_images[img_key]
+
+        if img then
+            local scale_factor = is_active and 1.20 or 1.0
+            local draw_w = math.floor(btn_size * scale_factor)
+            local s = draw_w / img:getWidth()
+
+            local px = start_x + (idx - 1) * (btn_size + gap)
+            local py = is_active and (start_y + math.floor(2 * scale)) or (start_y + math.floor(4 * scale))
+
+            love.graphics.setColor(1, 1, 1, is_active and 1.0 or 0.80)
+            love.graphics.draw(img, px + (btn_size - draw_w) / 2, py + (btn_size - draw_w) / 2, 0, s, s)
+        end
+    end
+end
+
 function renderer.getStoreItems()
     local booster_128 = _G.stats and (_G.stats.start_128_count or 0) or 0
     local booster_256 = _G.stats and (_G.stats.start_256_count or 0) or 0
@@ -9637,7 +9692,7 @@ function renderer.getStoreItems()
         {id="theme_synthwave",cost=2000,name="Synthwave 80s Theme",   desc="Unlock retro 80s retrowave theme"},
 
         -- Secret Master Code
-        {id="secret_key",    cost=10000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Code: UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A START" or "Unlock master code to access Secret Menu"}
+        {id="secret_key",    cost=10000, name="Secret Passcode Reveal",desc=(_G.stats and _G.stats.purchased_items and _G.stats.purchased_items["secret_key"]) and "Enter sequence on Main Menu to unlock Secret Menu" or "Unlock master code to access Secret Menu"}
     }
 end
 
@@ -9704,7 +9759,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     for idx, itm in ipairs(items) do
         card_y_offsets[idx] = current_y_acc
         local is_pur = _G.stats and _G.stats.purchased_items and (_G.stats.purchased_items[itm.id] or (itm.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"]))
-        local ch = (itm.id == "mascot_dog" and is_pur) and math.floor(92 * scale) or math.floor(58 * scale)
+        local ch = ((itm.id == "mascot_dog" or itm.id == "secret_key") and is_pur) and math.floor(92 * scale) or math.floor(58 * scale)
         current_y_acc = current_y_acc + ch + card_gap
     end
 
@@ -9715,7 +9770,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     _G.store_scroll = _G.store_scroll or 0
     local sel_itm = items[selection]
     local is_sel_pur = sel_itm and _G.stats and _G.stats.purchased_items and (_G.stats.purchased_items[sel_itm.id] or (sel_itm.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"]))
-    local sel_card_h = (sel_itm and sel_itm.id == "mascot_dog" and is_sel_pur) and math.floor(92 * scale) or math.floor(58 * scale)
+    local sel_card_h = (sel_itm and (sel_itm.id == "mascot_dog" or sel_itm.id == "secret_key") and is_sel_pur) and math.floor(92 * scale) or math.floor(58 * scale)
     local target_scroll = (card_y_offsets[selection] or 0) - (avail_h - sel_card_h) / 2
     target_scroll = math.max(0, math.min(max_scroll, target_scroll))
 
@@ -9732,7 +9787,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     for i, item in ipairs(items) do
         local is_consumable = item.consumable
         local purchased = (not is_consumable) and _G.stats and _G.stats.purchased_items and (_G.stats.purchased_items[item.id] or (item.id == "theme_cherry" and _G.stats.purchased_items["theme_cherry_blossom"]))
-        local card_h = (item.id == "mascot_dog" and purchased) and math.floor(92 * scale) or math.floor(58 * scale)
+        local card_h = ((item.id == "mascot_dog" or item.id == "secret_key") and purchased) and math.floor(92 * scale) or math.floor(58 * scale)
         local y = list_y + card_y_offsets[i] - scroll
 
         if y + card_h >= list_y - math.floor(6 * scale) and y <= list_y + avail_h + math.floor(6 * scale) then
@@ -9763,7 +9818,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
             -- Vector Icon Badge
             local icon_radius = math.floor(20 * scale)
             local icon_cx = padding + math.floor(16 * scale) + icon_radius
-            local icon_cy = (item.id == "mascot_dog" and purchased) and (y + math.floor(28 * scale)) or (y + card_h / 2)
+            local icon_cy = ((item.id == "mascot_dog" or item.id == "secret_key") and purchased) and (y + math.floor(28 * scale)) or (y + card_h / 2)
             drawStoreItemIcon(item.id, icon_cx, icon_cy, icon_radius, is_sel)
 
             -- Item Name & Desc
@@ -9860,6 +9915,16 @@ function renderer.drawStoreMenu(selection, skip_transition)
                         love.graphics.print(breed.name, name_x, name_y)
                     end
                 end
+            end
+
+            -- Animated Button Prompts for Secret Key when purchased
+            if item.id == "secret_key" and purchased then
+                local prompt_y = y + math.floor(50 * scale)
+                local start_px = text_x
+                local btn_seq = { "UP", "UP", "DOWN", "DOWN", "LEFT", "RIGHT", "LEFT", "RIGHT", "B", "A", "START" }
+                local total_seq = #btn_seq
+                local active_step = math.floor(love.timer.getTime() * 1.4) % total_seq + 1
+                drawAnimatedButtonSequence(start_px, prompt_y, btn_seq, active_step, scale)
             end
 
             -- Right Tag (Price / Purchased)
