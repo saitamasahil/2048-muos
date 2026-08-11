@@ -358,23 +358,6 @@ function love.load(args)
             if save and save.saveStats then save.saveStats(_G.stats) end
         end
         if sound and sound.playMenuMove then sound.playMenuMove() end
-        local names = {
-            [0] = "Default Order",
-            [1] = "Not Owned Only",
-            [2] = "Owned Only",
-            [3] = "Themes Only",
-            [4] = "Board Skins Only",
-            [5] = "Companions Only",
-            [6] = "Upgrades Only",
-            [7] = "Boosters Only",
-            [8] = "Visual FX Only",
-            [9] = "Price: Low to High",
-            [10] = "Price: High to Low"
-        }
-        local toast_msg = "Filter: " .. (names[_G.store_sort_mode] or "Default Order")
-        if renderer and renderer.showToast then
-            renderer.showToast(toast_msg)
-        end
     end
 
     -- Load theme from dedicated file
