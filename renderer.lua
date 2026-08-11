@@ -8897,13 +8897,13 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
                 local rew_text = (isUnlocked and "Unlocked: " or "Unlocks: ") .. ach.reward
                 local font_h = font_help_label:getHeight()
                 local c_str = (ach.coins and ach.coins > 0) and tostring(ach.coins) or nil
+                local std_pill_w = math.floor(95 * scale)
                 local c_icon_sz = math.floor(15 * scale)
-                local c_tag_w = c_str and (font_help_label:getWidth(c_str) + (coin_icon and (c_icon_sz + 4 * scale) or 0)) or 0
                 local rw = font_help_label:getWidth(rew_text)
-                
-                local total_tag_w = rw + (c_str and (c_tag_w + math.floor(14 * scale)) or 0)
-                local tag_x = w - padding - total_tag_w - math.floor(25 * scale)
-                local tag_y = current_y + math.floor(13 * scale)
+                local font_h = font_help_label:getHeight()
+                local tag_h = font_h + math.floor(8 * scale)
+                local tag_box_y = current_y + math.floor(9 * scale)
+                local text_y = tag_box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
 
                 local tag_text_color = base_text_col
                 if isUnlocked then
@@ -8919,59 +8919,62 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
                     end
                 end
 
-                -- Tag background for Unlock
-                local tag_h = font_h + math.floor(8 * scale)
-                local tag_box_y = current_y + math.floor(9 * scale)
-                local text_y = tag_box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
+                -- Calculate rightmost positioning
+                local rew_pill_w = math.max(std_pill_w, rw + math.floor(16 * scale))
+                local rew_box_x, coin_box_x
 
-                if isUnlocked then
-                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
-                else
-                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.18)
-                end
-                roundedRect("fill", tag_x - math.floor(8 * scale), tag_box_y, rw + math.floor(16 * scale), tag_h, math.floor(6 * scale))
-
-                if isUnlocked then
-                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
-                else
-                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.7)
-                end
-                love.graphics.print(rew_text, tag_x, text_y)
-
-                -- Tag background for Coins
                 if c_str then
-                    local coin_tag_x = tag_x + rw + math.floor(18 * scale)
-                    local tag_h = font_h + math.floor(8 * scale)
-                    local tag_box_y = tag_y - math.floor(4 * scale)
+                    local c_str_w = font_help_label:getWidth(c_str)
+                    local c_content_w = c_str_w + (coin_icon and (c_icon_sz + 4 * scale) or 0)
+                    local coin_pill_w = math.max(std_pill_w, c_content_w + math.floor(16 * scale))
+
+                    coin_box_x = w - padding - coin_pill_w - math.floor(15 * scale)
+                    rew_box_x = coin_box_x - rew_pill_w - math.floor(10 * scale)
+
+                    -- Draw Coin Tag
                     if isUnlocked then
                         love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
                     else
                         love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.18)
                     end
-                    roundedRect("fill", coin_tag_x - math.floor(6 * scale), tag_box_y, c_tag_w + math.floor(12 * scale), tag_h, math.floor(6 * scale))
+                    roundedRect("fill", coin_box_x, tag_box_y, coin_pill_w, tag_h, math.floor(6 * scale))
 
                     if isUnlocked then
                         love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                     else
                         love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.7)
                     end
-                    local text_y = tag_box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
+
+                    local c_content_x = coin_box_x + math.floor((coin_pill_w - c_content_w) / 2)
                     local icon_y = tag_box_y + math.floor((tag_h - c_icon_sz) / 2)
-                    love.graphics.print(c_str, coin_tag_x, text_y)
+                    love.graphics.print(c_str, c_content_x, text_y)
 
                     if coin_icon then
-                        if isUnlocked then
-                            love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
-                        else
-                            love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.7)
-                        end
                         love.graphics.setShader(icon_shader)
                         local sw = c_icon_sz / coin_icon:getWidth()
                         local sh = c_icon_sz / coin_icon:getHeight()
-                        love.graphics.draw(coin_icon, coin_tag_x + font_help_label:getWidth(c_str) + 3 * scale, icon_y, 0, sw, sh)
+                        love.graphics.draw(coin_icon, c_content_x + c_str_w + 4 * scale, icon_y, 0, sw, sh)
                         love.graphics.setShader()
                     end
+                else
+                    rew_box_x = w - padding - rew_pill_w - math.floor(15 * scale)
                 end
+
+                -- Draw Reward / Unlock Tag
+                if isUnlocked then
+                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
+                else
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.18)
+                end
+                roundedRect("fill", rew_box_x, tag_box_y, rew_pill_w, tag_h, math.floor(6 * scale))
+
+                if isUnlocked then
+                    love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
+                else
+                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.7)
+                end
+                local rew_text_x = rew_box_x + math.floor((rew_pill_w - rw) / 2)
+                love.graphics.print(rew_text, rew_text_x, text_y)
 
                 current_y = current_y + item_h
             end
@@ -9657,8 +9660,8 @@ function renderer.getStoreItems()
 
     return {
         -- Mascots & Companions
-        {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Animated cat companion that celebrates your merges!"},
-        {id="mascot_dog",   cost=1600, name="Dog Companion",   desc="Animated dog companion with 4 adorable dog pals!"},
+        {id="mascot_cat",   cost=800,  name="Cat Companion",   desc="Animated cat companion!"},
+        {id="mascot_dog",   cost=1600, name="Dog Companion",   desc="Animated dog companion with 4 dog pals!"},
 
         -- Permanent Upgrades
         {id="extra_undo",    cost=200,  name="Extra Starting Undo",  desc="Permanently start Plus Mode with +1 Undo"},
@@ -9679,10 +9682,10 @@ function renderer.getStoreItems()
 
         -- Board Grid Skins
         {id="skin_wood",     cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
-        {id="skin_bamboo",   cost=150,  name="Bamboo Board",         desc="Natural woven Japanese bamboo grid texture"},
-        {id="skin_glass",    cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid with glowing borders"},
-        {id="skin_marble",   cost=200,  name="Marble Board",         desc="Polished white marble texture with subtle veins"},
-        {id="skin_matrix",   cost=250,  name="Matrix Board",         desc="Animated digital green code lines running down board"},
+        {id="skin_bamboo",   cost=150,  name="Bamboo Board",         desc="Natural woven bamboo grid texture"},
+        {id="skin_glass",    cost=200,  name="Glassmorphism Board", desc="Sleek translucent glass grid"},
+        {id="skin_marble",   cost=200,  name="Marble Board",         desc="Polished white marble texture"},
+        {id="skin_matrix",   cost=250,  name="Matrix Board",         desc="Animated green digital code grid"},
 
         -- Visual FX
         {id="anim_bounce",   cost=300,  name="Bounce Pop FX",        desc="Unlock Bounce Pop Merge FX"},
@@ -9966,11 +9969,14 @@ function renderer.drawStoreMenu(selection, skip_transition)
                     end
                 end
 
+                local std_pill_w = math.floor(95 * scale)
                 local tw = font_help_label:getWidth(tag_txt)
                 local font_h = font_help_label:getHeight()
                 local tag_h = font_h + math.floor(8 * scale)
-                local tag_x = w - padding - tw - math.floor(20 * scale)
-                local box_y = y + math.floor(9 * scale)
+                local pill_w = math.max(std_pill_w, tw + math.floor(16 * scale))
+                local box_x = w - padding - pill_w - math.floor(15 * scale)
+                local box_y = y + math.floor((card_h - tag_h) / 2)
+                local text_x = box_x + math.floor((pill_w - tw) / 2)
                 local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
 
                 if is_equipped then
@@ -9978,80 +9984,51 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 else
                     love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
                 end
-                roundedRect("fill", tag_x - math.floor(6 * scale), box_y, tw + math.floor(12 * scale), tag_h, math.floor(6 * scale))
+                roundedRect("fill", box_x, box_y, pill_w, tag_h, math.floor(6 * scale))
 
                 love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
-                love.graphics.print(tag_txt, tag_x, text_y)
-            elseif is_consumable then
-                -- Consumable: count is shown in desc text, just show price pill
+                love.graphics.print(tag_txt, text_x, text_y)
+            else
+                local std_pill_w = math.floor(95 * scale)
                 local tag_txt = tostring(item.cost)
-                local tw = font_help_label:getWidth(tag_txt)
                 local font_h = font_help_label:getHeight()
                 local c_icon_sz = math.floor(15 * scale)
-                local tag_w = tw + (coin_icon and (c_icon_sz + 14 * scale) or math.floor(16 * scale))
+                local tw = font_help_label:getWidth(tag_txt)
+                local content_w = tw + (coin_icon and (c_icon_sz + 4 * scale) or 0)
                 local tag_h = font_h + math.floor(8 * scale)
-                local tag_x = w - padding - tag_w - math.floor(12 * scale)
-                local box_y = y + math.floor(9 * scale)
+                local pill_w = math.max(std_pill_w, content_w + math.floor(16 * scale))
+                local box_x = w - padding - pill_w - math.floor(15 * scale)
+                local box_y = y + math.floor((card_h - tag_h) / 2)
+
+                local content_x = box_x + math.floor((pill_w - content_w) / 2)
+                local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
+                local icon_y = box_y + math.floor((tag_h - c_icon_sz) / 2)
+
                 local can_afford = (coins >= item.cost)
                 if can_afford then
                     love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.25)
                 else
                     love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.15)
                 end
-                roundedRect("fill", tag_x - math.floor(6 * scale), box_y, tag_w, tag_h, math.floor(6 * scale))
-                local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
-                local icon_y = box_y + math.floor((tag_h - c_icon_sz) / 2)
+                roundedRect("fill", box_x, box_y, pill_w, tag_h, math.floor(6 * scale))
+
                 if can_afford then
                     love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                 else
                     love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.5)
                 end
-                love.graphics.print(tag_txt, tag_x, text_y)
-                if coin_icon then
-                    love.graphics.setShader(icon_shader)
-                    local sw = c_icon_sz / coin_icon:getWidth()
-                    local sh = c_icon_sz / coin_icon:getHeight()
-                    love.graphics.draw(coin_icon, tag_x + tw + 3 * scale, icon_y, 0, sw, sh)
-                    love.graphics.setShader()
-                end
-            else
-                local tag_txt = tostring(item.cost)
-                local tw = font_help_label:getWidth(tag_txt)
-                local font_h = font_help_label:getHeight()
-                local c_icon_sz = math.floor(15 * scale)
-                local tag_w = tw + (coin_icon and (c_icon_sz + 14 * scale) or math.floor(16 * scale))
-                local tag_h = font_h + math.floor(8 * scale)
-                local tag_x = w - padding - tag_w - math.floor(12 * scale)
-                local box_y = y + math.floor(9 * scale)
-
-                local can_afford = (coins >= item.cost)
-                if can_afford then
-                    love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.25)
-                else
-                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.15)
-                end
-                roundedRect("fill", tag_x - math.floor(6 * scale), box_y, tag_w, tag_h, math.floor(6 * scale))
-
-                local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
-                local icon_y = box_y + math.floor((tag_h - c_icon_sz) / 2)
-
-                if can_afford then
-                    love.graphics.setColor(ui_text)
-                else
-                    love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.4)
-                end
-                love.graphics.print(tag_txt, tag_x, text_y)
+                love.graphics.print(tag_txt, content_x, text_y)
 
                 if coin_icon then
                     if can_afford then
-                        love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 1)
+                        love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                     else
-                        love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.4)
+                        love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.5)
                     end
                     love.graphics.setShader(icon_shader)
                     local sw = c_icon_sz / coin_icon:getWidth()
                     local sh = c_icon_sz / coin_icon:getHeight()
-                    love.graphics.draw(coin_icon, tag_x + tw + 4 * scale, icon_y, 0, sw, sh)
+                    love.graphics.draw(coin_icon, content_x + tw + 4 * scale, icon_y, 0, sw, sh)
                     love.graphics.setShader()
                 end
             end
