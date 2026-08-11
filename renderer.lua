@@ -8920,19 +8920,23 @@ function renderer.drawAchievements(scroll, skip_transition, static_only, overrid
                 end
 
                 -- Tag background for Unlock
+                local tag_h = font_h + math.floor(8 * scale)
+                local tag_box_y = current_y + math.floor(9 * scale)
+                local text_y = tag_box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
+
                 if isUnlocked then
                     love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
                 else
                     love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.18)
                 end
-                roundedRect("fill", tag_x - math.floor(8 * scale), tag_y - math.floor(4 * scale), rw + math.floor(16 * scale), font_h + math.floor(8 * scale), math.floor(6 * scale))
+                roundedRect("fill", tag_x - math.floor(8 * scale), tag_box_y, rw + math.floor(16 * scale), tag_h, math.floor(6 * scale))
 
                 if isUnlocked then
                     love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                 else
                     love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.7)
                 end
-                love.graphics.print(rew_text, tag_x, tag_y)
+                love.graphics.print(rew_text, tag_x, text_y)
 
                 -- Tag background for Coins
                 if c_str then
@@ -9664,14 +9668,14 @@ function renderer.getStoreItems()
         {id="coin_multiplier",cost=1200,name="2x Coin Multiplier",   desc="Permanently double all earned Coins"},
 
         -- Boosters & Powerups
-        {id="powerup_undo",  cost=40,   name="Purchase Undo for Plus Mode",  desc="Add Undo charge for next Plus game  (x" .. pu_undo  .. " owned)", consumable=true, ckey="powerup_undo_count"},
-        {id="powerup_swap",  cost=50,   name="Purchase Swap for Plus Mode",  desc="Add Swap charge for next Plus game  (x" .. pu_swap  .. " owned)", consumable=true, ckey="powerup_swap_count"},
-        {id="powerup_bomb",  cost=60,   name="Purchase Bomb for Plus Mode",  desc="Add Bomb charge for next Plus game  (x" .. pu_bomb  .. " owned)", consumable=true, ckey="powerup_bomb_count"},
-        {id="start_128",     cost=60,   name="128 High-Tile Booster",desc="Next game starts with a 128 tile  (x" .. booster_128 .. " owned)", consumable=true, ckey="start_128_count"},
-        {id="coin_rush",     cost=100,  name="Coin Rush Ticket",     desc="Doubles all Coins earned in your next game  (x" .. coin_rush_count .. " owned)", consumable=true, ckey="coin_rush_count"},
-        {id="start_256",     cost=120,  name="256 High-Tile Booster",desc="Next game starts with a 256 tile  (x" .. booster_256 .. " owned)", consumable=true, ckey="start_256_count"},
-        {id="second_chance", cost=200,  name="Second Chance Shield", desc="Clear any row or col on demand  (x" .. shield_count .. " owned)", consumable=true, ckey="second_chance_count"},
-        {id="start_512",     cost=250,  name="512 High-Tile Booster",desc="Next game starts with a 512 tile  (x" .. booster_512 .. " owned)", consumable=true, ckey="start_512_count"},
+        {id="powerup_undo",  cost=40,   name="Purchase Undo (x" .. pu_undo .. " owned)",          desc="Add Undo charge for next Plus game", consumable=true, ckey="powerup_undo_count"},
+        {id="powerup_swap",  cost=50,   name="Purchase Swap (x" .. pu_swap .. " owned)",          desc="Add Swap charge for next Plus game", consumable=true, ckey="powerup_swap_count"},
+        {id="powerup_bomb",  cost=60,   name="Purchase Bomb (x" .. pu_bomb .. " owned)",          desc="Add Bomb charge for next Plus game", consumable=true, ckey="powerup_bomb_count"},
+        {id="start_128",     cost=60,   name="128 High-Tile Booster (x" .. booster_128 .. " owned)", desc="Next game starts with a 128 tile", consumable=true, ckey="start_128_count"},
+        {id="coin_rush",     cost=100,  name="Coin Rush Ticket (x" .. coin_rush_count .. " owned)",     desc="Doubles all Coins earned in your next game", consumable=true, ckey="coin_rush_count"},
+        {id="start_256",     cost=120,  name="256 High-Tile Booster (x" .. booster_256 .. " owned)", desc="Next game starts with a 256 tile", consumable=true, ckey="start_256_count"},
+        {id="second_chance", cost=200,  name="Second Chance Shield (x" .. shield_count .. " owned)", desc="Clear any row or col on demand", consumable=true, ckey="second_chance_count"},
+        {id="start_512",     cost=250,  name="512 High-Tile Booster (x" .. booster_512 .. " owned)", desc="Next game starts with a 512 tile", consumable=true, ckey="start_512_count"},
 
         -- Board Grid Skins
         {id="skin_wood",     cost=100,  name="Wood Board",           desc="Classic arcade cabinet wooden grid texture"},
@@ -9966,20 +9970,20 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 local font_h = font_help_label:getHeight()
                 local tag_h = font_h + math.floor(8 * scale)
                 local tag_x = w - padding - tw - math.floor(20 * scale)
-                local tag_y = y + math.floor((card_h - tag_h) / 2)
-                local text_y = tag_y + math.floor((tag_h - font_h) / 2)
+                local box_y = y + math.floor(9 * scale)
+                local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
 
                 if is_equipped then
                     love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.35)
                 else
                     love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 0.2)
                 end
-                roundedRect("fill", tag_x - math.floor(6 * scale), tag_y, tw + math.floor(12 * scale), tag_h, math.floor(6 * scale))
+                roundedRect("fill", tag_x - math.floor(6 * scale), box_y, tw + math.floor(12 * scale), tag_h, math.floor(6 * scale))
 
                 love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                 love.graphics.print(tag_txt, tag_x, text_y)
             elseif is_consumable then
-                -- Consumable: count is shown in desc text, just show centered price pill
+                -- Consumable: count is shown in desc text, just show price pill
                 local tag_txt = tostring(item.cost)
                 local tw = font_help_label:getWidth(tag_txt)
                 local font_h = font_help_label:getHeight()
@@ -9987,16 +9991,16 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 local tag_w = tw + (coin_icon and (c_icon_sz + 14 * scale) or math.floor(16 * scale))
                 local tag_h = font_h + math.floor(8 * scale)
                 local tag_x = w - padding - tag_w - math.floor(12 * scale)
-                local tag_y = y + math.floor((card_h - tag_h) / 2)
+                local box_y = y + math.floor(9 * scale)
                 local can_afford = (coins >= item.cost)
                 if can_afford then
                     love.graphics.setColor(help_key_color[1], help_key_color[2], help_key_color[3], 0.25)
                 else
                     love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.15)
                 end
-                roundedRect("fill", tag_x - math.floor(6 * scale), tag_y, tag_w, tag_h, math.floor(6 * scale))
-                local text_y = tag_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
-                local icon_y = tag_y + math.floor((tag_h - c_icon_sz) / 2)
+                roundedRect("fill", tag_x - math.floor(6 * scale), box_y, tag_w, tag_h, math.floor(6 * scale))
+                local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
+                local icon_y = box_y + math.floor((tag_h - c_icon_sz) / 2)
                 if can_afford then
                     love.graphics.setColor(tag_text_color[1], tag_text_color[2], tag_text_color[3], 1)
                 else
@@ -10018,7 +10022,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 local tag_w = tw + (coin_icon and (c_icon_sz + 14 * scale) or math.floor(16 * scale))
                 local tag_h = font_h + math.floor(8 * scale)
                 local tag_x = w - padding - tag_w - math.floor(12 * scale)
-                local tag_y = y + math.floor((card_h - tag_h) / 2)
+                local box_y = y + math.floor(9 * scale)
 
                 local can_afford = (coins >= item.cost)
                 if can_afford then
@@ -10026,10 +10030,10 @@ function renderer.drawStoreMenu(selection, skip_transition)
                 else
                     love.graphics.setColor(base_text_col[1], base_text_col[2], base_text_col[3], 0.15)
                 end
-                roundedRect("fill", tag_x - math.floor(6 * scale), tag_y, tag_w, tag_h, math.floor(6 * scale))
+                roundedRect("fill", tag_x - math.floor(6 * scale), box_y, tag_w, tag_h, math.floor(6 * scale))
 
-                local text_y = tag_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
-                local icon_y = tag_y + math.floor((tag_h - c_icon_sz) / 2)
+                local text_y = box_y + math.floor((tag_h - font_h) / 2) - math.floor(1 * scale)
+                local icon_y = box_y + math.floor((tag_h - c_icon_sz) / 2)
 
                 if can_afford then
                     love.graphics.setColor(ui_text)
