@@ -1782,29 +1782,33 @@ local crt_shader_code = [[
     extern vec2 screen_size;
 
     vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-        // 1. Curvature / Barrel distortion
+        // 1. CRT Curved Glass Barrel Distortion with Auto-Fill (Zero Blank Space Outlines!)
         vec2 cc = texture_coords - 0.5;
         float dist = dot(cc, cc);
         
-        // Barrel distortion formula
-        vec2 distorted_coords = cc * (1.0 + dist * 0.08 + dist * dist * 0.04) + 0.5;
+        // Curved screen profile scaled so UV coordinates stay strictly within [0, 1]
+        // This eliminates all black blank corner cutouts while preserving retro glass curvature!
+        vec2 distorted_coords = cc * (1.0 + dist * 0.05) * 0.965 + 0.5;
+        distorted_coords = clamp(distorted_coords, 0.0, 1.0);
 
-        // Clip edges (simulate screen bezel)
-        if (distorted_coords.x < 0.0 || distorted_coords.x > 1.0 || 
-            distorted_coords.y < 0.0 || distorted_coords.y > 1.0) {
-            return vec4(0.0, 0.0, 0.0, 1.0);
-        }
+        // 2. Chromatic Aberration (Trinitron RGB glass separation near edges)
+        float ca = 0.0012 * (1.0 + dist * 1.5);
+        float r = Texel(texture, distorted_coords - vec2(ca, 0.0)).r;
+        float g = Texel(texture, distorted_coords).g;
+        float b = Texel(texture, distorted_coords + vec2(ca, 0.0)).b;
+        vec4 tex_color = vec4(r, g, b, 1.0);
 
-        // 2. Sample texture
-        vec4 tex_color = Texel(texture, distorted_coords);
+        // 3. Scanlines (subtle TV line raster effect)
+        float scanline = sin(distorted_coords.y * screen_size.y * 1.2) * 0.045 + 0.955;
 
-        // 3. Scanlines (subtle brightness fluctuation based on vertical coord)
-        float scanline = sin(distorted_coords.y * screen_size.y * 1.5) * 0.07 + 0.93;
+        // 4. Phosphor Mask (subtle RGB triad grille effect)
+        float mask = sin(distorted_coords.x * screen_size.x * 1.5) * 0.025 + 0.975;
 
-        // 4. Subtle phosphor horizontal mask
-        float mask = sin(distorted_coords.x * screen_size.x * 2.0) * 0.03 + 0.97;
+        // 5. Smooth CRT Glass Corner Vignette (replaces ugly black cutouts with soft vintage screen falloff)
+        float vig = smoothstep(0.70, 0.30, length(cc));
+        float vignette = 0.90 + 0.10 * vig;
 
-        return tex_color * vec4(scanline * mask) * color;
+        return tex_color * vec4(vec3(scanline * mask * vignette), 1.0) * color;
     }
 ]]
 
