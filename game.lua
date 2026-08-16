@@ -154,6 +154,9 @@ function Game.new(mode)
         else
             self.swap_used_this_run = saved_swap or 0
         end
+
+        self.coin_rush_active = savedState.coin_rush_active or false
+        self.start_booster_val = savedState.start_booster_val
     else
         -- Start a fresh game if no save state exists
         self:addStartTiles()
@@ -245,7 +248,9 @@ function Game:saveGameState()
         milestonesReached = self.milestonesReached,
         runTime = self.runTime,
         undo_used_this_run = self.undo_used_this_run,
-        swap_used_this_run = self.swap_used_this_run
+        swap_used_this_run = self.swap_used_this_run,
+        coin_rush_active = self.coin_rush_active or false,
+        start_booster_val = self.start_booster_val
     }
 
     if self.mode == "timeattack" then
@@ -333,6 +338,7 @@ function Game:addStartTiles()
                 tile.booster_val = booster_val
                 tile.booster_spawn_t = love.timer.getTime()
                 self.grid:insertTile(tile)
+                self.start_booster_val = booster_val
                 _G.stats[booster_key] = (_G.stats[booster_key] or 1) - 1
                 if save and save.saveStats then save.saveStats(_G.stats) end
             end
@@ -959,7 +965,17 @@ function Game:restart()
         self.timePopups = {}
         self.timerFlashTimer = 0
     end
+    self.start_booster_val = nil
     self:addStartTiles()
+    -- Consume Coin Rush Ticket if owned
+    self.coin_rush_active = false
+    if _G.stats then
+        local cr_count = _G.stats.coin_rush_count or 0
+        if cr_count > 0 then
+            _G.stats.coin_rush_count = cr_count - 1
+            self.coin_rush_active = true
+        end
+    end
     if _G.stats then
         _G.stats.games_played = (_G.stats.games_played or 0) + 1
         if self.mode == "classic" then

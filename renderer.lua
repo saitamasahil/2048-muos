@@ -3328,6 +3328,7 @@ function renderer.init()
     local ok_tr_pause, tps_img = pcall(love.graphics.newImage, "assets/icon/track_pause.png")
     if ok_tr_pause then track_pause_icon = tps_img end
 
+
     -- Preload pet animations (all 1 to N frames for different states)
     pet_cat_idle_down_frames = {}
     pet_cat_idle_left_frames = {}
@@ -4065,9 +4066,9 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local sx = cx - scaledW / 2
     local sy = cy - scaledH / 2
 
-    -- ── High-Tile Booster Visual FX: Theme-Aware Rays, Energy Bloom & Holographic Badge ──
+    -- ── High-Tile Booster Visual FX ──
     local now = love.timer.getTime()
-    local is_booster_active = tile.is_booster and (now - (tile.booster_spawn_t or now) < 4.5)
+    local is_booster_active = tile.is_booster and (now - (tile.booster_spawn_t or now) < 5.0)
     local b_alpha = 0
     local theme_gold, theme_board = renderer.getThemeHighlightColors()
     local accent_col = help_key_color or theme_gold
@@ -4075,33 +4076,33 @@ function renderer.drawTile(tile, slideProgress, popProgress)
 
     if is_booster_active then
         local b_age = now - (tile.booster_spawn_t or now)
-        b_alpha = math.max(0.0, math.min(1.0, (4.5 - b_age) / 1.0))
-        
-        -- 1. Dual-Tone Rotating Solar Energy Rays (10 Rays)
-        local ray_count = 10
-        local ray_rot = now * 2.0
-        local ray_rad = scaledW * 0.92
-        local pulse = 0.65 + 0.35 * math.sin(now * 8.0)
-        for r = 1, ray_count do
-            local a1 = ray_rot + (r - 1) * (math.pi * 2 / ray_count)
-            local a2 = a1 + 0.20
-            local x1 = cx + math.cos(a1) * ray_rad
-            local y1 = cy + math.sin(a1) * ray_rad
-            local x2 = cx + math.cos(a2) * ray_rad
-            local y2 = cy + math.sin(a2) * ray_rad
+        b_alpha = math.max(0.0, math.min(1.0, (5.0 - b_age) / 1.2))
 
-            local r_col = (r % 2 == 0) and accent_col or tile_col
-            love.graphics.setColor(r_col[1], r_col[2], r_col[3], 0.35 * b_alpha * pulse)
-            love.graphics.polygon("fill", cx, cy, x1, y1, x2, y2)
+        -- 1. Soft outer glow bloom (3 expanding layers)
+        for layer = 3, 1, -1 do
+            local breath = 0.7 + 0.3 * math.sin(now * 4.0 + layer * 0.8)
+            local expand = (layer * 4.0 * scale) * breath
+            local layer_alpha = b_alpha * (0.12 / layer)
+            love.graphics.setColor(tile_col[1], tile_col[2], tile_col[3], layer_alpha)
+            roundedRect("fill", sx - expand, sy - expand, scaledW + expand * 2, scaledH + expand * 2, (cr * ((tileScaleX + tileScaleY) / 2)) + expand * 0.4)
         end
 
-        -- 2. Multi-layer Pulsing Neon Box Halos
-        for layer = 4, 1, -1 do
-            local expand = (layer * 5.5 * scale) * (0.6 + 0.4 * math.sin(now * 7.0 + layer))
-            local layer_alpha = 0.45 * b_alpha * (0.30 / layer)
-            local h_col = (layer % 2 == 0) and accent_col or theme_gold
-            love.graphics.setColor(h_col[1], h_col[2], h_col[3], layer_alpha)
-            roundedRect("fill", sx - expand, sy - expand, scaledW + expand * 2, scaledH + expand * 2, (cr * ((tileScaleX + tileScaleY) / 2)) + expand * 0.5)
+        -- 2. Slow rotating light cone rays (6 wide, soft)
+        local ray_count = 6
+        local ray_rot = now * 0.8
+        local ray_len = scaledW * 0.85
+        local ray_width = 0.35
+        for r = 1, ray_count do
+            local a_center = ray_rot + (r - 1) * (math.pi * 2 / ray_count)
+            local a1 = a_center - ray_width / 2
+            local a2 = a_center + ray_width / 2
+            local x1 = cx + math.cos(a1) * ray_len
+            local y1 = cy + math.sin(a1) * ray_len
+            local x2 = cx + math.cos(a2) * ray_len
+            local y2 = cy + math.sin(a2) * ray_len
+            local ray_a = 0.15 * b_alpha
+            love.graphics.setColor(tile_col[1], tile_col[2], tile_col[3], ray_a)
+            love.graphics.polygon("fill", cx, cy, x1, y1, x2, y2)
         end
     end
 
@@ -4142,21 +4143,35 @@ function renderer.drawTile(tile, slideProgress, popProgress)
         end
     end
 
-    -- ── High-Tile Booster Visual FX: Electric Perimeter & Metallic Sheen ─────
+    -- ── High-Tile Booster Visual FX: Border glow & light sweep ─────
     if is_booster_active then
-        -- Pulsing Electric Theme Border
-        local stroke_pulse = 0.75 + 0.25 * math.sin(now * 10.0)
-        love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.95 * b_alpha * stroke_pulse)
-        love.graphics.setLineWidth(math.floor(2.8 * scale))
+        -- Pulsing accent border
+        local stroke_pulse = 0.6 + 0.4 * math.sin(now * 5.0)
+        love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.8 * b_alpha * stroke_pulse)
+        love.graphics.setLineWidth(math.max(1, math.floor(2.0 * scale)))
         roundedRect("line", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
-        love.graphics.setLineWidth(math.floor(1.5 * scale))
 
-        -- Metallic Sheen Sweep with Theme-Tinted Tail
-        local sweep = ((now * 2.0) % 1.6) - 0.3
-        if sweep >= 0 and sweep <= 1.0 then
-            local sheen_x = sx + sweep * scaledW
-            love.graphics.setColor(1, 1, 1, 0.38 * b_alpha * math.sin(sweep * math.pi))
-            love.graphics.rectangle("fill", sheen_x, sy, math.floor(12 * scale), scaledH)
+        -- Corner sparkle dots (4 corners)
+        local dot_sz = math.floor(2.5 * scale)
+        local dot_pulse = 0.5 + 0.5 * math.sin(now * 6.0)
+        love.graphics.setColor(1, 1, 1, 0.7 * b_alpha * dot_pulse)
+        love.graphics.circle("fill", sx + 2, sy + 2, dot_sz)
+        love.graphics.circle("fill", sx + scaledW - 2, sy + 2, dot_sz)
+        love.graphics.circle("fill", sx + 2, sy + scaledH - 2, dot_sz)
+        love.graphics.circle("fill", sx + scaledW - 2, sy + scaledH - 2, dot_sz)
+
+        -- Diagonal light sweep
+        local sweep_period = 2.5
+        local sweep_t = (now % sweep_period) / sweep_period
+        if sweep_t < 0.6 then
+            local sp = sweep_t / 0.6
+            local sweep_x = sx + sp * scaledW * 1.3 - scaledW * 0.15
+            local sweep_a = math.sin(sp * math.pi) * 0.3 * b_alpha
+            love.graphics.setColor(1, 1, 1, sweep_a)
+            love.graphics.push()
+            love.graphics.translate(sweep_x, sy)
+            love.graphics.polygon("fill", 0, 0, math.floor(8 * scale), 0, math.floor(4 * scale), scaledH, math.floor(-4 * scale), scaledH)
+            love.graphics.pop()
         end
     end
 
@@ -4297,6 +4312,7 @@ function renderer.drawTiles(game)
         if tile and tile.is_booster and not tile.booster_sparkles_spawned then
             tile.booster_sparkles_spawned = true
             if not _G.booster_sparkles then _G.booster_sparkles = {} end
+            if not _G.booster_shockwaves then _G.booster_shockwaves = {} end
             
             local bx, by = layout.board_x, layout.board_y
             local cs, cg = layout.cell_size, layout.cell_gap
@@ -4308,35 +4324,61 @@ function renderer.drawTiles(game)
             local accent_col = help_key_color or theme_gold
             local tile_col = getTileColor(tile.booster_val or tile.value)
 
-            for i = 1, 36 do
-                local angle = love.math.random() * math.pi * 2
-                local speed = love.math.random(90, 280) * scale
+            -- Screen flash effect
+            _G.booster_screen_flash = 0.65
+            _G.booster_flash_color = {accent_col[1], accent_col[2], accent_col[3]}
 
-                -- Dynamically select color palette based on active theme
+            -- Expanding shockwave rings
+            for ring = 1, 3 do
+                table.insert(_G.booster_shockwaves, {
+                    x = cx, y = cy,
+                    radius = cs * 0.3,
+                    max_radius = cs * (1.8 + ring * 0.7),
+                    life = 1.0 + ring * 0.25,
+                    max_life = 1.0 + ring * 0.25,
+                    color = (ring % 2 == 0) and accent_col or tile_col,
+                    width = (4 - ring) * 2.0 * scale
+                })
+            end
+
+            -- Particles - more, bigger, more varied
+            for i = 1, 60 do
+                local angle = love.math.random() * math.pi * 2
+                local speed = love.math.random(60, 350) * scale
+
                 local p_col
-                local r_val = i % 4
+                local r_val = i % 5
                 if r_val == 0 then
                     p_col = {accent_col[1], accent_col[2], accent_col[3]}
                 elseif r_val == 1 then
                     p_col = {tile_col[1], tile_col[2], tile_col[3]}
                 elseif r_val == 2 then
                     p_col = {theme_gold[1], theme_gold[2], theme_gold[3]}
+                elseif r_val == 3 then
+                    p_col = {1.0, 1.0, 0.85}
                 else
                     p_col = {1.0, 1.0, 1.0}
                 end
+
+                local ptype
+                local t_roll = i % 5
+                if t_roll == 0 then ptype = "ring"
+                elseif t_roll == 1 then ptype = "diamond"
+                elseif t_roll == 2 then ptype = "spark"
+                else ptype = "star" end
 
                 table.insert(_G.booster_sparkles, {
                     x = cx,
                     y = cy,
                     vx = math.cos(angle) * speed,
                     vy = math.sin(angle) * speed,
-                    size = love.math.random(3, 8) * scale,
-                    life = 1.5,
-                    max_life = 1.5,
+                    size = love.math.random(3, 10) * scale,
+                    life = 1.8,
+                    max_life = 1.8,
                     rot = love.math.random() * math.pi * 2,
-                    vrot = (love.math.random() - 0.5) * 10,
+                    vrot = (love.math.random() - 0.5) * 12,
                     color = p_col,
-                    ptype = (i % 3 == 0) and "ring" or "star"
+                    ptype = ptype
                 })
             end
         end
@@ -4358,16 +4400,35 @@ function renderer.drawTiles(game)
                 p.x = p.x + p.vx * dt
                 p.y = p.y + p.vy * dt
                 p.vy = p.vy + 70 * scale * dt
+                p.vx = p.vx * 0.995  -- slight drag
                 p.rot = p.rot + p.vrot * dt
-                local alpha = math.min(1.0, p.life / (p.max_life * 0.4))
+                local alpha = math.min(1.0, p.life / (p.max_life * 0.35))
                 
                 -- Render particle based on ptype
                 if p.ptype == "ring" then
-                    local ring_rad = p.size * (1.0 + (p.max_life - p.life) * 1.5)
-                    love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha * 0.65)
-                    love.graphics.setLineWidth(math.floor(1.2 * scale))
+                    local ring_rad = p.size * (1.0 + (p.max_life - p.life) * 1.8)
+                    love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha * 0.6)
+                    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
                     love.graphics.circle("line", p.x, p.y, ring_rad)
-                else
+                elseif p.ptype == "diamond" then
+                    local sz = p.size * (0.6 + 0.4 * (p.life / p.max_life))
+                    love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha * 0.9)
+                    love.graphics.push()
+                    love.graphics.translate(p.x, p.y)
+                    love.graphics.rotate(p.rot)
+                    love.graphics.polygon("fill", 0, -sz, sz * 0.5, 0, 0, sz, -sz * 0.5, 0)
+                    love.graphics.pop()
+                elseif p.ptype == "spark" then
+                    local sz = p.size * (0.5 + 0.5 * (p.life / p.max_life))
+                    love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha)
+                    love.graphics.push()
+                    love.graphics.translate(p.x, p.y)
+                    love.graphics.rotate(p.rot)
+                    love.graphics.setLineWidth(math.max(1, math.floor(1.5 * scale)))
+                    love.graphics.line(-sz, 0, sz, 0)
+                    love.graphics.line(0, -sz * 0.4, 0, sz * 0.4)
+                    love.graphics.pop()
+                else  -- star
                     love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha)
                     love.graphics.push()
                     love.graphics.translate(p.x, p.y)
@@ -4381,93 +4442,38 @@ function renderer.drawTiles(game)
         end
     end
 
-    -- ── Top-Pass: Draw Floating Hologram Glass Badges ON TOP of ALL tiles ────
-    game.grid:eachCell(function(x, y, tile)
-        if tile and tile.is_booster then
-            local now = love.timer.getTime()
-            local b_age = now - (tile.booster_spawn_t or now)
-            if b_age < 4.5 then
-                local b_alpha = math.max(0.0, math.min(1.0, (4.5 - b_age) / 1.0))
-                local theme_gold, theme_board = renderer.getThemeHighlightColors()
-                local accent_col = help_key_color or theme_gold
-
-                local bx_board, by_board = layout.board_x, layout.board_y
-                local cs, cg = layout.cell_size, layout.cell_gap
-                local scale = _G.scale
-
-                local tx = bx_board + cg + (tile.x - 1) * (cs + cg)
-                local ty_tile = by_board + cg + (tile.y - 1) * (cs + cg)
-                local cx = tx + cs / 2
-                local cy = ty_tile + cs / 2
-                local scaledW = cs
-                local scaledH = cs
-                local sx = cx - scaledW / 2
-                local sy = cy - scaledH / 2
-
-                local b_val = tile.booster_val or tile.value
-                local badge_txt = tostring(b_val) .. " BOOST!"
-                love.graphics.setFont(font_help_key)
-
-                local icon_sz = math.floor(11 * scale)
-                local icon_pad = math.floor(6 * scale)
-                local text_w = font_help_key:getWidth(badge_txt)
-                local text_h = font_help_key:getHeight()
-                local bw = text_w + icon_sz + icon_pad + math.floor(20 * scale)
-                local bh = text_h + math.floor(8 * scale)
-                local float_y = sy - bh - math.floor(8 * scale) + math.sin(now * 3.8) * math.floor(3.5 * scale)
-                local bx = cx - bw / 2
-
-                -- 1. Hologram Laser Light Beams connecting tile corners to floating badge
-                local beam_a = 0.28 * b_alpha * (0.65 + 0.35 * math.sin(now * 10.0))
-                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], beam_a)
-                love.graphics.polygon("fill", sx + math.floor(5 * scale), sy, sx + math.floor(11 * scale), float_y + bh, bx + math.floor(4 * scale), float_y + bh, sx + math.floor(1 * scale), sy)
-                love.graphics.polygon("fill", sx + scaledW - math.floor(5 * scale), sy, sx + scaledW - math.floor(1 * scale), sy, bx + bw - math.floor(4 * scale), float_y + bh, bx + bw - math.floor(11 * scale), float_y + bh)
-
-                -- 2. High-Contrast Premium Dark Glass Pill Container
-                love.graphics.setColor(0.05, 0.06, 0.10, 0.94 * b_alpha)
-                roundedRect("fill", bx, float_y, bw, bh, math.floor(7 * scale))
-
-                -- 3. Double-Layer Pulsing Neon Rim
-                local border_pulse = 0.8 + 0.2 * math.sin(now * 8.0)
-                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.45 * b_alpha * border_pulse)
-                love.graphics.setLineWidth(math.floor(3.0 * scale))
-                roundedRect("line", bx - 1, float_y - 1, bw + 2, bh + 2, math.floor(8 * scale))
-                love.graphics.setColor(1.0, 0.90, 0.30, 0.98 * b_alpha * border_pulse)
-                love.graphics.setLineWidth(math.floor(1.5 * scale))
-                roundedRect("line", bx, float_y, bw, bh, math.floor(7 * scale))
-
-                -- 4. Dynamic Spinning & Size-Breathing 4-Point Star Vector Icon
-                local star_x = bx + math.floor(11 * scale) + icon_sz / 2
-                local star_y = float_y + bh / 2
-                local star_breath = 1.0 + 0.22 * math.sin(now * 8.0)
-                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.98 * b_alpha)
-                love.graphics.push()
-                love.graphics.translate(star_x, star_y)
-                love.graphics.rotate(now * 3.5)
-                local sz = (icon_sz / 2) * star_breath
-                love.graphics.polygon("fill", -sz, 0, 0, -sz * 0.3, sz, 0, 0, sz * 0.3)
-                love.graphics.polygon("fill", 0, -sz, sz * 0.3, 0, 0, sz, -sz * 0.3, 0)
-                love.graphics.pop()
-
-                -- 5. Floating Pill Text with 4-Way Shadow & Volumetric Glow
-                local t_x = bx + math.floor(11 * scale) + icon_sz + icon_pad
-                local t_y = float_y + math.floor((bh - text_h) / 2) - math.floor(1 * scale)
-
-                love.graphics.setColor(0.0, 0.0, 0.0, 0.90 * b_alpha)
-                love.graphics.print(badge_txt, t_x - 1, t_y)
-                love.graphics.print(badge_txt, t_x + 1, t_y)
-                love.graphics.print(badge_txt, t_x, t_y - 1)
-                love.graphics.print(badge_txt, t_x, t_y + 1)
-
-                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.55 * b_alpha)
-                love.graphics.print(badge_txt, t_x - 0.5, t_y - 0.5)
-                love.graphics.print(badge_txt, t_x + 0.5, t_y + 0.5)
-
-                love.graphics.setColor(1.0, 0.96, 0.45, 0.98 * b_alpha)
-                love.graphics.print(badge_txt, t_x, t_y)
+    -- Update and render shockwave rings
+    if _G.booster_shockwaves then
+        local dt = love.timer.getDelta()
+        local scale = _G.scale
+        for i = #_G.booster_shockwaves, 1, -1 do
+            local sw = _G.booster_shockwaves[i]
+            sw.life = sw.life - dt
+            if sw.life <= 0 then
+                table.remove(_G.booster_shockwaves, i)
+            else
+                local progress = 1.0 - (sw.life / sw.max_life)
+                local ease_p = 1.0 - math.pow(1.0 - progress, 2.5)
+                local radius = sw.radius + (sw.max_radius - sw.radius) * ease_p
+                local alpha = (1.0 - progress) * 0.7
+                love.graphics.setColor(sw.color[1], sw.color[2], sw.color[3], alpha)
+                love.graphics.setLineWidth(math.max(1, sw.width * (1.0 - progress * 0.6)))
+                love.graphics.circle("line", sw.x, sw.y, radius)
             end
         end
-    end)
+    end
+
+    -- Screen flash overlay for booster spawn
+    if _G.booster_screen_flash and _G.booster_screen_flash > 0 then
+        local dt = love.timer.getDelta()
+        local fc = _G.booster_flash_color or {1, 0.9, 0.3}
+        love.graphics.setColor(fc[1], fc[2], fc[3], _G.booster_screen_flash * 0.35)
+        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        _G.booster_screen_flash = _G.booster_screen_flash - dt * 2.5
+        if _G.booster_screen_flash <= 0 then _G.booster_screen_flash = nil end
+    end
+
+
 end
 
 -- ============================================================================
@@ -4512,12 +4518,7 @@ function renderer.drawScores(game)
     love.graphics.setColor(score_value)
     love.graphics.printf(tostring(game.score), score_x, score_y, box_w, "center")
 
-    -- 2x COIN RUSH active indicator badge
-    if game and game.coin_rush_active then
-        love.graphics.setFont(font_help_label or love.graphics.getFont())
-        love.graphics.setColor(0.95, 0.85, 0.15, 0.95)
-        love.graphics.printf("★ 2x COIN RUSH ★", score_x, box_y - math.floor(14 * scale), box_w, "center")
-    end
+
 
     if game.mode == "timeattack" and game.timeLeft ~= nil then
         -- TIMER box (replaces BEST in Time Attack)
@@ -5454,22 +5455,103 @@ function renderer.drawOverlay(game)
         if game.state == Game.STATE_PAUSED then
             local sound = require("sound")
             local track = sound.getCurrentTrack()
-            if track then
+
+            -- Active Perks & Boosters List (icons only)
+            local active_perks = {}
+            if game.coin_rush_active and item_icons and item_icons["coin_rush"] then
+                table.insert(active_perks, item_icons["coin_rush"])
+            end
+            if _G.stats and _G.stats.purchased_items and (_G.stats.purchased_items["coin_multiplier"] or _G.stats.purchased_items["multiplier"]) and item_icons and item_icons["multiplier"] then
+                table.insert(active_perks, item_icons["multiplier"])
+            end
+            if game.start_booster_val and item_icons and item_icons[tostring(game.start_booster_val)] then
+                table.insert(active_perks, item_icons[tostring(game.start_booster_val)])
+            end
+            local has_shield = (_G.stats and (_G.stats.second_chance_count or 0) > 0) or game.hasShield
+            if not has_shield and game.grid then
+                game.grid:eachCell(function(gx, gy, tile)
+                    if tile and tile.shielded then has_shield = true end
+                end)
+            end
+            if has_shield and item_icons and item_icons["shield"] then
+                table.insert(active_perks, item_icons["shield"])
+            end
+            if _G.active_companion == "dog" and item_icons and item_icons["dog"] then
+                table.insert(active_perks, item_icons["dog"])
+            elseif _G.active_companion == "cat" and item_icons and item_icons["cat"] then
+                table.insert(active_perks, item_icons["cat"])
+            end
+
+            local has_track = track ~= nil
+            local has_perks = #active_perks > 0
+            local icon_sz = math.floor(36 * scale)
+            local icon_gap = math.floor(12 * scale)
+
+            local font_h = font_help_label:getHeight()
+            local track_h = has_track and (font_h + math.floor(6 * scale)) or 0
+            local coins_h = font_h + math.floor(10 * scale)
+            local perks_h = has_perks and (icon_sz + math.floor(12 * scale)) or 0
+
+            local total_content_h = th + track_h + coins_h + perks_h
+            local pause_y = by + math.floor((bs - total_content_h) / 2)
+
+            -- Draw "Paused" title
+            love.graphics.setFont(font_message)
+            love.graphics.setColor(light_text)
+            love.graphics.print(msg, bx + (bs - tw) / 2, pause_y)
+
+            -- Draw track details centered below
+            local next_y = pause_y + th + math.floor(4 * scale)
+            if has_track then
                 local track_lbl = track.title .. " - " .. track.artist
                 love.graphics.setFont(font_help_label)
                 local tw_track = font_help_label:getWidth(track_lbl)
-                
-                -- Draw "Paused" slightly higher to balance the box layout
-                love.graphics.setFont(font_message)
-                love.graphics.setColor(light_text)
-                love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2 - math.floor(12 * scale))
-                
-                -- Draw track details centered below
-                love.graphics.setFont(font_help_label)
                 love.graphics.setColor(0.65, 0.65, 0.65, 0.9)
-                love.graphics.print(track_lbl, bx + (bs - tw_track) / 2, by + (bs - th) / 2 + th - math.floor(6 * scale))
+                love.graphics.print(track_lbl, bx + (bs - tw_track) / 2, next_y)
+                next_y = next_y + font_h + math.floor(6 * scale)
+            end
+
+            -- Draw Coin count
+            local total_coins = (_G.stats and _G.stats.coins) or 0
+            local coin_str = tostring(total_coins)
+            love.graphics.setFont(font_help_label)
+            local c_w = font_help_label:getWidth(coin_str)
+            local c_icon_sz = math.floor(18 * scale)
+            local c_gap = math.floor(5 * scale)
+            local total_c_w = c_w + (coin_icon and (c_icon_sz + c_gap) or 0)
+            local coin_start_x = bx + math.floor((bs - total_c_w) / 2)
+            local coin_y = next_y
+
+            if coin_icon then
+                love.graphics.setColor(1.0, 0.82, 0.25, 0.95)
+                love.graphics.setShader(icon_shader)
+                local sw = c_icon_sz / coin_icon:getWidth()
+                local sh = c_icon_sz / coin_icon:getHeight()
+                love.graphics.draw(coin_icon, coin_start_x, coin_y + math.floor((font_h - c_icon_sz) / 2), 0, sw, sh)
+                love.graphics.setShader()
+                love.graphics.setColor(0.9, 0.9, 0.9, 0.95)
+                love.graphics.print(coin_str, coin_start_x + c_icon_sz + c_gap, coin_y)
             else
-                love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+                love.graphics.setColor(0.9, 0.9, 0.9, 0.95)
+                love.graphics.print(coin_str .. " Coins", coin_start_x, coin_y)
+            end
+            next_y = next_y + font_h + math.floor(12 * scale)
+
+            -- Active Perks: Static white icons with icon_shader, centered row
+            if has_perks then
+                local total_w = #active_perks * icon_sz + (#active_perks - 1) * icon_gap
+                local start_x = bx + math.floor((bs - total_w) / 2)
+                local row_y = next_y
+
+                love.graphics.setColor(1, 1, 1, 0.95)
+                love.graphics.setShader(icon_shader)
+                for idx, icon in ipairs(active_perks) do
+                    local ix = start_x + (idx - 1) * (icon_sz + icon_gap)
+                    local iw, ih = icon:getDimensions()
+                    local s = icon_sz / math.max(iw, ih)
+                    love.graphics.draw(icon, ix, row_y, 0, s, s)
+                end
+                love.graphics.setShader()
             end
         else
             love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)

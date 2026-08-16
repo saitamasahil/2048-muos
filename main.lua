@@ -927,6 +927,11 @@ function love.update(dt)
                             if _G.stats.total_spent_coins >= 5000 and _G.unlockAchievement then
                                 _G.unlockAchievement("ach_big_spender")
                             end
+                            if sel_item.id == "coin_rush" and game and not game.coin_rush_active then
+                                game.coin_rush_active = true
+                                _G.stats[stat_key] = math.max(0, (_G.stats[stat_key] or 1) - 1)
+                                if game.saveGameState then game:saveGameState() end
+                            end
                             save.saveStats(_G.stats)
                             renderer.showToast("Purchased! " .. sel_item.name .. " (" .. _G.stats[stat_key] .. " owned)")
                         else
