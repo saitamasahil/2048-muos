@@ -9541,6 +9541,16 @@ function renderer.drawAbout(skip_transition)
     local label_gap = math.floor(4 * scale)
 
     if love.system.getOS() ~= "Web" then
+        -- Left side: DPAD Scroll
+        local dpad_x = math.floor(20 * scale)
+        local dpad_size = math.floor(24 * scale)
+        drawKeyBadge("DPAD", dpad_x, footer_y + (badge_h - dpad_size) / 2, dpad_size, dpad_size)
+        dpad_x = dpad_x + dpad_size + math.floor(6 * scale)
+        love.graphics.setFont(font_help_label)
+        love.graphics.setColor(ui_text)
+        love.graphics.print("Scroll", dpad_x, footer_y + (badge_h - font_help_label:getHeight()) / 2)
+
+        -- Right side: Actions
         local right_x = w - math.floor(20 * scale)
         local actions = {
             {key = "B", label = "Back"},
