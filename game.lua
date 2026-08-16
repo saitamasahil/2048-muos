@@ -38,6 +38,7 @@ function Game.new(mode)
     local self = setmetatable({}, Game)
     self.mode = mode or "classic"
     save.saveLastMode(self.mode)
+    self.rng = love.math.newRandomGenerator(math.floor(love.timer.getTime() * 1000) + love.math.random(1, 100000))
     self.size = 4
     self.targetValue = 2048
     if self.mode == "huge" then
@@ -63,23 +64,9 @@ function Game.new(mode)
     local extra_undo, extra_bomb, extra_swap = 0, 0, 0
     if self.mode == "plus" and _G.stats then
         local pi = _G.stats.purchased_items or {}
-        extra_undo = pi["extra_undo"] or 0
-        extra_bomb = pi["extra_bomb"] or 0
-        extra_swap = pi["extra_swap"] or 0
-        -- Consumable single-use charges (bought from store, depleted on use)
-        local cu = _G.stats.powerup_undo_count or 0
-        local cb = _G.stats.powerup_bomb_count or 0
-        local cs = _G.stats.powerup_swap_count or 0
-        extra_undo = extra_undo + cu
-        extra_bomb = extra_bomb + cb
-        extra_swap = extra_swap + cs
-        -- Consume the charges
-        if cu > 0 or cb > 0 or cs > 0 then
-            _G.stats.powerup_undo_count = 0
-            _G.stats.powerup_bomb_count = 0
-            _G.stats.powerup_swap_count = 0
-            if save and save.saveStats then save.saveStats(_G.stats) end
-        end
+        extra_undo = (pi["extra_undo"] or 0) + (_G.stats.powerup_undo_count or 0)
+        extra_bomb = (pi["extra_bomb"] or 0) + (_G.stats.powerup_bomb_count or 0)
+        extra_swap = (pi["extra_swap"] or 0) + (_G.stats.powerup_swap_count or 0)
     end
     self.powerups = { undo = initial_powerups + extra_undo, bomb = initial_powerups + extra_bomb, swap = initial_powerups + extra_swap }
     self.milestonesReached = {}
@@ -115,6 +102,9 @@ function Game.new(mode)
     -- Try to load saved game state
     local savedState = save.loadState(self.mode)
     if savedState and savedState.gridState then
+        if savedState.rngState and self.rng then
+            self.rng:setState(savedState.rngState)
+        end
         self.score = savedState.score or 0
         self.max_score_for_coins = savedState.max_score_for_coins or self.score
         self.state = savedState.state or Game.STATE_PLAYING
@@ -249,6 +239,7 @@ function Game:saveGameState()
         won = self.won,
         canUndo = self.canUndo,
         gridState = self.grid:saveState(),
+        rngState = self.rng and self.rng:getState() or nil,
         undoHistory = self.undoHistory,
         powerups = self.powerups,
         milestonesReached = self.milestonesReached,
@@ -294,7 +285,7 @@ function Game:addStartTiles()
     local starting_tiles = 2
 
     if self.mode == "goose" then
-        local cell = self.grid:randomAvailableCell()
+        local cell = self.grid:randomAvailableCell(self.rng)
         if cell then
             local goose = Tile.new(cell.x, cell.y, "goose")
             goose.isNew = true
@@ -305,7 +296,7 @@ function Game:addStartTiles()
 
     if _G.cheat_start_1024_classic or _G.cheat_start_1024_plus then
         if self.grid:cellsAvailable() then
-            local cell = self.grid:randomAvailableCell()
+            local cell = self.grid:randomAvailableCell(self.rng)
             if cell then
                 local tile = Tile.new(cell.x, cell.y, 1024)
                 tile.isNew = true
@@ -334,7 +325,7 @@ function Game:addStartTiles()
 
     if booster_val > 0 and booster_key then
         if self.grid:cellsAvailable() then
-            local cell = self.grid:randomAvailableCell()
+            local cell = self.grid:randomAvailableCell(self.rng)
             if cell then
                 local tile = Tile.new(cell.x, cell.y, booster_val)
                 tile.isNew = true
@@ -355,9 +346,10 @@ end
 
 function Game:addRandomTile()
     if self.grid:cellsAvailable() then
-        local value = love.math.random() < 0.9 and 2 or 4
+        local rand_val = self.rng and self.rng:random() or love.math.random()
+        local value = rand_val < 0.9 and 2 or 4
 
-        local cell = self.grid:randomAvailableCell()
+        local cell = self.grid:randomAvailableCell(self.rng)
         if cell then
             local tile = Tile.new(cell.x, cell.y, value)
             tile.isNew = true
@@ -438,7 +430,9 @@ function Game:move(direction)
     -- Save undo state before the move, but only apply it if the board actually changes
     local pendingUndoState = self.grid:saveState()
     local pendingUndoScore = self.score
-    local pendingUndoRNG = love.math.getRandomState()
+    local pendingUndoRNG = self.rng and self.rng:getState() or love.math.getRandomState()
+    local pendingUndoWon = self.won
+    local pendingUndoGameState = self.state
 
     local traversalsX, traversalsY = self:buildTraversals(direction)
     local moved = false
@@ -681,7 +675,9 @@ function Game:move(direction)
         local pending = {
             gridState = pendingUndoState,
             score = pendingUndoScore,
-            rng = pendingUndoRNG
+            rng = pendingUndoRNG,
+            won = pendingUndoWon,
+            gameState = pendingUndoGameState
         }
         if _G.undo_mode == "unlimited" then
             table.insert(self.undoHistory, pending)
@@ -816,6 +812,9 @@ function Game:undo()
     if self.mode == "plus" then
         if self.powerups.undo <= 0 then return end
         self.powerups.undo = self.powerups.undo - 1
+        if _G.stats and (_G.stats.powerup_undo_count or 0) > 0 then
+            _G.stats.powerup_undo_count = _G.stats.powerup_undo_count - 1
+        end
         self.undo_used_this_run = (self.undo_used_this_run or 0) + 1
         if self.undo_used_this_run >= 5 and self.swap_used_this_run >= 5 and _G.unlockAchievement then
             _G.unlockAchievement("ach_tactician")
@@ -850,15 +849,24 @@ function Game:undo()
     self.score = state.score
 
     if state.rng then
-        love.math.setRandomState(state.rng)
+        if self.rng then
+            self.rng:setState(state.rng)
+        else
+            love.math.setRandomState(state.rng)
+        end
     end
 
-    -- Reset game state if we were lost/won
-    if self.state == Game.STATE_LOST then
-        self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
-    elseif self.state == Game.STATE_WON then
-        self.state = Game.STATE_PLAYING
-        self.won = false
+    if state.won ~= nil then self.won = state.won end
+    if state.gameState ~= nil then
+        self.state = state.gameState
+    else
+        -- Reset game state if we were lost/won
+        if self.state == Game.STATE_LOST then
+            self.state = self.won and Game.STATE_ENDLESS or Game.STATE_PLAYING
+        elseif self.state == Game.STATE_WON then
+            self.state = Game.STATE_PLAYING
+            self.won = false
+        end
     end
 
     -- Clear animation states from newly restored grid
@@ -920,6 +928,7 @@ function Game:continueGame()
 end
 
 function Game:restart()
+    self.rng = love.math.newRandomGenerator(math.floor(love.timer.getTime() * 1000) + love.math.random(1, 100000))
     self.grid:clear()
     self.score = 0
     self.max_score_for_coins = 0
@@ -930,7 +939,14 @@ function Game:restart()
     self.animationTimer = 0
     if self.mode == "plus" then
         local initial_powerups = _G.cheat_max_powerups and 99 or 1
-        self.powerups = { undo = initial_powerups, bomb = initial_powerups, swap = initial_powerups }
+        local extra_undo, extra_bomb, extra_swap = 0, 0, 0
+        if _G.stats then
+            local pi = _G.stats.purchased_items or {}
+            extra_undo = (pi["extra_undo"] or 0) + (_G.stats.powerup_undo_count or 0)
+            extra_bomb = (pi["extra_bomb"] or 0) + (_G.stats.powerup_bomb_count or 0)
+            extra_swap = (pi["extra_swap"] or 0) + (_G.stats.powerup_swap_count or 0)
+        end
+        self.powerups = { undo = initial_powerups + extra_undo, bomb = initial_powerups + extra_bomb, swap = initial_powerups + extra_swap }
         self.milestonesReached = {}
     end
     -- Reset Time Attack timer
@@ -1046,6 +1062,10 @@ function Game:confirmTarget()
             self.powerups.bomb = self.powerups.bomb - 1
             if _G.stats then
                 _G.stats.bombs_used = (_G.stats.bombs_used or 0) + 1
+                if (_G.stats.powerup_bomb_count or 0) > 0 then
+                    _G.stats.powerup_bomb_count = _G.stats.powerup_bomb_count - 1
+                end
+                if save and save.saveStats then save.saveStats(_G.stats) end
             end
 
             _G.achievements.bombs_used = (_G.achievements.bombs_used or 0) + 1
@@ -1122,6 +1142,10 @@ function Game:confirmTarget()
             end
             if _G.stats then
                 _G.stats.swaps_used = (_G.stats.swaps_used or 0) + 1
+                if (_G.stats.powerup_swap_count or 0) > 0 then
+                    _G.stats.powerup_swap_count = _G.stats.powerup_swap_count - 1
+                end
+                if save and save.saveStats then save.saveStats(_G.stats) end
             end
             self.swapTarget = nil
 
