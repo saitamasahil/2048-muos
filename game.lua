@@ -338,6 +338,9 @@ function Game:addStartTiles()
             if cell then
                 local tile = Tile.new(cell.x, cell.y, booster_val)
                 tile.isNew = true
+                tile.is_booster = true
+                tile.booster_val = booster_val
+                tile.booster_spawn_t = love.timer.getTime()
                 self.grid:insertTile(tile)
                 _G.stats[booster_key] = (_G.stats[booster_key] or 1) - 1
                 if save and save.saveStats then save.saveStats(_G.stats) end

@@ -4065,12 +4065,51 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local sx = cx - scaledW / 2
     local sy = cy - scaledH / 2
 
+    -- ── High-Tile Booster Visual FX: Theme-Aware Rays, Energy Bloom & Holographic Badge ──
+    local now = love.timer.getTime()
+    local is_booster_active = tile.is_booster and (now - (tile.booster_spawn_t or now) < 4.5)
+    local b_alpha = 0
+    local theme_gold, theme_board = renderer.getThemeHighlightColors()
+    local accent_col = help_key_color or theme_gold
+    local tile_col = getTileColor(tile.booster_val or tile.value)
+
+    if is_booster_active then
+        local b_age = now - (tile.booster_spawn_t or now)
+        b_alpha = math.max(0.0, math.min(1.0, (4.5 - b_age) / 1.0))
+        
+        -- 1. Dual-Tone Rotating Solar Energy Rays (10 Rays)
+        local ray_count = 10
+        local ray_rot = now * 2.0
+        local ray_rad = scaledW * 0.92
+        local pulse = 0.65 + 0.35 * math.sin(now * 8.0)
+        for r = 1, ray_count do
+            local a1 = ray_rot + (r - 1) * (math.pi * 2 / ray_count)
+            local a2 = a1 + 0.20
+            local x1 = cx + math.cos(a1) * ray_rad
+            local y1 = cy + math.sin(a1) * ray_rad
+            local x2 = cx + math.cos(a2) * ray_rad
+            local y2 = cy + math.sin(a2) * ray_rad
+
+            local r_col = (r % 2 == 0) and accent_col or tile_col
+            love.graphics.setColor(r_col[1], r_col[2], r_col[3], 0.35 * b_alpha * pulse)
+            love.graphics.polygon("fill", cx, cy, x1, y1, x2, y2)
+        end
+
+        -- 2. Multi-layer Pulsing Neon Box Halos
+        for layer = 4, 1, -1 do
+            local expand = (layer * 5.5 * scale) * (0.6 + 0.4 * math.sin(now * 7.0 + layer))
+            local layer_alpha = 0.45 * b_alpha * (0.30 / layer)
+            local h_col = (layer % 2 == 0) and accent_col or theme_gold
+            love.graphics.setColor(h_col[1], h_col[2], h_col[3], layer_alpha)
+            roundedRect("fill", sx - expand, sy - expand, scaledW + expand * 2, scaledH + expand * 2, (cr * ((tileScaleX + tileScaleY) / 2)) + expand * 0.5)
+        end
+    end
+
     -- Glow Pulse FX: Draw expanding soft neon bloom halo BEHIND tile (matching rounded rect shape)
     if tile.isMerged and _G.merge_fx == "glow" and popProgress < 1 then
         local p = popProgress
         local glow_alpha = (1.0 - p) * 0.65
         local tile_col = getTileColor(tile.value)
-        local theme_gold, theme_super = renderer.getThemeHighlightColors()
 
         -- Multi-layer soft neon box bloom (expanding outward)
         for layer = 3, 1, -1 do
@@ -4103,6 +4142,24 @@ function renderer.drawTile(tile, slideProgress, popProgress)
         end
     end
 
+    -- ── High-Tile Booster Visual FX: Electric Perimeter & Metallic Sheen ─────
+    if is_booster_active then
+        -- Pulsing Electric Theme Border
+        local stroke_pulse = 0.75 + 0.25 * math.sin(now * 10.0)
+        love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.95 * b_alpha * stroke_pulse)
+        love.graphics.setLineWidth(math.floor(2.8 * scale))
+        roundedRect("line", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
+        love.graphics.setLineWidth(math.floor(1.5 * scale))
+
+        -- Metallic Sheen Sweep with Theme-Tinted Tail
+        local sweep = ((now * 2.0) % 1.6) - 0.3
+        if sweep >= 0 and sweep <= 1.0 then
+            local sheen_x = sx + sweep * scaledW
+            love.graphics.setColor(1, 1, 1, 0.38 * b_alpha * math.sin(sweep * math.pi))
+            love.graphics.rectangle("fill", sheen_x, sy, math.floor(12 * scale), scaledH)
+        end
+    end
+
     -- Tile text
     local textColor = getTileTextColor(tile.value)
     love.graphics.setColor(textColor)
@@ -4121,6 +4178,8 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     local tw = font:getWidth(text)
     local th = font:getHeight()
     love.graphics.print(text, cx - tw / 2, cy - th / 2)
+
+
 end
 
 -- ============================================================================
@@ -4232,6 +4291,183 @@ function renderer.drawTiles(game)
             love.graphics.printf(n.text, cx - 100 * _G.scale, float_y, 200 * _G.scale, "center")
         end
     end
+
+    -- Spawn particle burst for any newly spawned booster tile (Dynamic Theme-Aware Particles!)
+    game.grid:eachCell(function(x, y, tile)
+        if tile and tile.is_booster and not tile.booster_sparkles_spawned then
+            tile.booster_sparkles_spawned = true
+            if not _G.booster_sparkles then _G.booster_sparkles = {} end
+            
+            local bx, by = layout.board_x, layout.board_y
+            local cs, cg = layout.cell_size, layout.cell_gap
+            local cx = bx + cg + (tile.x - 1) * (cs + cg) + cs / 2
+            local cy = by + cg + (tile.y - 1) * (cs + cg) + cs / 2
+            local scale = _G.scale
+
+            local theme_gold, theme_board = renderer.getThemeHighlightColors()
+            local accent_col = help_key_color or theme_gold
+            local tile_col = getTileColor(tile.booster_val or tile.value)
+
+            for i = 1, 36 do
+                local angle = love.math.random() * math.pi * 2
+                local speed = love.math.random(90, 280) * scale
+
+                -- Dynamically select color palette based on active theme
+                local p_col
+                local r_val = i % 4
+                if r_val == 0 then
+                    p_col = {accent_col[1], accent_col[2], accent_col[3]}
+                elseif r_val == 1 then
+                    p_col = {tile_col[1], tile_col[2], tile_col[3]}
+                elseif r_val == 2 then
+                    p_col = {theme_gold[1], theme_gold[2], theme_gold[3]}
+                else
+                    p_col = {1.0, 1.0, 1.0}
+                end
+
+                table.insert(_G.booster_sparkles, {
+                    x = cx,
+                    y = cy,
+                    vx = math.cos(angle) * speed,
+                    vy = math.sin(angle) * speed,
+                    size = love.math.random(3, 8) * scale,
+                    life = 1.5,
+                    max_life = 1.5,
+                    rot = love.math.random() * math.pi * 2,
+                    vrot = (love.math.random() - 0.5) * 10,
+                    color = p_col,
+                    ptype = (i % 3 == 0) and "ring" or "star"
+                })
+            end
+        end
+    end)
+
+    -- Update and render dynamic theme booster sparkle particles
+    if _G.booster_sparkles then
+        local dt = love.timer.getDelta()
+        local scale = _G.scale
+        local theme_gold, theme_board = renderer.getThemeHighlightColors()
+        local accent_col = help_key_color or theme_gold
+
+        for i = #_G.booster_sparkles, 1, -1 do
+            local p = _G.booster_sparkles[i]
+            p.life = p.life - dt
+            if p.life <= 0 then
+                table.remove(_G.booster_sparkles, i)
+            else
+                p.x = p.x + p.vx * dt
+                p.y = p.y + p.vy * dt
+                p.vy = p.vy + 70 * scale * dt
+                p.rot = p.rot + p.vrot * dt
+                local alpha = math.min(1.0, p.life / (p.max_life * 0.4))
+                
+                -- Render particle based on ptype
+                if p.ptype == "ring" then
+                    local ring_rad = p.size * (1.0 + (p.max_life - p.life) * 1.5)
+                    love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha * 0.65)
+                    love.graphics.setLineWidth(math.floor(1.2 * scale))
+                    love.graphics.circle("line", p.x, p.y, ring_rad)
+                else
+                    love.graphics.setColor(p.color[1], p.color[2], p.color[3], alpha)
+                    love.graphics.push()
+                    love.graphics.translate(p.x, p.y)
+                    love.graphics.rotate(p.rot)
+                    local sz = p.size
+                    love.graphics.polygon("fill", -sz, 0, 0, -sz * 0.3, sz, 0, 0, sz * 0.3)
+                    love.graphics.polygon("fill", 0, -sz, sz * 0.3, 0, 0, sz, -sz * 0.3, 0)
+                    love.graphics.pop()
+                end
+            end
+        end
+    end
+
+    -- ── Top-Pass: Draw Floating Hologram Glass Badges ON TOP of ALL tiles ────
+    game.grid:eachCell(function(x, y, tile)
+        if tile and tile.is_booster then
+            local now = love.timer.getTime()
+            local b_age = now - (tile.booster_spawn_t or now)
+            if b_age < 4.5 then
+                local b_alpha = math.max(0.0, math.min(1.0, (4.5 - b_age) / 1.0))
+                local theme_gold, theme_board = renderer.getThemeHighlightColors()
+                local accent_col = help_key_color or theme_gold
+
+                local bx_board, by_board = layout.board_x, layout.board_y
+                local cs, cg = layout.cell_size, layout.cell_gap
+                local scale = _G.scale
+
+                local tx = bx_board + cg + (tile.x - 1) * (cs + cg)
+                local ty_tile = by_board + cg + (tile.y - 1) * (cs + cg)
+                local cx = tx + cs / 2
+                local cy = ty_tile + cs / 2
+                local scaledW = cs
+                local scaledH = cs
+                local sx = cx - scaledW / 2
+                local sy = cy - scaledH / 2
+
+                local b_val = tile.booster_val or tile.value
+                local badge_txt = tostring(b_val) .. " BOOST!"
+                love.graphics.setFont(font_help_key)
+
+                local icon_sz = math.floor(11 * scale)
+                local icon_pad = math.floor(6 * scale)
+                local text_w = font_help_key:getWidth(badge_txt)
+                local text_h = font_help_key:getHeight()
+                local bw = text_w + icon_sz + icon_pad + math.floor(20 * scale)
+                local bh = text_h + math.floor(8 * scale)
+                local float_y = sy - bh - math.floor(8 * scale) + math.sin(now * 3.8) * math.floor(3.5 * scale)
+                local bx = cx - bw / 2
+
+                -- 1. Hologram Laser Light Beams connecting tile corners to floating badge
+                local beam_a = 0.28 * b_alpha * (0.65 + 0.35 * math.sin(now * 10.0))
+                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], beam_a)
+                love.graphics.polygon("fill", sx + math.floor(5 * scale), sy, sx + math.floor(11 * scale), float_y + bh, bx + math.floor(4 * scale), float_y + bh, sx + math.floor(1 * scale), sy)
+                love.graphics.polygon("fill", sx + scaledW - math.floor(5 * scale), sy, sx + scaledW - math.floor(1 * scale), sy, bx + bw - math.floor(4 * scale), float_y + bh, bx + bw - math.floor(11 * scale), float_y + bh)
+
+                -- 2. High-Contrast Premium Dark Glass Pill Container
+                love.graphics.setColor(0.05, 0.06, 0.10, 0.94 * b_alpha)
+                roundedRect("fill", bx, float_y, bw, bh, math.floor(7 * scale))
+
+                -- 3. Double-Layer Pulsing Neon Rim
+                local border_pulse = 0.8 + 0.2 * math.sin(now * 8.0)
+                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.45 * b_alpha * border_pulse)
+                love.graphics.setLineWidth(math.floor(3.0 * scale))
+                roundedRect("line", bx - 1, float_y - 1, bw + 2, bh + 2, math.floor(8 * scale))
+                love.graphics.setColor(1.0, 0.90, 0.30, 0.98 * b_alpha * border_pulse)
+                love.graphics.setLineWidth(math.floor(1.5 * scale))
+                roundedRect("line", bx, float_y, bw, bh, math.floor(7 * scale))
+
+                -- 4. Dynamic Spinning & Size-Breathing 4-Point Star Vector Icon
+                local star_x = bx + math.floor(11 * scale) + icon_sz / 2
+                local star_y = float_y + bh / 2
+                local star_breath = 1.0 + 0.22 * math.sin(now * 8.0)
+                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.98 * b_alpha)
+                love.graphics.push()
+                love.graphics.translate(star_x, star_y)
+                love.graphics.rotate(now * 3.5)
+                local sz = (icon_sz / 2) * star_breath
+                love.graphics.polygon("fill", -sz, 0, 0, -sz * 0.3, sz, 0, 0, sz * 0.3)
+                love.graphics.polygon("fill", 0, -sz, sz * 0.3, 0, 0, sz, -sz * 0.3, 0)
+                love.graphics.pop()
+
+                -- 5. Floating Pill Text with 4-Way Shadow & Volumetric Glow
+                local t_x = bx + math.floor(11 * scale) + icon_sz + icon_pad
+                local t_y = float_y + math.floor((bh - text_h) / 2) - math.floor(1 * scale)
+
+                love.graphics.setColor(0.0, 0.0, 0.0, 0.90 * b_alpha)
+                love.graphics.print(badge_txt, t_x - 1, t_y)
+                love.graphics.print(badge_txt, t_x + 1, t_y)
+                love.graphics.print(badge_txt, t_x, t_y - 1)
+                love.graphics.print(badge_txt, t_x, t_y + 1)
+
+                love.graphics.setColor(accent_col[1], accent_col[2], accent_col[3], 0.55 * b_alpha)
+                love.graphics.print(badge_txt, t_x - 0.5, t_y - 0.5)
+                love.graphics.print(badge_txt, t_x + 0.5, t_y + 0.5)
+
+                love.graphics.setColor(1.0, 0.96, 0.45, 0.98 * b_alpha)
+                love.graphics.print(badge_txt, t_x, t_y)
+            end
+        end
+    end)
 end
 
 -- ============================================================================
