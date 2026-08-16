@@ -492,7 +492,7 @@ function Game:move(direction)
                             self.milestonesReached[m_str] = true
 
                             local function grantRandomPowerup(g)
-                                local p = love.math.random(1, 3)
+                                local p = g.rng and g.rng:random(1, 3) or love.math.random(1, 3)
                                 if p == 1 then
                                     g.powerups.undo = g.powerups.undo + 1
                                     return "Undo"
