@@ -286,8 +286,38 @@ function sound.stopBgm()
         currentBgmSource:stop()
         currentBgmSource = nil
     end
+    currentBgmIdx = 0
+    bgmStartDelay = 0
     bgmStoppedBySystem = false
     bgmPausedByUser = false
+end
+
+function sound.enterJukebox()
+    sound.stopBgm()
+    _G.jukebox_prev_track = nil
+    _G.jukebox_eq_states = {}
+    _G.jukebox_energies = {}
+    _G.jukebox_peaks = {}
+    _G.jukebox_disc_angle = 0
+    _G.jukebox_viz_level = 0
+    _G.jukebox_viz_stop_time = love.timer.getTime() - 10
+    _G.jukebox_card_change_time = 0
+    _G.jukebox_selection = 1
+    _G.jukebox_scroll_offset = 0
+    _G.jukebox_anim_sel_idx = 1
+    _G.jukebox_target_scroll = 0
+    _G.jukebox_just_opened = true
+end
+
+function sound.exitJukebox()
+    sound.stopBgm()
+    _G.jukebox_prev_track = nil
+    _G.jukebox_eq_states = {}
+    _G.jukebox_energies = {}
+    _G.jukebox_peaks = {}
+    _G.jukebox_disc_angle = 0
+    _G.jukebox_viz_level = 0
+    _G.jukebox_card_change_time = 0
 end
 
 function sound.startFreshGameBgm()
@@ -367,15 +397,13 @@ function sound.update(dt)
     local in_jukebox = _G.appState == "JUKEBOX"
     local allowed    = sound.isBgmEnabled() and (in_game or in_jukebox)
 
-    -- ── Leaving an allowed state (e.g., exiting Jukebox or Game) ────────────
+    -- ── Leaving an allowed state (e.g., in menu, settings, store) ───────────
     if not allowed then
         if currentBgmSource then
-            if currentBgmSource:isPlaying() then
-                -- Auto-pause BGM when exiting Jukebox/Game, marking it paused by user
-                -- so it remains paused when re-entering until explicitly resumed.
-                currentBgmSource:pause()
-                bgmPausedByUser = true
-            end
+            currentBgmSource:stop()
+            currentBgmSource = nil
+            currentBgmIdx = 0
+            bgmPausedByUser = false
         end
         return
     end
@@ -415,9 +443,12 @@ function sound.update(dt)
     if currentBgmSource then
         if not currentBgmSource:isPlaying() and bgmStartDelay == 0 and not bgmPausedByUser and not bgmStoppedBySystem then
             sound.playNextBgm()
+            if in_jukebox then
+                _G.jukebox_selection = currentBgmIdx
+            end
         end
     elseif in_game and bgmStartDelay == 0 and not bgmPausedByUser and not bgmStoppedBySystem then
-        sound.playNextBgm()
+        sound.startFreshGameBgm()
     end
 end
 

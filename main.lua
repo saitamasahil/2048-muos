@@ -789,14 +789,9 @@ function love.update(dt)
                     sound.playMenuSelect()
                     queueTransitionAction(event, 0.08, function()
                         _G.appState = "JUKEBOX"
-                        _G.jukebox_selection = 1
-                        _G.jukebox_scroll_offset = 0
-                        _G.jukebox_anim_sel_idx = 1
-                        _G.jukebox_just_opened = true
-                        -- Reset visualizer state so no stale glow on entry
-                        _G.jukebox_viz_level = 0
-                        _G.jukebox_viz_stop_time = love.timer.getTime() - 10  -- already "stopped long ago"
-                        _G.jukebox_card_change_time = 0  -- no slide animation on open
+                        if sound.enterJukebox then
+                            sound.enterJukebox()
+                        end
                     end)
                 end
             elseif event == input.events.R1 then
@@ -1022,11 +1017,11 @@ function love.update(dt)
             elseif event == input.events.CONFIRM then
                 sound.playMenuSelect()
                 local curr_idx = sound.getCurrentBgmIndex and sound.getCurrentBgmIndex() or 0
-                if curr_idx == _G.jukebox_selection then
-                    -- Same track: toggle pause/play
+                if curr_idx == _G.jukebox_selection and curr_idx > 0 then
+                    -- Same active track: toggle pause/play
                     sound.toggleBgmPause()
                 else
-                    -- Different track: start it
+                    -- Different track or fresh start: play selected track
                     sound.playBgmIndex(_G.jukebox_selection)
                 end
             elseif event == input.events.Y then
@@ -1043,6 +1038,9 @@ function love.update(dt)
                 sound.playMenuSelect()
                 queueTransitionAction(event, 0.08, function()
                     _G.appState = "MENU"
+                    if sound.exitJukebox then
+                        sound.exitJukebox()
+                    end
                 end)
             end
             return

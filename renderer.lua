@@ -10951,7 +10951,7 @@ function renderer.drawJukebox(selection, skip_transition)
 
     for track_idx = first_idx, last_idx do
         local ry = playlist_y + (track_idx - 1 - scroll_offset) * row_h
-        local is_curr = (track_idx == curr_idx)
+        local is_curr = (track_idx == curr_idx and curr_idx > 0)
 
         if is_curr and not is_actively_playing then
             -- PAUSED track row: Distinctive theme accent tint + outline stroke
@@ -10983,7 +10983,7 @@ function renderer.drawJukebox(selection, skip_transition)
         if track then
             local ry = playlist_y + (track_idx - 1 - scroll_offset) * row_h
             local is_sel = (track_idx == selection)
-            local is_curr = (track_idx == curr_idx)
+            local is_curr = (track_idx == curr_idx and curr_idx > 0)
 
             local label_fh = font_help_label:getHeight()
             local text_y   = ry + math.floor((row_inner_h - label_fh) / 2)
@@ -11212,8 +11212,8 @@ function renderer.drawJukebox(selection, skip_transition)
     love.graphics.print("Select / Seek", dpad_x, badge_y + (badge_h - font_help_label:getHeight()) / 2)
 
     local right_x = w - math.floor(20 * scale)
-    local curr_sel_is_playing = (curr_idx == selection) and is_actively_playing
-    local a_label = (curr_idx == selection and is_playing) and (is_actively_playing and "Pause" or "Resume") or "Play"
+    local curr_sel_is_playing = (curr_idx == selection and curr_idx > 0) and is_actively_playing
+    local a_label = (curr_idx == selection and curr_idx > 0 and is_playing) and (is_actively_playing and "Pause" or "Resume") or "Play"
     local actions = {
         {key = "B", label = "Back"},
         {key = "Y", label = "Theme"},
