@@ -5476,11 +5476,6 @@ function renderer.drawOverlay(game)
             if has_shield and item_icons and item_icons["shield"] then
                 table.insert(active_perks, item_icons["shield"])
             end
-            if _G.active_companion == "dog" and item_icons and item_icons["dog"] then
-                table.insert(active_perks, item_icons["dog"])
-            elseif _G.active_companion == "cat" and item_icons and item_icons["cat"] then
-                table.insert(active_perks, item_icons["cat"])
-            end
 
             local has_track = track ~= nil
             local has_perks = #active_perks > 0
