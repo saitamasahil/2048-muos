@@ -3983,6 +3983,7 @@ end
 -- ============================================================================
 function renderer.drawTile(tile, slideProgress, popProgress)
     popProgress = popProgress or slideProgress
+    local scale = _G.scale or 1
     local bx, by = layout.board_x, layout.board_y
     local cs = layout.cell_size
     local cg = layout.cell_gap
@@ -4015,39 +4016,37 @@ function renderer.drawTile(tile, slideProgress, popProgress)
         tileScaleY = popProgress
     elseif tile.isMerged and popProgress < 1 then
         if _G.merge_fx == "bounce" then
+            -- ═══ BOUNCE POP FX ═══
+            -- Clean 3-phase elastic squash-and-stretch. No jitter, no wobble.
+            -- The asymmetric X/Y deformation is what makes this visually distinct.
             local p = popProgress
-            -- Dynamic Squash & Stretch Elastic Jelly Physics:
-            -- Phase 1 (0..0.30): Explosive Vertical Stretch (X=1.12, Y=1.52)
-            -- Phase 2 (0.30..0.65): Impact Horizontal Squash (X=1.40, Y=0.78)
-            -- Phase 3 (0.65..0.85): Rebound Stretch (X=0.92, Y=1.15)
-            -- Phase 4 (0.85..1.00): Smooth Settle (X=1.00, Y=1.00)
             if p < 0.30 then
+                -- Phase 1: STRETCH UP — tile squeezes narrow and tall (like pulling taffy)
                 local t = p / 0.30
-                local s = math.sin(t * math.pi * 0.5)
-                tileScaleX = 1.0 + 0.12 * s
-                tileScaleY = 1.0 + 0.52 * s
-            elseif p < 0.65 then
-                local t = (p - 0.30) / 0.35
-                local s = math.sin(t * math.pi * 0.5)
-                tileScaleX = 1.12 + 0.28 * s
-                tileScaleY = 1.52 - 0.74 * s
-            elseif p < 0.85 then
-                local t = (p - 0.65) / 0.20
-                local s = math.sin(t * math.pi * 0.5)
-                tileScaleX = 1.40 - 0.48 * s
-                tileScaleY = 0.78 + 0.37 * s
+                local ease = math.sin(t * math.pi * 0.5)  -- smooth ease-out
+                tileScaleX = 1.0 - 0.30 * ease   -- narrow to 0.70
+                tileScaleY = 1.0 + 0.40 * ease   -- tall to 1.40
+            elseif p < 0.60 then
+                -- Phase 2: SQUASH DOWN — tile slams flat and wide (like a pancake landing)
+                local t = (p - 0.30) / 0.30
+                local ease = math.sin(t * math.pi * 0.5)
+                tileScaleX = 0.70 + 0.55 * ease   -- widen to 1.25
+                tileScaleY = 1.40 - 0.55 * ease   -- flatten to 0.85
             else
-                local t = (p - 0.88) / 0.12
-                local s = math.sin(t * math.pi * 0.5)
-                tileScaleX = 0.92 + 0.08 * s
-                tileScaleY = 1.15 - 0.15 * s
+                -- Phase 3: SETTLE — smooth glide back to 1.0 (no oscillation)
+                local t = (p - 0.60) / 0.40
+                local ease = t * t * (3 - 2 * t)  -- smoothstep
+                tileScaleX = 1.25 - 0.25 * ease   -- back to 1.0
+                tileScaleY = 0.85 + 0.15 * ease   -- back to 1.0
             end
         elseif _G.merge_fx == "glow" then
+            -- ═══ GLOW PULSE FX ═══
+            -- UNIFORM scale only — NO squash, NO stretch, NO wobble.
+            -- Just a gentle smooth pulse. All the drama comes from the light effects.
             local p = popProgress
-            -- Smooth radiant pulse curve: smooth expand to 1.28x with ease-out finish
-            local s = math.sin(p * math.pi)
-            tileScaleX = 1.0 + 0.28 * s
-            tileScaleY = 1.0 + 0.28 * s
+            local ease = math.sin(p * math.pi)  -- single smooth arc: 0→1→0
+            tileScaleX = 1.0 + 0.18 * ease
+            tileScaleY = 1.0 + 0.18 * ease
         else
             if popProgress < 0.5 then
                 tileScaleX = 1 + 0.25 * (popProgress / 0.5)
@@ -4106,18 +4105,61 @@ function renderer.drawTile(tile, slideProgress, popProgress)
         end
     end
 
-    -- Glow Pulse FX: Draw expanding soft neon bloom halo BEHIND tile (matching rounded rect shape)
+    -- ═══ GLOW PULSE FX: Energy corona and orbiting sparks ═══
     if tile.isMerged and _G.merge_fx == "glow" and popProgress < 1 then
         local p = popProgress
-        local glow_alpha = (1.0 - p) * 0.65
-        local tile_col = getTileColor(tile.value)
+        local tile_col_g = getTileColor(tile.value)
 
-        -- Multi-layer soft neon box bloom (expanding outward)
-        for layer = 3, 1, -1 do
-            local expand = (layer * 4.5 * scale) * (0.5 + p * 0.8)
-            local layer_alpha = glow_alpha * (0.22 / layer)
-            love.graphics.setColor(tile_col[1], tile_col[2], tile_col[3], layer_alpha)
-            roundedRect("fill", sx - expand, sy - expand, scaledW + expand * 2, scaledH + expand * 2, (cr * ((tileScaleX + tileScaleY) / 2)) + expand * 0.5)
+        -- 1. OUTER CORONA BLOOM — multi-layer expanding neon halo
+        if p > 0.08 then
+            local bloom_p = math.min(1, (p - 0.08) / 0.55)
+            local bloom_alpha_base = (1 - bloom_p) * 0.8
+            for layer = 4, 1, -1 do
+                local expand = (layer * 5.5 * scale) * (0.3 + bloom_p * 1.2)
+                local layer_alpha = bloom_alpha_base * (0.18 / layer)
+                love.graphics.setColor(tile_col_g[1], tile_col_g[2], tile_col_g[3], layer_alpha)
+                roundedRect("fill", sx - expand, sy - expand, scaledW + expand * 2, scaledH + expand * 2, (cr * ((tileScaleX + tileScaleY) / 2)) + expand * 0.5)
+            end
+        end
+
+        -- 2. PULSING AURA RING — neon energy ring that expands and fades
+        if p > 0.05 and p < 0.75 then
+            local ring_p = (p - 0.05) / 0.70
+            local ring_radius = cs * 0.25 + cs * 0.65 * ring_p
+            local ring_alpha = math.sin(ring_p * math.pi) * 0.65
+            local ring_width = math.max(1.5, math.floor((4.0 - ring_p * 3.0) * scale))
+            -- Bright neon border ring
+            love.graphics.setColor(tile_col_g[1] * 0.5 + 0.5, tile_col_g[2] * 0.5 + 0.5, tile_col_g[3] * 0.5 + 0.5, ring_alpha)
+            love.graphics.setLineWidth(ring_width)
+            love.graphics.circle("line", cx, cy, ring_radius)
+            -- Inner brighter ring
+            love.graphics.setColor(1, 1, 1, ring_alpha * 0.4)
+            love.graphics.setLineWidth(math.max(1, ring_width * 0.4))
+            love.graphics.circle("line", cx, cy, ring_radius * 0.92)
+        end
+
+        -- 3. ORBITING ENERGY SPARKS — 4 bright sparks spiral around the tile
+        if p > 0.05 and p < 0.80 then
+            local spark_p = (p - 0.05) / 0.75
+            local spark_alpha = (1 - spark_p) * 0.95
+            local orbit_radius = cs * 0.35 + cs * 0.35 * spark_p
+            local spark_count = 4
+            for i = 1, spark_count do
+                local base_angle = (i - 1) * (math.pi * 2 / spark_count)
+                local spin_speed = 4.5 + i * 0.5  -- each spark spins at slightly different speed
+                local angle = base_angle + spark_p * spin_speed
+                local spx = cx + math.cos(angle) * orbit_radius
+                local spy = cy + math.sin(angle) * orbit_radius
+                local spark_size = math.max(1.5, (3.5 - spark_p * 2.5) * scale)
+
+                -- Spark glow (soft halo)
+                love.graphics.setColor(tile_col_g[1], tile_col_g[2], tile_col_g[3], spark_alpha * 0.35)
+                love.graphics.circle("fill", spx, spy, spark_size * 2.5)
+
+                -- Bright spark core
+                love.graphics.setColor(1, 1, 1, spark_alpha * 0.9)
+                love.graphics.circle("fill", spx, spy, spark_size)
+            end
         end
     end
 
@@ -4133,13 +4175,40 @@ function renderer.drawTile(tile, slideProgress, popProgress)
     love.graphics.setColor(color)
     roundedRect("fill", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
 
-    -- Glow Pulse FX: Surface radiant energy flash on peak pulse
+    -- ═══ GLOW PULSE FX: Chromatic surface energy ═══
+    -- Multi-phase surface flash with neon edge glow and chromatic highlight sweep
     if tile.isMerged and _G.merge_fx == "glow" and popProgress < 1 then
         local p = popProgress
-        if p < 0.6 then
-            local flash_a = math.sin((p / 0.6) * math.pi) * 0.35
+        local glow_col = getTileColor(tile.value)
+
+        -- Phase 2: Explosive bright flash (intense white/color wash)
+        if p > 0.10 and p < 0.50 then
+            local flash_p = (p - 0.10) / 0.40
+            local flash_a = math.sin(flash_p * math.pi) * 0.55
             love.graphics.setColor(1, 1, 1, flash_a)
             roundedRect("fill", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
+        end
+
+        -- Phase 3: Neon edge glow (pulsing bright border)
+        if p > 0.08 and p < 0.70 then
+            local edge_p = (p - 0.08) / 0.62
+            local edge_a = math.sin(edge_p * math.pi) * 0.75
+            love.graphics.setColor(glow_col[1] * 0.3 + 0.7, glow_col[2] * 0.3 + 0.7, glow_col[3] * 0.3 + 0.7, edge_a)
+            love.graphics.setLineWidth(math.max(2, math.floor(3.0 * (_G.scale or 1))))
+            roundedRect("line", sx, sy, scaledW, scaledH, cr * ((tileScaleX + tileScaleY) / 2))
+        end
+
+        -- Phase 4: Chromatic diagonal sweep (light streak crossing the tile)
+        if p > 0.15 and p < 0.65 then
+            local sweep_p = (p - 0.15) / 0.50
+            local sweep_a = math.sin(sweep_p * math.pi) * 0.35
+            local sweep_x = sx + sweep_p * scaledW * 1.4 - scaledW * 0.2
+            love.graphics.setColor(1, 1, 1, sweep_a)
+            love.graphics.push()
+            love.graphics.translate(sweep_x, sy)
+            local sw = math.floor(10 * (_G.scale or 1))
+            love.graphics.polygon("fill", 0, 0, sw, 0, sw * 0.5, scaledH, -sw * 0.5, scaledH)
+            love.graphics.pop()
         end
     end
 
@@ -4222,7 +4291,16 @@ function renderer.drawTiles(game)
         slideProgress = p
         gooseProgress = p
         spawnProgress = p
-        mergePopProgress = p
+        -- When a merge FX is active, use a slower ease-out curve so the
+        -- animation phases are readable instead of trembling blur
+        if _G.merge_fx == "bounce" or _G.merge_fx == "glow" then
+            -- Square root curve: spends more time in early phases (the visually
+            -- dramatic part) and less time settling. At 60fps with 0.12s duration,
+            -- this gives ~5 frames in the first 30% of progress instead of ~2.
+            mergePopProgress = math.sqrt(p)
+        else
+            mergePopProgress = p
+        end
     end
 
     game.grid:eachCell(function(x, y, tile)
