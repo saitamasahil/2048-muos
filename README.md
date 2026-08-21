@@ -10,11 +10,11 @@ This project is inspired by and references the popular open-source [2048 Android
 
 ## Features
 
-- **Game Modes**: Classic, Plus Mode with Bomb, Swap, and Undo powerups, and 4 Arcade Modes - Time Attack, 5x5 Huge, No Mercy, Goose.
-- **Store & Customization**: Integrated Store and 41 custom themes & items.
-- **Achievements & Visuals**: 34 unlockable achievements, embedded lo-fi BGM playlist, procedural SFX, and CRT shader.
-- **Stats & Settings**: Comprehensive player statistics tracking, 100-move undo stack, and customizable gameplay speed and limits.
-- **Quality of Life**: Auto-save & resume after every move, interactive pause menu, instant theme switching.
+- **Game Modes**: Classic, Plus Mode with Bomb, Swap, and Undo powerups, and 4 Arcade Modes — Time Attack, 5x5 Huge, No Mercy, and Goose.
+- **Store & Customization**: In-game Store with Coins currency, interactive Cat & Dog pet companions, board skins, and unlockable themes.
+- **Audio & Visuals**: Dedicated Jukebox with lo-fi soundtrack, procedural SFX, and retro CRT shader.
+- **Achievements & Stats**: 34 unlockable achievements with custom pixel-art icons, comprehensive stats tracking, and 100-move undo stack.
+- **Quality of Life**: Auto-save & resume after every move, interactive pause menu with active perks HUD, and instant theme switching.
 
 *Note: Perhaps a well-known secret sequence of buttons might reveal something special...?*
 

@@ -1,14 +1,35 @@
 # Changelog
 
 ## [6.0.0]
-- Added In-Game Store: Spend Coins on Powerup Charges, High-Tile Boosters (128/256/512), Second Chance Shield, 2x Coin Multiplier, Merge FX, and Themes
-- Added 5 New Themes: Cosmic, Cherry, Gold Luxe, Cyber Neon Grid, and Synthwave 80s
-- Added PNG icon support for Store items, Achievements, and Notification Toasts
-- Added more Lo-Fi bgm
+
+### Added
+- In-game store and coins currency system to spend on powerups, boosters, cosmetics, and perks
+- Second Chance Shield consumable to protect against game over by clearing a row or column
+- 2x Coin Multiplier store perk to double all coins earned during gameplay
+- Coin Rush Ticket consumable to trigger active coin frenzies and double achievement payouts
+- Powerup restocks in store for Undo, Bomb, and Swap charges
+- High-tile starting boosters to start fresh games with 128, 256, or 512 pre-spawned tiles
+- Animated pixel-art Cat and Dog companions that react to gameplay
+- 6 new themes: Cosmic, Cherry, Gold Luxe, Cyber Neon Grid, Synthwave 80s, and Pastel
+- 5 decorative board skins: Wood, Bamboo, Glassmorphism, Marble, and Matrix
+- Purrfect Run and Best Friend achievements with custom pixel-art icons
+- Jukebox to listen to background music tracks with track seeking and animated equalizer
+- Expanded soundtrack with more Lo-Fi background music tracks
+- Pause menu perks HUD displaying active status of Shields, Multipliers, Coin Rush, and Boosters
+- Smooth title glide and animated subtitle entrance when continuing into Endless Mode
+
+### Changed
+- Updated CRT shader with improved scanlines, phosphor mask, and curvature
+- Tutorial page dots now match theme color and contrast
+- Hidden DPAD movement hints on game over and victory screens
+- Enhanced text contrast for locked and unlocked achievements across themes
+
+### Fixed
+- Fixed crash when returning to menu from a continued game
 
 ## [5.0.3]
-- Redesigned Forest theme to a cleaner, minimalist aesthetic with elegant falling leaves and subtle ambient mist
-- Updated splash screen exit animation with a beautiful radiant ripple effect
+- Forest Theme: Redesigned with a cleaner aesthetic, falling leaves, and ambient mist.
+- Splash Screen: Updated exit animation with a radiant ripple effect.
 
 ## [5.0.2]
 - Reordered achievements list by category
