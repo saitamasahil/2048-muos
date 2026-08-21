@@ -20,7 +20,7 @@ This project is inspired by and references the popular open-source [2048 Android
 
 ## Installation on muOS
 
-1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048plus/releases) page.
+1. Download the latest `.muxapp` file from the [Releases](https://github.com/saitamasahil/2048plus/releases) page or build your own following the [Building from Source](#building-from-source) instructions.
 2. Move the downloaded file to the `/mnt/mmc/MUOS/ARCHIVE` folder on your SD card.
 3. Open Archive Manager on your device and select the file to install.
 4. After installation, you'll find an entry called "2048 Plus" in the Applications section.
@@ -33,7 +33,7 @@ This project is inspired by and references the popular open-source [2048 Android
 3. Select Install. The game will automatically download and install into your Ports menu.
 
 ### Method 2: Offline Autoinstall
-1. Download the game's `.zip` release package on your PC from [PortMaster](https://portmaster.games/detail.html?name=2048plus).
+1. Download the game's `.zip` release package on your PC from [PortMaster](https://portmaster.games/detail.html?name=2048plus) or build your own following the [Building from Source](#building-from-source) instructions.
 2. Place the downloaded `.zip` file directly into the `autoinstall` folder on your SD card for your OS:
    - **muOS:** `/mnt/mmc/MUOS/PortMaster/autoinstall/`
    - **ArkOS:** `/roms/tools/PortMaster/autoinstall/`
@@ -111,9 +111,7 @@ This project is inspired by and references the popular open-source [2048 Android
 
 ## Building from Source
 
-To build the package yourself, you should be on a Linux or macOS environment with `bash` and `zip` installed.
-
-*Note: Running `build.sh` will only generate the **muOS package (`.muxapp`)**. PortMaster packages are managed and distributed via the official PortMaster repository.*
+To build the packages yourself, make sure you are in a Linux or macOS environment with `bash` and `zip` installed.
 
 1. Clone this repository:
    ```bash
@@ -121,7 +119,7 @@ To build the package yourself, you should be on a Linux or macOS environment wit
    cd 2048plus
    ```
 
-2. Make sure the build script is executable:
+2. Make the build script executable:
    ```bash
    chmod +x build.sh
    ```
@@ -131,7 +129,12 @@ To build the package yourself, you should be on a Linux or macOS environment wit
    ./build.sh
    ```
 
-4. The script will bundle the Lua source, the embedded LÖVE runtime, and all assets into a new `.muxapp` file located in the `build/` directory.
+4. Select your target from the interactive menu (or press **Enter** to build both):
+   - **`1` (muOS)**: Generates the muOS package in `build/`
+   - **`2` (PortMaster)**: Generates the PortMaster package (`2048plus.zip`) in `build/`
+   - **`3` (Both / Default)**: Generates both packages simultaneously
+
+*Note: You can also build non-interactively via CLI arguments: `./build.sh muos`, `./build.sh portmaster`, or `./build.sh both`.*
 
 ## Credits & Acknowledgements
 
