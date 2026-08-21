@@ -84,11 +84,12 @@ build_portmaster() {
     TMP_STAGE="/tmp/pm_stage_$$"
     mkdir -p "$TMP_STAGE/gamedata"
 
-    # Stage code, sprites, icons, UI, font, SFX (exclude loose music & repo meta)
+    # Stage code, sprites, icons, UI, font, SFX (exclude loose music, docs & repo meta)
     rsync -av \
       --exclude="music" \
       --exclude=".git*" \
       --exclude="*.sh" \
+      --exclude="*.md" \
       --exclude="build*" \
       --exclude="bin" \
       --exclude="demo.webp" \
