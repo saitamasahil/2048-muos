@@ -59,6 +59,9 @@ local selection_quad = nil
 -- Win animation state
 local win_timer = 0
 
+-- Endless Mode header animation state (0 = normal header, 1 = endless header)
+local endless_anim_progress = 0
+
 -- Text size flash animation state (triggered when text size is toggled)
 local text_size_flash_timer = 0
 local TEXT_SIZE_FLASH_DURATION = 0.4
@@ -4788,26 +4791,47 @@ function renderer.drawHeader(game)
         end
     end
 
-    if game and game.won then
-        local eh = font_header_plus:getHeight()
-        local total_h = title_h + eh - math.floor(2 * scale)
-        
-        local title_y = math.floor((layout.board_y - total_h) / 2)
-        local y_2048 = title_y
-        local y_plus = y_2048 + th - math.floor(11 * scale)
+    -- Normal gameplay position (without Endless Mode subtitle)
+    local normal_title_y = math.floor((layout.board_y - title_h) / 2)
+    local normal_y_2048 = normal_title_y
 
-        -- Draw "2048"
-        love.graphics.setFont(font_header_2048)
-        love.graphics.setColor(ui_text)
-        love.graphics.print("2048", bx, y_2048)
+    -- Endless Mode final position (shifted up to make room for Endless Mode subtitle)
+    local eh = font_header_plus:getHeight()
+    local total_h = title_h + eh - math.floor(2 * scale)
+    local endless_title_y = math.floor((layout.board_y - total_h) / 2)
+    local endless_y_2048 = endless_title_y
 
-        -- Draw "PLUS" (or morph theme name)
-        drawSubTitle(bx + tw, y_plus)
+    -- Only active when player has continued past the win screen into endless play
+    local is_endless = (game and game.won and game.state ~= Game.STATE_WON)
+    local dt = love.timer.getDelta()
 
-        -- Draw "Endless Mode" subtitle below "PLUS" with smaller font, shifted right and vertically closer
+    if is_endless then
+        if endless_anim_progress < 1.0 then
+            endless_anim_progress = math.min(1.0, endless_anim_progress + dt / 0.45)
+        end
+    else
+        endless_anim_progress = 0.0
+    end
+
+    local p = endless_anim_progress
+
+    -- Smooth cubic ease-out for 2048 PLUS gliding upward
+    local slide_ease = 1 - math.pow(1 - p, 3)
+    local y_2048 = normal_y_2048 + (endless_y_2048 - normal_y_2048) * slide_ease
+    local y_plus = y_2048 + th - math.floor(11 * scale)
+
+    -- Draw "2048"
+    love.graphics.setFont(font_header_2048)
+    love.graphics.setColor(ui_text)
+    love.graphics.print("2048", bx, y_2048)
+
+    -- Draw "PLUS" (or morph theme name)
+    drawSubTitle(bx + tw, y_plus)
+
+    -- Draw "Endless Mode" subtitle with fade & subtle slide animation
+    if p > 0 then
         local text = "Endless Mode"
         love.graphics.setFont(font_header_plus)
-        love.graphics.setColor(ui_text)
         
         local box_w = math.floor((_G.text_size == "large" and 115 or 105) * scale)
         local box_gap = math.floor(8 * scale)
@@ -4822,21 +4846,21 @@ function renderer.drawHeader(game)
         end
         
         local x_endless = bx + tw - etw * text_s - math.floor(2 * scale)
-        local y_endless = y_plus + ph - math.floor(2 * scale)
+        local target_y_endless = y_plus + ph - math.floor(2 * scale)
+
+        -- Smooth entrance: fade-in and subtle slide upward into final resting position
+        local p_text = math.min(1.0, p / 0.85)
+        local text_ease = 1 - math.pow(1 - p_text, 2)
+        local text_offset_y = math.floor(4 * scale) * (1 - text_ease)
+        local y_endless = target_y_endless + text_offset_y
+
+        local r = ui_text[1] or 1
+        local g = ui_text[2] or 1
+        local b = ui_text[3] or 1
+        local a = (ui_text[4] or 1) * text_ease
+
+        love.graphics.setColor(r, g, b, a)
         love.graphics.print(text, x_endless, y_endless, 0, text_s, text_s)
-    else
-        -- Normal gameplay: center the stacked title block vertically in the header area
-        local title_y = math.floor((layout.board_y - title_h) / 2)
-        local y_2048 = title_y
-        local y_plus = y_2048 + th - math.floor(11 * scale)
-
-        -- Draw "2048"
-        love.graphics.setFont(font_header_2048)
-        love.graphics.setColor(ui_text)
-        love.graphics.print("2048", bx, y_2048)
-
-        -- Draw "PLUS" (or morph theme name)
-        drawSubTitle(bx + tw, y_plus)
     end
 end
 
