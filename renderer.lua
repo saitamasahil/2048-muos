@@ -3397,49 +3397,46 @@ function renderer.init()
     for _, info in ipairs(dog_breeds_list) do
         local id = info.id
         local frames = {
-            idle_down = {},
-            idle_left = {},
-            walk      = {},
-            run       = {},
-            sniff_walk= {},
-            happy     = {},
-            sit       = {},
-            sniff     = {},
+            jump       = {},
+            idle1      = {},
+            idle2      = {},
+            sit        = {},
+            walk       = {},
+            run        = {},
+            sniff      = {},
+            sniff_walk = {},
         }
-        for i = 1, 5 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_idle_down_" .. i .. ".png")
-            if ok then table.insert(frames.idle_down, img) end
-        end
-        for i = 1, 5 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_idle_left_" .. i .. ".png")
-            if ok then table.insert(frames.idle_left, img) end
-        end
-        frames.idle_right = frames.idle_down
-        frames.idle_up    = frames.idle_left
-
-        for i = 1, 5 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_walk_down_" .. i .. ".png")
-            if ok then table.insert(frames.walk, img) end
-        end
-        for i = 1, 8 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_walk_side_" .. i .. ".png")
-            if ok then table.insert(frames.run, img) end
-        end
-        for i = 1, 8 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_walk_up_" .. i .. ".png")
-            if ok then table.insert(frames.sniff_walk, img) end
-        end
         for i = 1, 11 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_happy_" .. i .. ".png")
-            if ok then table.insert(frames.happy, img) end
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_jump_" .. i .. ".png")
+            if ok then table.insert(frames.jump, img) end
+        end
+        for i = 1, 5 do
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_idle1_" .. i .. ".png")
+            if ok then table.insert(frames.idle1, img) end
+        end
+        for i = 1, 5 do
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_idle2_" .. i .. ".png")
+            if ok then table.insert(frames.idle2, img) end
         end
         for i = 1, 9 do
             local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_sit_" .. i .. ".png")
             if ok then table.insert(frames.sit, img) end
         end
+        for i = 1, 5 do
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_walk_" .. i .. ".png")
+            if ok then table.insert(frames.walk, img) end
+        end
         for i = 1, 8 do
-            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_sleep_" .. i .. ".png")
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_run_" .. i .. ".png")
+            if ok then table.insert(frames.run, img) end
+        end
+        for i = 1, 8 do
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_sniff_" .. i .. ".png")
             if ok then table.insert(frames.sniff, img) end
+        end
+        for i = 1, 8 do
+            local ok, img = pcall(love.graphics.newImage, "assets/pet/dog/" .. id .. "/dog_sniff_walk_" .. i .. ".png")
+            if ok then table.insert(frames.sniff_walk, img) end
         end
         pet_dog_breed_frames[id] = frames
     end
@@ -10018,7 +10015,7 @@ local function drawStoreItemIcon(item_id, cx, cy, radius, is_selected)
         if not img then
             local breed = _G.active_dog_breed or "roxy"
             local b_frames = pet_dog_breed_frames[breed] or pet_dog_breed_frames["roxy"]
-            img = (b_frames and b_frames.idle_down and b_frames.idle_down[1]) or (b_frames and b_frames.happy and b_frames.happy[1])
+            img = (b_frames and b_frames.idle1 and b_frames.idle1[1]) or (b_frames and b_frames.idle2 and b_frames.idle2[1]) or (b_frames and b_frames.jump and b_frames.jump[1])
         end
         if img then
             local target_h = math.floor(radius * 1.5)
@@ -10456,13 +10453,13 @@ function renderer.drawStoreMenu(selection, skip_transition)
 
                     -- Draw Mini Dog Idle Sprite in Pill (Prominent & vertically centered)
                     local b_frames = pet_dog_breed_frames[breed.id]
-                    local mini_img = b_frames and b_frames.idle_down and b_frames.idle_down[1]
+                    local mini_img = b_frames and ((b_frames.idle1 and b_frames.idle1[1]) or (b_frames.idle2 and b_frames.idle2[1]))
                     local sprite_cx = px + pad_left + icon_w / 2
                     local center_y = pill_y + math.floor(pill_h / 2)
 
                     if mini_img then
-                        local mini_h = math.floor(24 * scale)
-                        local ms = mini_h / mini_img:getHeight()
+                        local mini_h = math.floor(22 * scale)
+                        local ms = mini_h / 32
                         love.graphics.setColor(1, 1, 1, 1.0)
                         love.graphics.draw(
                             mini_img,
@@ -10471,7 +10468,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
                             0,
                             ms, ms,
                             mini_img:getWidth() / 2,
-                            mini_img:getHeight() * 0.70
+                            34
                         )
                     end
 
@@ -11648,9 +11645,9 @@ function renderer.drawCatCompanion(cx, cy, scale, game)
     end
 end
 
--- Grounded Real-Physics Dog Companion Engine (Pomeranian)
--- Behaviors: walk (casual), run (fast dash), sit, sniff (stationary ground sniff),
---            sniff_walk (sniffing while moving), idle (2 variations), happy (excited jump)
+-- Grounded Real-Physics Dog Companion Engine
+-- Behaviors: walk (casual), run (fast sprint), sit (rest with tail wag), sniff (stationary ground sniff),
+--            sniff_walk (sniffing while wandering), idle (2 variations: calm & alert), jump (excited celebration)
 local dog_phys = {
     x = nil,
     y = nil,
@@ -11669,7 +11666,7 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
     if not _G.active_companion or _G.active_companion ~= "dog" then return end
     local active_breed = _G.active_dog_breed or "roxy"
     local breed_frames = pet_dog_breed_frames[active_breed] or pet_dog_breed_frames["roxy"]
-    if not breed_frames or not breed_frames.idle_down or #breed_frames.idle_down == 0 then return end
+    if not breed_frames or not breed_frames.idle1 or #breed_frames.idle1 == 0 then return end
 
     local dt = love.timer.getDelta()
     local is_won = (game and game.state == Game.STATE_WON)
@@ -11694,7 +11691,7 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
     dog_phys.particles     = dog_phys.particles or {}
     dog_phys.spawn_timer   = (dog_phys.spawn_timer or 0) - dt
 
-    -- Spawn paw-print / heart particles when excited
+    -- Spawn paw-print / warm amber heart particles when excited
     if is_excited and dog_phys.spawn_timer <= 0 then
         dog_phys.spawn_timer = 0.18
         table.insert(dog_phys.particles, {
@@ -11708,17 +11705,17 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
         })
     end
 
-    -- Excitement → jump (uses JUMP / happy frames)
+    -- Excitement → Jump celebration
     if (is_won or (is_excited and dog_phys.jump_cooldown <= 0))
         and dog_phys.is_grounded and dog_phys.vy == 0 then
-        dog_phys.vy = -200 * scale   -- dogs jump a bit higher than cats!
+        dog_phys.vy = -210 * scale
         dog_phys.is_grounded = false
         dog_phys.squish_sy = 1.2
-        dog_phys.state = "happy"
+        dog_phys.state = "jump"
         dog_phys.anim_time = 0
         dog_phys.vx = 0
         if not is_won then
-            dog_phys.jump_cooldown = 40.0
+            dog_phys.jump_cooldown = 30.0
         end
     end
 
@@ -11751,11 +11748,11 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
     -- Ground landing
     if dog_phys.y >= ground_y then
         if not dog_phys.is_grounded then
-            dog_phys.squish_sy = 0.82   -- heavier landing squish (dog is chonky)
-            if dog_phys.state == "happy" then
+            dog_phys.squish_sy = 0.82   -- landing squish
+            if dog_phys.state == "jump" then
                 if is_won then
                     -- Keep bouncing on victory!
-                    dog_phys.vy = -200 * scale
+                    dog_phys.vy = -210 * scale
                     dog_phys.is_grounded = false
                     dog_phys.squish_sy = 1.2
                     dog_phys.anim_time = 0
@@ -11777,47 +11774,54 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
 
     -- ── Behaviour State Machine ──────────────────────────────────────────────
     dog_phys.action_timer = dog_phys.action_timer - dt
-    if dog_phys.action_timer <= 0 and dog_phys.is_grounded and dog_phys.state ~= "happy" then
+    if dog_phys.action_timer <= 0 and dog_phys.is_grounded and dog_phys.state ~= "jump" then
         local roll = love.math.random()
         dog_phys.anim_time = 0
 
         if dog_phys.state == "sniff" then
-            if roll < 0.40 then
+            if roll < 0.35 then
                 local dir = (love.math.random() < 0.5 and 1 or -1)
-                dog_phys.vx = dir * 16 * scale
+                dog_phys.vx = dir * 18 * scale
                 dog_phys.facing = dir
                 dog_phys.state = "walk"
-                dog_phys.action_timer = 2.0 + love.math.random() * 2.0
-            elseif roll < 0.60 then
+                dog_phys.action_timer = 4.0 + love.math.random() * 4.0
+            elseif roll < 0.65 then
                 local dir = (love.math.random() < 0.5 and 1 or -1)
-                dog_phys.vx = dir * 10 * scale
+                dog_phys.vx = dir * 12 * scale
                 dog_phys.facing = dir
                 dog_phys.state = "sniff_walk"
-                dog_phys.action_timer = 2.5 + love.math.random() * 1.5
+                dog_phys.action_timer = 4.0 + love.math.random() * 3.5
             elseif roll < 0.75 then
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                dog_phys.vx = dir * 42 * scale
+                dog_phys.facing = dir
+                dog_phys.state = "run"
+                dog_phys.action_timer = 3.0 + love.math.random() * 3.0
+            elseif roll < 0.80 then
                 dog_phys.vx = 0
                 dog_phys.state = "sit"
-                dog_phys.action_timer = 1.5
+                dog_phys.action_timer = 15.0 + love.math.random() * 6.0  -- sits for 15-21 seconds
             else
                 dog_phys.vx = 0
-                dog_phys.state = "sniff"
-                dog_phys.action_timer = 2.0 + love.math.random() * 2.0
+                dog_phys.state = "idle"
+                dog_phys.idle_type = love.math.random(1, 2)
+                dog_phys.action_timer = 3.0 + love.math.random() * 3.0
             end
 
         elseif dog_phys.state == "run" then
             if roll < 0.35 then
                 dog_phys.vx = 0
                 dog_phys.state = "sniff"
-                dog_phys.action_timer = 2.5 + love.math.random() * 2.0
-            elseif roll < 0.60 then
+                dog_phys.action_timer = 3.0 + love.math.random() * 2.5
+            elseif roll < 0.40 then
                 dog_phys.vx = 0
                 dog_phys.state = "sit"
-                dog_phys.action_timer = 1.5
-            elseif roll < 0.80 then
+                dog_phys.action_timer = 15.0 + love.math.random() * 6.0  -- sits for 15-21 seconds
+            elseif roll < 0.75 then
                 local dir = dog_phys.facing
-                dog_phys.vx = dir * 16 * scale
+                dog_phys.vx = dir * 18 * scale
                 dog_phys.state = "walk"
-                dog_phys.action_timer = 2.0 + love.math.random() * 1.5
+                dog_phys.action_timer = 4.0 + love.math.random() * 3.5
             else
                 dog_phys.vx = 0
                 dog_phys.state = "idle"
@@ -11825,38 +11829,62 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
                 dog_phys.action_timer = 3.0 + love.math.random() * 3.0
             end
 
-        else
-            if roll < 0.25 then
-                local dir = (love.math.random() < 0.5 and 1 or -1)
-                dog_phys.vx = dir * 16 * scale
-                dog_phys.facing = dir
-                dog_phys.state = "walk"
-                dog_phys.action_timer = 2.5 + love.math.random() * 2.5
-            elseif roll < 0.37 then
-                local dir = (love.math.random() < 0.5 and 1 or -1)
-                dog_phys.vx = dir * 38 * scale
-                dog_phys.facing = dir
-                dog_phys.state = "run"
-                dog_phys.action_timer = 0.8 + love.math.random() * 0.8
-            elseif roll < 0.57 then
+        elseif dog_phys.state == "sit" then
+            if roll < 0.40 then
                 dog_phys.vx = 0
                 dog_phys.state = "sniff"
-                dog_phys.action_timer = 3.0 + love.math.random() * 3.0
+                dog_phys.action_timer = 3.0 + love.math.random() * 2.5
             elseif roll < 0.75 then
                 local dir = (love.math.random() < 0.5 and 1 or -1)
-                dog_phys.vx = dir * 10 * scale
+                dog_phys.vx = dir * 18 * scale
                 dog_phys.facing = dir
-                dog_phys.state = "sniff_walk"
-                dog_phys.action_timer = 3.0 + love.math.random() * 2.0
-            elseif roll < 0.87 then
-                dog_phys.vx = 0
-                dog_phys.state = "sit"
-                dog_phys.action_timer = 1.5
+                dog_phys.state = "walk"
+                dog_phys.action_timer = 4.0 + love.math.random() * 4.0
+            elseif roll < 0.85 then
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                dog_phys.vx = dir * 42 * scale
+                dog_phys.facing = dir
+                dog_phys.state = "run"
+                dog_phys.action_timer = 3.0 + love.math.random() * 2.5
             else
                 dog_phys.vx = 0
                 dog_phys.state = "idle"
                 dog_phys.idle_type = love.math.random(1, 2)
-                dog_phys.action_timer = 3.0 + love.math.random() * 4.0
+                dog_phys.action_timer = 3.0 + love.math.random() * 3.0
+            end
+
+        else -- from idle, walk, or sniff_walk
+            if roll < 0.32 then
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                dog_phys.vx = dir * 18 * scale
+                dog_phys.facing = dir
+                dog_phys.state = "walk"
+                dog_phys.action_timer = 4.5 + love.math.random() * 4.0
+            elseif roll < 0.48 then
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                dog_phys.vx = dir * 42 * scale
+                dog_phys.facing = dir
+                dog_phys.state = "run"
+                dog_phys.action_timer = 3.0 + love.math.random() * 3.0  -- runs across ledge for 3-6 seconds
+            elseif roll < 0.70 then
+                dog_phys.vx = 0
+                dog_phys.state = "sniff"
+                dog_phys.action_timer = 3.0 + love.math.random() * 2.5
+            elseif roll < 0.88 then
+                local dir = (love.math.random() < 0.5 and 1 or -1)
+                dog_phys.vx = dir * 12 * scale
+                dog_phys.facing = dir
+                dog_phys.state = "sniff_walk"
+                dog_phys.action_timer = 4.0 + love.math.random() * 3.5
+            elseif roll < 0.92 then
+                dog_phys.vx = 0
+                dog_phys.state = "sit"
+                dog_phys.action_timer = 15.0 + love.math.random() * 6.0  -- sits for 15-21 seconds
+            else
+                dog_phys.vx = 0
+                dog_phys.state = "idle"
+                dog_phys.idle_type = love.math.random(1, 2)
+                dog_phys.action_timer = 3.0 + love.math.random() * 3.0
             end
         end
     end
@@ -11868,21 +11896,21 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
     end
 
     -- ── Choose animation frames & FPS ───────────────────────────────────────
-    local frames = breed_frames.idle_down
+    local frames = breed_frames.idle1
     local fps = 5
     local is_single_play = false
 
-    if dog_phys.state == "happy" or not dog_phys.is_grounded then
-        frames = (#breed_frames.happy > 0) and breed_frames.happy or breed_frames.idle_down
-        fps = 12   -- fast, energetic jump animation
+    if dog_phys.state == "jump" or not dog_phys.is_grounded then
+        frames = (#breed_frames.jump > 0) and breed_frames.jump or breed_frames.idle1
+        fps = 12   -- energetic jump animation
         is_single_play = true
 
     elseif dog_phys.state == "run" then
-        frames = (#breed_frames.run > 0) and breed_frames.run or breed_frames.idle_down
-        fps = 14   -- fast run cycle
+        frames = (#breed_frames.run > 0) and breed_frames.run or breed_frames.idle1
+        fps = 13   -- fast sprint cycle
 
     elseif dog_phys.state == "walk" then
-        frames = (#breed_frames.walk > 0) and breed_frames.walk or breed_frames.idle_down
+        frames = (#breed_frames.walk > 0) and breed_frames.walk or breed_frames.idle1
         fps = 8
 
     elseif dog_phys.state == "sniff_walk" then
@@ -11890,20 +11918,20 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
         fps = 7    -- slower pace while sniffing
 
     elseif dog_phys.state == "sniff" then
-        frames = (#breed_frames.sniff > 0) and breed_frames.sniff or breed_frames.idle_down
-        fps = 5    -- slow, deliberate sniffing
+        frames = (#breed_frames.sniff > 0) and breed_frames.sniff or breed_frames.idle1
+        fps = 6    -- deliberate ground sniffing
 
     elseif dog_phys.state == "sit" then
-        frames = (#breed_frames.sit > 0) and breed_frames.sit or breed_frames.idle_down
+        frames = (#breed_frames.sit > 0) and breed_frames.sit or breed_frames.idle1
         fps = 6
         is_single_play = true
 
     else
-        -- idle: alternate between IDLE1 and IDLE2
-        if dog_phys.idle_type == 2 and #breed_frames.idle_left > 0 then
-            frames = breed_frames.idle_left
+        -- idle: alternate between IDLE1 (calm) and IDLE2 (alert)
+        if dog_phys.idle_type == 2 and #breed_frames.idle2 > 0 then
+            frames = breed_frames.idle2
         else
-            frames = breed_frames.idle_down
+            frames = breed_frames.idle1
         end
         fps = 5
     end
@@ -11914,26 +11942,14 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
     if is_single_play then
         local raw_idx = math.floor(dog_phys.anim_time * fps) + 1
         frame_idx = math.min(#frames, raw_idx)
-        -- Sit: when animation finishes → go back to idle/sniff
-        if raw_idx > #frames and dog_phys.state == "sit" then
-            if love.math.random() < 0.4 then
-                dog_phys.state = "sniff"
-                dog_phys.action_timer = 2.0 + love.math.random() * 2.0
-            else
-                dog_phys.state = "idle"
-                dog_phys.idle_type = love.math.random(1, 2)
-                dog_phys.action_timer = 3.0 + love.math.random() * 3.0
-            end
-            dog_phys.anim_time = 0
-        end
     else
         frame_idx = (math.floor(dog_phys.anim_time * fps) % #frames) + 1
     end
 
     local img = frames[frame_idx]
     if img then
-        local target_h = math.floor(44 * scale)
-        local s = target_h / img:getHeight()
+        local target_body_h = math.floor(38 * scale)
+        local s = target_body_h / 30
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(
             img,
@@ -11942,12 +11958,12 @@ function renderer.drawDogCompanion(cx, cy, scale, game)
             0,
             s * dog_phys.facing,
             s * dog_phys.squish_sy,
-            img:getWidth() / 2,
-            img:getHeight()
+            32,  -- Center of 64x64 cell
+            48   -- Ground contact baseline in 64x64 cell
         )
     end
 
-    -- Floating hearts (warm orange-yellow for dog, different from cat's pink)
+    -- Floating hearts (warm amber for dog)
     for i = #dog_phys.particles, 1, -1 do
         local p = dog_phys.particles[i]
         p.life = p.life - dt
