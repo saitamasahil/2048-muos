@@ -1,5 +1,8 @@
 # Changelog
 
+## [6.0.1]
+- Fixed unlocked achievements displaying as locked in achievements menu
+
 ## [6.0.0]
 
 ### Added
