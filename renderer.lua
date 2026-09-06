@@ -1587,6 +1587,23 @@ function renderer.getThemeDisplayName(theme_id, uppercase)
     return uppercase and name:upper() or name
 end
 
+function renderer.getModeDisplayName(mode)
+    if mode == "classic" then
+        return "Classic Mode"
+    elseif mode == "plus" then
+        return "Plus Mode"
+    elseif mode == "timeattack" then
+        return "Time Attack"
+    elseif mode == "huge" then
+        return "Huge Mode (5x5)"
+    elseif mode == "nomercy" then
+        return "No Mercy Mode"
+    elseif mode == "goose" then
+        return "Goose Mode"
+    end
+    return mode and (mode:sub(1,1):upper() .. mode:sub(2) .. " Mode") or "Classic Mode"
+end
+
 function renderer.triggerThemeMorph(theme_id)
     if not theme_id then return end
     local name = renderer.getThemeDisplayName(theme_id, true)
@@ -5582,11 +5599,15 @@ function renderer.drawOverlay(game)
             local icon_gap = math.floor(12 * scale)
 
             local font_h = font_help_label:getHeight()
+            local mode_name = renderer.getModeDisplayName(game.mode)
+            local tw_mode = font_help_label:getWidth(mode_name)
+            local mode_gap = math.floor(4 * scale)
+            local mode_h = font_h + math.floor(6 * scale)
             local track_h = has_track and (font_h + math.floor(6 * scale)) or 0
             local coins_h = font_h + math.floor(10 * scale)
             local perks_h = has_perks and (icon_sz + math.floor(12 * scale)) or 0
 
-            local total_content_h = th + track_h + coins_h + perks_h
+            local total_content_h = th + mode_gap + mode_h + track_h + coins_h + perks_h
             local pause_y = by + math.floor((bs - total_content_h) / 2)
 
             -- Draw "Paused" title
@@ -5594,8 +5615,14 @@ function renderer.drawOverlay(game)
             love.graphics.setColor(light_text)
             love.graphics.print(msg, bx + (bs - tw) / 2, pause_y)
 
+            -- Draw game mode name centered below "Paused"
+            local next_y = pause_y + th + mode_gap
+            love.graphics.setFont(font_help_label)
+            love.graphics.setColor(light_text[1], light_text[2], light_text[3], 0.8)
+            love.graphics.print(mode_name, bx + math.floor((bs - tw_mode) / 2), next_y)
+            next_y = next_y + font_h + math.floor(6 * scale)
+
             -- Draw track details centered below
-            local next_y = pause_y + th + math.floor(4 * scale)
             if has_track then
                 local track_lbl = track.title .. " - " .. track.artist
                 love.graphics.setFont(font_help_label)
@@ -5610,7 +5637,6 @@ function renderer.drawOverlay(game)
             local coin_str = tostring(total_coins)
             love.graphics.setFont(font_help_label)
             local c_w = font_help_label:getWidth(coin_str)
-            local font_h = font_help_label:getHeight()
             local c_icon_sz = math.floor(18 * scale)
             local c_gap = math.floor(5 * scale)
             local total_c_w = c_w + (coin_icon and (c_icon_sz + c_gap) or 0)
@@ -5652,7 +5678,31 @@ function renderer.drawOverlay(game)
                 love.graphics.setShader()
             end
         else
-            love.graphics.print(msg, bx + (bs - tw) / 2, by + (bs - th) / 2)
+            if game.mode == "timeattack" and game.timesUp then
+                -- In Time Attack when time is up, "Time's Up!" is self-explanatory
+                love.graphics.setFont(font_message)
+                love.graphics.setColor(1.0, 0.95, 0.7, 1.0)
+                love.graphics.print(msg, bx + math.floor((bs - tw) / 2), by + math.floor((bs - th) / 2))
+            else
+                local mode_name = renderer.getModeDisplayName(game.mode)
+                love.graphics.setFont(font_help_label)
+                local mw = font_help_label:getWidth(mode_name)
+                local mh = font_help_label:getHeight()
+
+                local gap = math.floor(6 * scale)
+                local total_h = th + gap + mh
+                local start_y = by + math.floor((bs - total_h) / 2)
+
+                -- Draw "Game Over!"
+                love.graphics.setFont(font_message)
+                love.graphics.setColor(ui_text)
+                love.graphics.print(msg, bx + math.floor((bs - tw) / 2), start_y)
+
+                -- Draw Game Mode Name
+                love.graphics.setFont(font_help_label)
+                love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.75)
+                love.graphics.print(mode_name, bx + math.floor((bs - mw) / 2), start_y + th + gap)
+            end
         end
     end
 end
