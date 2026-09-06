@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.2]
+
+### Added
+- Display active game mode name on Pause and Game Over screens
+
+### Changed
+- Refined some achievement description
+
+### Fixed
+- Fixed coin counter and icon vertical alignment across Pause, Main Menu, and Store screens
+
 ## [6.0.1]
 - Fixed unlocked achievements displaying as locked in achievements menu
 
