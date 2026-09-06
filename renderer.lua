@@ -9019,8 +9019,8 @@ local achievementsList = {
 
     -- Companions & Economy
     { id = "ach_coin_hoarder",     name = "Coin Hoarder",      desc = "Accumulate 10,000 coins at once",                                reward = "Pastel Theme",     coins = 250 },
-    { id = "ach_best_friend",      name = "Best Friend",       desc = "Play a game with all 4 dog breeds",                              reward = "Pawprint Theme",   coins = 200 },
-    { id = "ach_purrfect_run",     name = "Purrfect Run",      desc = "Create a 2048 tile with the Cat Companion active",               reward = "Neko Night Theme", coins = 250 }
+    { id = "ach_best_friend",      name = "Best Friend",       desc = "Play with all 4 dog pals",                                       reward = "Pawprint Theme",   coins = 200 },
+    { id = "ach_purrfect_run",     name = "Purrfect Run",      desc = "Create a 2048 tile with the cat companion active",               reward = "Neko Night Theme", coins = 250 }
 }
 
 function renderer.getAchievementsList()
