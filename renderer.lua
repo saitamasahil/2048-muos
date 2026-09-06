@@ -5610,24 +5610,28 @@ function renderer.drawOverlay(game)
             local coin_str = tostring(total_coins)
             love.graphics.setFont(font_help_label)
             local c_w = font_help_label:getWidth(coin_str)
+            local font_h = font_help_label:getHeight()
             local c_icon_sz = math.floor(18 * scale)
             local c_gap = math.floor(5 * scale)
             local total_c_w = c_w + (coin_icon and (c_icon_sz + c_gap) or 0)
             local coin_start_x = bx + math.floor((bs - total_c_w) / 2)
             local coin_y = next_y
+            local row_h = math.max(font_h, c_icon_sz)
+            local text_y = coin_y + math.floor((row_h - font_h) / 2) - 1.5 * scale
+            local icon_y = coin_y + math.floor((row_h - c_icon_sz) / 2)
 
             if coin_icon then
                 love.graphics.setColor(1.0, 0.82, 0.25, 0.95)
                 love.graphics.setShader(icon_shader)
                 local sw = c_icon_sz / coin_icon:getWidth()
                 local sh = c_icon_sz / coin_icon:getHeight()
-                love.graphics.draw(coin_icon, coin_start_x, coin_y + math.floor((font_h - c_icon_sz) / 2), 0, sw, sh)
+                love.graphics.draw(coin_icon, coin_start_x, icon_y, 0, sw, sh)
                 love.graphics.setShader()
                 love.graphics.setColor(0.9, 0.9, 0.9, 0.95)
-                love.graphics.print(coin_str, coin_start_x + c_icon_sz + c_gap, coin_y)
+                love.graphics.print(coin_str, coin_start_x + c_icon_sz + c_gap, text_y)
             else
                 love.graphics.setColor(0.9, 0.9, 0.9, 0.95)
-                love.graphics.print(coin_str .. " Coins", coin_start_x, coin_y)
+                love.graphics.print(coin_str .. " Coins", coin_start_x, text_y)
             end
             next_y = next_y + font_h + math.floor(12 * scale)
 
@@ -7137,8 +7141,8 @@ function renderer.drawMainMenu(selection, skip_transition)
         local total_c_w = c_w + (coin_icon and (coin_sz + math.floor(4 * scale)) or 0)
         local coin_x = right_edge - total_c_w
         local coin_row_y = r1_y + icon_size + math.floor(7 * scale)
-        local text_y = coin_row_y + math.floor((row_h - font_h) / 2)
-        local icon_top = coin_row_y + math.floor((row_h - coin_sz) / 2) + math.floor(2 * scale)
+        local text_y = coin_row_y + math.floor((row_h - font_h) / 2) - 1.5 * scale
+        local icon_top = coin_row_y + math.floor((row_h - coin_sz) / 2)
 
         love.graphics.setColor(ui_text[1], ui_text[2], ui_text[3], 0.8)
         love.graphics.setFont(font_help_label)
@@ -10252,7 +10256,7 @@ function renderer.drawStoreMenu(selection, skip_transition)
     love.graphics.setLineWidth(math.floor(1.5 * scale))
     roundedRect("line", pill_x, pill_y, pill_w, pill_h, math.floor(6 * scale))
 
-    local text_y = pill_y + math.floor((pill_h - font_h) / 2) - math.floor(1 * scale)
+    local text_y = pill_y + math.floor((pill_h - font_h) / 2) - 1.5 * scale
     local icon_y = pill_y + math.floor((pill_h - c_icon_sz) / 2)
 
     love.graphics.setColor(ui_text)
